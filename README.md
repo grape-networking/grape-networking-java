@@ -18,3 +18,10 @@ test these locally before pushing you can do so as follows:
 # TODO:
 - instrumented tests with a custom runner with a phone attached
 - findbugs (static analysis)
+
+# Setting up the self-hosted CI runner
+- Attach a phone
+- Install java8 jre and jdk
+- Ensure its being using with `sudo update-alternatives --config java` and `sudo update-alternatives --config javac`
+- Install android studio sdk
+- Set $ANDROID_SDK_ROOT to the install location

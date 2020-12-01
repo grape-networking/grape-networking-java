@@ -29,6 +29,8 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
       - name: Run lint
         run: ./gradlew app:lint
       - name: Anotate lint results
@@ -37,7 +39,7 @@ jobs:
           xml_path: app/build/reports/lint/report.xml
       - name: Run checkstyle
         run: ./gradlew app:checkstyle
-      - name: Run junit5 tests
+      - name: Run junit5 unit tests
         run: ./gradlew app:test
       - name: Run junit5 instrumented tests
         run: ./gradlew app:connectedCheck
