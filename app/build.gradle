@@ -20,6 +20,13 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    lintOptions {
+        warningsAsErrors true
+        showAll true
+        explainIssues true
+        xmlOutput file("build/reports/lint/report.xml")
+        htmlOutput file("build/reports/lint/report.html")
+    }
 }
 
 dependencies {
@@ -29,3 +36,5 @@ dependencies {
         exclude group: 'ch.qos.logback'
     }
 }
+
+apply from: 'checkstyle.gradle'

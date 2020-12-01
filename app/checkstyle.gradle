@@ -1,0 +1,40 @@
+apply plugin: 'checkstyle'
+
+configurations {
+    checkstyleConfig
+}
+
+def versions = [
+        checkstyle: '8.34',
+]
+
+checkstyle {
+    showViolations = true
+    ignoreFailures = false
+    toolVersion = "${versions.checkstyle}"
+    config = resources.text.fromArchiveEntry(configurations.checkstyleConfig, 'google_checks.xml')
+}
+
+// http://dplatz.de/blog/2018/gradle-checkstyle-2.html
+// https://discuss.gradle.org/t/checkstyle-how-to-use-an-official-style-configuration/6952/6
+dependencies {
+    checkstyleConfig ("com.puppycrawl.tools:checkstyle:${versions.checkstyle}") {
+        transitive = false
+    }
+}
+
+task checkstyle(type: Checkstyle) {
+    description 'Check code standard'
+    group 'verification'
+    source 'src'
+    include '**/*.kt'
+    include '**/*.java'
+    exclude '**/gen/**'
+    classpath = files()
+    showViolations = true
+    ignoreFailures = false
+    reports {
+        xml.enabled true
+        html.enabled true
+    }
+}
