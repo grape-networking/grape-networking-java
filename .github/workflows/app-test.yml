@@ -31,6 +31,8 @@ jobs:
           java-version: 1.8
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2.0.1
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
       - name: Test ANDROID_SDK_ROOT
         run: echo $ANDROID_SDK_ROOT
       - name: Run lint
