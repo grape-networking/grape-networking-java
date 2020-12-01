@@ -9,6 +9,16 @@ on:
       - '**.gradle'
       - gradle.properties
       - gradlew*
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/app-test.yml
+      - 'app/**'
+      - gradle/**
+      - '**.gradle'
+      - gradle.properties
+      - gradlew*
 
 jobs:
   android_lint:
