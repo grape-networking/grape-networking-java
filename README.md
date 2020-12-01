@@ -16,7 +16,7 @@ test these locally before pushing you can do so as follows:
 ```
 
 # TODO:
-- findbugs (static analysis)
+- dependency injection framework
 
 # Setting up the self-hosted CI runner
 - Install java8 jre and jdk
