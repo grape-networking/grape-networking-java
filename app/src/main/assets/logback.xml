@@ -1,0 +1,29 @@
+<configuration>
+    <appender name="syslog-tls" class="com.papertrailapp.logback.Syslog4jAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>%d{MMM dd HH:mm:ss} Android GRAPE-APP: %-5level %logger{35} %m%n</pattern>
+        </layout>
+        <syslogConfig class="org.productivity.java.syslog4j.impl.net.tcp.ssl.SSLTCPNetSyslogConfig">
+            <host>logs5.papertrailapp.com</host>
+            <port>38444</port>
+            <sendLocalName>false</sendLocalName>
+            <sendLocalTimestamp>false</sendLocalTimestamp>
+            <maxMessageLength>128000</maxMessageLength>
+        </syslogConfig>
+    </appender>
+    <appender name="async" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="syslog-tls" />
+    </appender>
+    <appender name="logcat" class="ch.qos.logback.classic.android.LogcatAppender">
+        <tagEncoder>
+            <pattern>%logger{12}</pattern>
+        </tagEncoder>
+        <encoder>
+            <pattern>[%-20thread] %msg</pattern>
+        </encoder>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="async" />
+        <appender-ref ref="logcat" />
+    </root>
+</configuration>
