@@ -43,6 +43,11 @@ jobs:
         run: ./gradlew app:jacocoTestReportDebug
       - name: Run jacoco release coverage reports
         run: ./gradlew app:jacocoTestReportRelease
+      - name: Upload Test Report to CodeCov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: app/build/reports/jacoco/debug/jacoco.xml
       - name: Archive results
         uses: actions/upload-artifact@v2
         with:
