@@ -36,6 +36,6 @@ jobs:
           xml_path: app/build/reports/lint-results.xml
       - name: Archive lint results
         uses: actions/upload-artifact@v2
-          with:
-            name: lint-results
-            xml_path: app/build/reports/lint-results.xml
+        with:
+          name: lint-results
+          path: app/build/reports/lint-results.xml
