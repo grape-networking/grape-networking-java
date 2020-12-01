@@ -22,7 +22,7 @@ on:
 
 jobs:
   android_checks:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
       - name: set up JDK 1.8
@@ -39,6 +39,8 @@ jobs:
         run: ./gradlew app:checkstyle
       - name: Run junit5 tests
         run: ./gradlew app:test
+      - name: Run junit5 instrumented tests
+        run: ./gradlew app:connectedCheck
       - name: Run jacoco debug coverage reports
         run: ./gradlew app:jacocoTestReportDebug
       - name: Run jacoco release coverage reports

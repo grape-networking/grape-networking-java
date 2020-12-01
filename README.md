@@ -16,6 +16,5 @@ test these locally before pushing you can do so as follows:
 ```
 
 # TODO:
- - instrumented tests with a custom runner with a phone attached
+- instrumented tests with a custom runner with a phone attached
 - findbugs (static analysis)
-- codecov (historical coverage analytics)
