@@ -29,7 +29,7 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-      - run: ./gradlew lint
+      - run: ./gradlew app:lint
       - uses: yutailang0119/action-android-lint@v1.0.2
         with:
-          xml_path: build/reports/lint-results.xml
+          xml_path: app/build/reports/lint-results.xml
