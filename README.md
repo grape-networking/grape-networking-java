@@ -11,11 +11,11 @@ Github actions is configured to run a bunch of checks. If you want to
 test these locally before pushing you can do so as follows:
 ```
 ./gradlew lint
+./gradlew checkstyle
+./gradlew test
 ```
 
 # TODO:
-- checkstyle (style enforcement)
-- junit (unit, integration tests)
-- jacoco (test coverage)
+ - instrumented tests with a custom runner with a phone attached
 - findbugs (static analysis)
 - codecov (historical coverage analytics)
