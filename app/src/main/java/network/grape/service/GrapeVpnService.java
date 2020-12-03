@@ -17,6 +17,11 @@ public class GrapeVpnService extends VpnService {
   Logger logger = LoggerFactory.getLogger(VpnService.class);
 
   @Override
+  public void onCreate() {
+    logger.info("onCreate");
+  }
+
+  @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     logger.info("onStartCommand");
 
@@ -26,5 +31,10 @@ public class GrapeVpnService extends VpnService {
 
     // do all the startup logic
     return START_STICKY;
+  }
+
+  @Override
+  public void onDestroy() {
+    logger.info("onDestroy");
   }
 }
