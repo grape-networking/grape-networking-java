@@ -48,6 +48,11 @@ android {
     packagingOptions {
         exclude "META-INF/LICENSE*"
     }
+    buildTypes {
+        debug {
+            testCoverageEnabled true
+        }
+    }
 }
 
 dependencies {
@@ -78,10 +83,10 @@ dependencies {
 }
 
 junitJacoco {
-    jacocoVersion = '0.8.2' // type String
+    jacocoVersion = '0.8.5' // type String
     ignoreProjects = [] // type String array
     excludes // type String List
-    includeNoLocationClasses = false // type boolean
+    includeNoLocationClasses = true // type boolean
     includeInstrumentationCoverageInMergedReport = true // type boolean
     xml.enabled = true
     csv.enabled = true
