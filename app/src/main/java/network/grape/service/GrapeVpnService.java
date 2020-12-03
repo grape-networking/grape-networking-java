@@ -109,7 +109,7 @@ public class GrapeVpnService extends VpnService implements Runnable {
 
   /**
    * Starts a background thread to handle writing to the VPN tun0 interface. This thread handles
-   * the incoming packets from the VPN tun0 interface.  
+   * the incoming packets from the VPN tun0 interface.
    *
    * @throws IOException
    */
