@@ -4,7 +4,10 @@ import android.content.Intent;
 import android.net.VpnService;
 import android.os.ParcelFileDescriptor;
 import dagger.hilt.android.AndroidEntryPoint;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,10 +17,13 @@ import org.slf4j.LoggerFactory;
 @AndroidEntryPoint
 public class GrapeVpnService extends VpnService implements Runnable {
 
+  private static final int MAX_PACKET_LEN = 1500;
+
   // SLF4J
   private final Logger logger = LoggerFactory.getLogger(VpnService.class);
   private ParcelFileDescriptor mInterface;
   private Thread mThread;
+  private boolean serviceValid;
 
   @Override
   public void onCreate() {
@@ -62,6 +68,8 @@ public class GrapeVpnService extends VpnService implements Runnable {
     try {
       if (startVpnService()) {
         logger.info("VPN Service started");
+        startTrafficHandler();
+        logger.info("Traffic handler terminated");
       } else {
         logger.error("Failed to start VPN service");
       }
@@ -99,8 +107,85 @@ public class GrapeVpnService extends VpnService implements Runnable {
     }
   }
 
+  /**
+   * Starts a background thread to handle writing to the VPN tun0 interface. This thread handles
+   * the incoming packets from the VPN tun0 interface.  
+   *
+   * @throws IOException
+   */
+  void startTrafficHandler() throws IOException {
+    logger.info("startTrafficHandler() :traffic handling starting");
+    // Packets to be sent are queued in this input stream.
+    FileInputStream clientReader = new FileInputStream(mInterface.getFileDescriptor());
+
+    // Packets received need to be written to this output stream.
+    FileOutputStream clientWriter = new FileOutputStream(mInterface.getFileDescriptor());
+
+    // Allocate the buffer for a single packet.
+    ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_LEN);
+
+    // todo implement a writer and session logic
+
+    byte[] data;
+    int length;
+    serviceValid = true;
+    while (serviceValid) {
+      data = packet.array();
+      length = clientReader.read(data);
+      if (length > 0) {
+        logger.info("received packet from vpn client: " + length);
+        packet.limit(length);
+        // pass off to session handler
+        // handler.handlePacket(packet);
+      } else {
+        try {
+          Thread.sleep(100);
+        } catch (InterruptedException e) {
+          logger.info("Failed to sleep: "+ e.getMessage());
+        }
+      }
+    }
+    logger.info("startTrafficHandler() finished: serviceValid = " + serviceValid);
+  }
+
+  @Override
+  public boolean stopService(Intent name) {
+    logger.info("stopService(...)");
+    serviceValid = false;
+    return super.stopService(name);
+  }
+
   @Override
   public void onDestroy() {
     logger.info("onDestroy");
+    serviceValid = false;
+
+    try {
+      if (mInterface != null) {
+        logger.info("mInterface.close()");
+        mInterface.close();
+      }
+    } catch (IOException e) {
+      logger.error("mInterface.close():" + e.getMessage());
+      e.printStackTrace();
+    }
+
+    // Stop the previous session by interrupting the thread.
+    if (mThread != null) {
+      mThread.interrupt();
+      int reps = 0;
+      while (mThread.isAlive()) {
+        logger.info("Waiting to exit " + ++reps);
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+        if (reps > 5) {
+          break;
+        }
+      }
+      mThread = null;
+    }
   }
 }
