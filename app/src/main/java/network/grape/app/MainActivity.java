@@ -1,6 +1,7 @@
 package network.grape.app;
 
 import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.net.VpnService;
 import android.os.Bundle;
@@ -77,7 +78,8 @@ public class MainActivity extends AppCompatActivity {
     if (resultCode == RESULT_OK) {
       logger.info("RESULT_OK");
       Intent captureVpnServiceIntent = new Intent(getApplicationContext(), GrapeVpnService.class);
-      startService(captureVpnServiceIntent);
+      ComponentName componentName = startService(captureVpnServiceIntent);
+      logger.info("Component name: " + componentName);
     } else if (resultCode == RESULT_CANCELED) {
       logger.info("RESULT_CANCELLED");
       showVpnRefusedDialog();
