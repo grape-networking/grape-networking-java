@@ -5,7 +5,6 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-
 import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
@@ -72,6 +71,9 @@ public class VpnInstrumentedTest {
     Thread.sleep(1000);
     allowPermissionsIfNeeded();
     Thread.sleep(1000);
+
+    // TODO:(jason) pause, resume, destory activity to see how the lifecycle of the activity affects
+    // the way the service starts / stops
   }
 
   private static void allowPermissionsIfNeeded() {
