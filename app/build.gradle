@@ -12,7 +12,7 @@ buildscript {
   dependencies {
       classpath "com.android.tools.build:gradle:4.1.1"
       classpath "de.mannodermaus.gradle.plugins:android-junit5:1.6.2.0"
-      classpath "com.vanniktech:gradle-android-junit-jacoco-plugin:0.17.0-SNAPSHOT"
+      classpath "com.vanniktech:gradle-android-junit-jacoco-plugin:0.16.0"
       classpath "com.google.dagger:hilt-android-gradle-plugin:${hiltVersion}"
   }
 }
@@ -88,12 +88,9 @@ dependencies {
 junitJacoco {
     jacocoVersion = '0.8.5' // type String
     ignoreProjects = [] // type String array
-    excludes // type String List
-    includeNoLocationClasses = true // type boolean
+    excludes = ['Hilt**', 'hilt**', '**Generated**', 'Dagger**'] // type String List
+    includeNoLocationClasses = false // type boolean
     includeInstrumentationCoverageInMergedReport = true // type boolean
-    xml.enabled = true
-    csv.enabled = true
-    html.enabled = true
 }
 
 apply from: 'checkstyle.gradle'
