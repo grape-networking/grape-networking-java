@@ -22,3 +22,9 @@ test these locally before pushing you can do so as follows:
 - Set $ANDROID_SDK_ROOT to the install location (verify that this actually has to be done) (see `utilities/install-android-studio.sh`)
 - Attach a phone, add user to plugdev, setup udev rules: https://developer.android.com/studio/run/device, authorize USB debugging
   - verify with `adb devices` should see a serial number followed by `device`
+
+# TODO
+- Setup dependency tree in github:
+  - https://docs.github.com/en/free-pro-team@latest/github/visualizing-repository-data-with-graphs/about-the-dependency-graph#supported-package-ecosystems
+  - https://github.com/isaacs/github/issues/1620
+- Figure out why the instrumented tests are being auto-skipped on the Nexus 6P but running fine on the Moto G7 Power
