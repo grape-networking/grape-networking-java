@@ -51,11 +51,13 @@ android {
 }
 
 dependencies {
+    implementation 'com.google.android.material:material:1.2.1'
     implementation "com.google.dagger:hilt-android:${hiltVersion}"
     implementation "org.slf4j:slf4j-api:1.7.30"
     implementation('com.papertrailapp:logback-syslog4j:1.0.0') {
         exclude group: 'ch.qos.logback'
     }
+    implementation 'androidx.appcompat:appcompat:1.2.0'
     runtimeOnly "com.github.tony19:logback-android:2.0.0"
     annotationProcessor "com.google.dagger:hilt-android-compiler:${hiltVersion}"
 
