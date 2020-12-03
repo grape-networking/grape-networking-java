@@ -15,9 +15,6 @@ test these locally before pushing you can do so as follows:
 ./gradlew test
 ```
 
-# TODO:
-- dependency injection framework
-
 # Setting up the self-hosted CI runner
 - Install java8 jre and jdk
 - Ensure its being using with `sudo update-alternatives --config java` and `sudo update-alternatives --config javac`

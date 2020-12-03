@@ -1,19 +1,26 @@
 buildscript {
+  ext {
+      hiltVersion = "2.30.1-alpha"
+      jUnitVersion = "5.7.0"
+  }
   repositories {
       google()
       jcenter()
+      mavenCentral()
       maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
   }
   dependencies {
       classpath "com.android.tools.build:gradle:4.1.1"
       classpath "de.mannodermaus.gradle.plugins:android-junit5:1.6.2.0"
       classpath "com.vanniktech:gradle-android-junit-jacoco-plugin:0.17.0-SNAPSHOT"
+      classpath "com.google.dagger:hilt-android-gradle-plugin:${hiltVersion}"
   }
 }
 
 apply plugin: 'com.android.application'
 apply plugin: 'de.mannodermaus.android-junit5'
 apply plugin: 'com.vanniktech.android.junit.jacoco'
+apply plugin: 'dagger.hilt.android.plugin'
 
 android {
     compileSdkVersion 30
@@ -44,21 +51,26 @@ android {
 }
 
 dependencies {
-    implementation 'org.slf4j:slf4j-api:1.7.30'
-    runtimeOnly 'com.github.tony19:logback-android:2.0.0'
+    implementation "com.google.dagger:hilt-android:${hiltVersion}"
+    implementation "org.slf4j:slf4j-api:1.7.30"
     implementation('com.papertrailapp:logback-syslog4j:1.0.0') {
         exclude group: 'ch.qos.logback'
     }
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.7.0'
+    runtimeOnly "com.github.tony19:logback-android:2.0.0"
+    annotationProcessor "com.google.dagger:hilt-android-compiler:${hiltVersion}"
 
-    androidTestImplementation 'androidx.test:runner:1.3.0'
-    androidTestImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:${jUnitVersion}"
+    testImplementation "com.google.dagger:hilt-android-testing:${hiltVersion}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}"
+    testAnnotationProcessor "com.google.dagger:hilt-android-compiler:${hiltVersion}"
 
-    androidTestImplementation 'de.mannodermaus.junit5:android-test-core:1.2.0'
-    androidTestRuntimeOnly 'de.mannodermaus.junit5:android-test-runner:1.2.0'
-
+    androidTestImplementation "androidx.test:runner:1.3.0"
+    androidTestImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
+    androidTestImplementation  "com.google.dagger:hilt-android-testing:${hiltVersion}"
+    androidTestAnnotationProcessor "com.google.dagger:hilt-android-compiler:${hiltVersion}"
+    androidTestImplementation "de.mannodermaus.junit5:android-test-core:1.2.0"
+    androidTestRuntimeOnly "de.mannodermaus.junit5:android-test-runner:1.2.0"
 }
 
 junitJacoco {
