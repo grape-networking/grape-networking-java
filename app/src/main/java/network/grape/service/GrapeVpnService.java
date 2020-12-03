@@ -3,7 +3,6 @@ package network.grape.service;
 import android.content.Intent;
 import android.net.VpnService;
 import dagger.hilt.android.AndroidEntryPoint;
-import network.grape.app.MainActivity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +24,9 @@ public class GrapeVpnService extends VpnService {
   public int onStartCommand(Intent intent, int flags, int startId) {
     logger.info("onStartCommand");
 
+    // https://developer.android.com/reference/android/app/Service#onStartCommand(android.content.Intent,%20int,%20int)
+    // This may be null if the service is being restarted after its process has gone away,
+    // and it had previously returned anything except START_STICKY_COMPATIBILITY
     if (intent == null) {
       return START_STICKY;
     }

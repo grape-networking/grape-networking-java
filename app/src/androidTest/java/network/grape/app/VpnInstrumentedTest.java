@@ -1,5 +1,7 @@
 package network.grape.app;
 
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -8,8 +10,13 @@ import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import androidx.test.platform.app.InstrumentationRegistry;
+import android.os.Build;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.rule.GrantPermissionRule;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObject;
+import androidx.test.uiautomator.UiObjectNotFoundException;
+import androidx.test.uiautomator.UiSelector;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.RequestFuture;
 import com.android.volley.toolbox.StringRequest;
@@ -38,7 +45,7 @@ public class VpnInstrumentedTest {
   public void testVpnConnection() throws InterruptedException, ExecutionException, TimeoutException {
 
     //start the service up
-    Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+    Context context = getInstrumentation().getTargetContext();
     Intent serviceIntent = new Intent(context, GrapeVpnService.class);
     ComponentName componentName = context.startService(serviceIntent);
 
@@ -55,5 +62,29 @@ public class VpnInstrumentedTest {
 
     //shut the service down
     context.stopService(serviceIntent);
+  }
+
+  @Test void startFromActivityTest() throws InterruptedException {
+    Context context = getInstrumentation().getTargetContext();
+    Intent activityIntent = new Intent(context, MainActivity.class);
+    activityIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
+    ApplicationProvider.getApplicationContext().startActivity(activityIntent);
+    Thread.sleep(1000);
+    allowPermissionsIfNeeded();
+    Thread.sleep(1000);
+  }
+
+  private static void allowPermissionsIfNeeded() {
+    if (Build.VERSION.SDK_INT >= 23) {
+      UiDevice device = UiDevice.getInstance(getInstrumentation());
+      UiObject allowPermissions = device.findObject(new UiSelector().text("OK"));
+      if (allowPermissions.exists()) {
+        try {
+          allowPermissions.click();
+        } catch (UiObjectNotFoundException e) {
+          System.out.println("There is no permissions dialog to interact with");
+        }
+      }
+    }
   }
 }
