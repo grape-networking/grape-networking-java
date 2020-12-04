@@ -7,7 +7,9 @@ import dagger.hilt.android.AndroidEntryPoint;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import network.grape.lib.PacketHeaderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +25,7 @@ public class GrapeVpnService extends VpnService implements Runnable {
   private final Logger logger = LoggerFactory.getLogger(VpnService.class);
   private ParcelFileDescriptor mInterface;
   private Thread mThread;
+  private Thread vpnWriterThread;
   private boolean serviceValid;
 
   @Override
@@ -80,6 +83,7 @@ public class GrapeVpnService extends VpnService implements Runnable {
 
   /**
    * setup VPN interface.
+   *
    * @return boolean
    * @throws IOException
    */
@@ -124,7 +128,13 @@ public class GrapeVpnService extends VpnService implements Runnable {
     // Allocate the buffer for a single packet.
     ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_LEN);
 
-    // todo implement a writer and session logic
+    SessionHandler handler = SessionHandler.getInstance();
+    handler.setOutputStream(clientWriter);
+
+    // background thread for writing output to the vpn outputstream
+    VpnWriter vpnWriter = new VpnWriter(clientWriter);
+    vpnWriterThread = new Thread(vpnWriter);
+    vpnWriterThread.start();
 
     byte[] data;
     int length;
@@ -133,15 +143,19 @@ public class GrapeVpnService extends VpnService implements Runnable {
       data = packet.array();
       length = clientReader.read(data);
       if (length > 0) {
-        logger.info("received packet from vpn client: " + length);
-        packet.limit(length);
-        // pass off to session handler
-        // handler.handlePacket(packet);
+        // logger.info("received packet from vpn client: " + length);
+        try {
+          packet.limit(length);
+          handler.handlePacket(packet);
+        } catch (PacketHeaderException | UnknownHostException ex) {
+          logger.error(ex.toString());
+        }
+        packet.clear();
       } else {
         try {
           Thread.sleep(100);
         } catch (InterruptedException e) {
-          logger.info("Failed to sleep: "+ e.getMessage());
+          logger.info("Failed to sleep: " + e.getMessage());
         }
       }
     }
@@ -159,6 +173,10 @@ public class GrapeVpnService extends VpnService implements Runnable {
   public void onDestroy() {
     logger.info("onDestroy");
     serviceValid = false;
+
+    if (vpnWriterThread != null) {
+      vpnWriterThread.interrupt();
+    }
 
     try {
       if (mInterface != null) {
