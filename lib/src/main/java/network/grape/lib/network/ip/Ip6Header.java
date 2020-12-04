@@ -1,4 +1,4 @@
-package network.grape.lib.ip;
+package network.grape.lib.network.ip;
 
 import java.net.Inet6Address;
 import java.net.UnknownHostException;

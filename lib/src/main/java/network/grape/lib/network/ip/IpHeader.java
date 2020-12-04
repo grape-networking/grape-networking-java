@@ -1,4 +1,4 @@
-package network.grape.lib.ip;
+package network.grape.lib.network.ip;
 
 /**
  * Abstraction of common functions to both Ip4 and Ip6 headers.

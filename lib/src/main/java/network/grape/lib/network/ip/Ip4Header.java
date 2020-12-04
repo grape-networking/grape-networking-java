@@ -1,4 +1,4 @@
-package network.grape.lib.ip;
+package network.grape.lib.network.ip;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -78,7 +78,13 @@ public class Ip4Header implements IpHeader {
     int sourceIp = stream.getInt();
     int destinationIp = stream.getInt();
 
-    // todo (jason): process the options properly
+    // todo (jason): process the options properly, for now just skip them
+    // https://github.com/LipiLee/ToyShark/blob/master/app/src/main/java/com/lipisoft/toyshark/network/ip/IPPacketFactory.java#L123
+    if (ihl > 5) {
+      for (int i = 0; i < ihl - 5; i++) {
+        stream.getInt();
+      }
+    }
 
     return new Ip4Header(ipVersion, ihl, dscp, ecn, length, id, flags, fragmentOffset, ttl,
         protocol, checksum,

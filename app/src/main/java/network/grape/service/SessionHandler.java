@@ -1,7 +1,7 @@
 package network.grape.service;
 
-import static network.grape.lib.ip.IpHeader.IP4_VERSION;
-import static network.grape.lib.ip.IpHeader.IP6_VERSION;
+import static network.grape.lib.network.ip.IpHeader.IP4_VERSION;
+import static network.grape.lib.network.ip.IpHeader.IP6_VERSION;
 
 
 import java.io.FileOutputStream;
@@ -9,9 +9,12 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 
 import network.grape.lib.PacketHeaderException;
-import network.grape.lib.ip.Ip4Header;
-import network.grape.lib.ip.Ip6Header;
-import network.grape.lib.ip.IpHeader;
+import network.grape.lib.transport.TransportHeader;
+import network.grape.lib.network.ip.Ip4Header;
+import network.grape.lib.network.ip.Ip6Header;
+import network.grape.lib.network.ip.IpHeader;
+import network.grape.lib.transport.tcp.TcpHeader;
+import network.grape.lib.transport.udp.UdpHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +55,24 @@ public class SessionHandler {
       throw new PacketHeaderException("Got a packet which isn't Ip4 or Ip6: " + version);
     }
 
-    logger.info("Got packet: " + ipHeader.toString());
+    final TransportHeader transportHeader;
+    if (ipHeader.getProtocol() == TransportHeader.UDP_PROTOCOL) {
+      transportHeader = UdpHeader.parseBuffer(stream);
+      handleUdpPacket(stream, ipHeader, (UdpHeader) transportHeader);
+    } else if (ipHeader.getProtocol() == TransportHeader.TCP_PROTOCOL) {
+      transportHeader = TcpHeader.parseBuffer(stream);
+      handleTcpPacket(stream, ipHeader, (TcpHeader) transportHeader);
+    } else {
+      throw new PacketHeaderException(
+          "Got an unsupported transport protocol: " + ipHeader.getProtocol());
+    }
+  }
+
+  private void handleTcpPacket(ByteBuffer payload, IpHeader ipHeader, TcpHeader tcpHeader) {
+
+  }
+
+  private void handleUdpPacket(ByteBuffer payload, IpHeader ipHeader, UdpHeader udpHeader) {
+
   }
 }
