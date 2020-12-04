@@ -23,6 +23,24 @@ public enum SessionManager {
     return getSessionByKey(key);
   }
 
+  public boolean putSession(InetAddress sourceIp, short sourcePort, InetAddress destinationIp,
+                            short destinationPort, byte protocol, Session session) {
+    String key = createKey(sourceIp, sourcePort, destinationIp, destinationPort, protocol);
+    return putSessionByKey(key, session);
+  }
+
+  public boolean putSession(Session session) {
+    return putSessionByKey(session.getKey(), session);
+  }
+
+  public synchronized boolean putSessionByKey(String key, Session session) {
+    if (table.containsKey(key)) {
+      return false;
+    }
+    table.put(key, session);
+    return true;
+  }
+
   public Session getSessionByKey(String key) {
     return table.get(key);
   }
@@ -41,7 +59,7 @@ public enum SessionManager {
    */
   public String createKey(InetAddress sourceIp, short sourcePort, InetAddress destinationIp,
                           short destinationPort, byte protocol) {
-    return sourceIp.toString() + ":" + sourceIp + "," + destinationIp.toString() + ":"
+    return sourceIp.toString() + ":" + sourcePort + "," + destinationIp.toString() + ":"
         + destinationPort + "::" + protocol;
   }
 }

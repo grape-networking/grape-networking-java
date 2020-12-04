@@ -73,11 +73,31 @@ public class SessionHandler {
   }
 
   private void handleUdpPacket(ByteBuffer payload, IpHeader ipHeader, UdpHeader udpHeader) {
+    // try to find an existing session
     Session session = SessionManager.INSTANCE
         .getSession(ipHeader.getSourceAddress(), udpHeader.getSourcePort(),
             ipHeader.getDestinationAddress(),
             udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL);
 
-    // todo if session is null, create a new session, otherwise use the session to start delivery
+    // otherwise create a new one
+    if (session == null) {
+      session = new Session(ipHeader.getSourceAddress(), udpHeader.getSourcePort(),
+          ipHeader.getDestinationAddress(),
+          udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL);
+
+      // just in case we fail to add it (we should hopefully never get here)
+      if (!SessionManager.INSTANCE.putSession(session)) {
+        logger.error("Unable to create a new session in the session manager for " + session);
+        return;
+      }
+    }
+
+    session.setLastIpHeader(ipHeader);
+    session.setLastTransportHeader(udpHeader);
+
+    int payloadSize = payload.limit() - payload.position();
+    if (payloadSize > 0) {
+      session.appendOutboundData(payload);
+    }
   }
 }
