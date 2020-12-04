@@ -1,10 +1,14 @@
 package network.grape.lib.network.ip;
 
+import java.net.InetAddress;
+
 /**
  * Abstraction of common functions to both Ip4 and Ip6 headers.
  */
 public interface IpHeader {
   byte getProtocol();
+  InetAddress getSourceAddress();
+  InetAddress getDestinationAddress();
 
   byte IP4_VERSION = 0x04;
   byte IP6_VERSION = 0x06;

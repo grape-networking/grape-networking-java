@@ -73,6 +73,11 @@ public class SessionHandler {
   }
 
   private void handleUdpPacket(ByteBuffer payload, IpHeader ipHeader, UdpHeader udpHeader) {
+    Session session = SessionManager.INSTANCE
+        .getSession(ipHeader.getSourceAddress(), udpHeader.getSourcePort(),
+            ipHeader.getDestinationAddress(),
+            udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL);
 
+    // todo if session is null, create a new session, otherwise use the session to start delivery
   }
 }

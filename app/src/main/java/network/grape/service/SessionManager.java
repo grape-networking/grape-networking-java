@@ -1,0 +1,47 @@
+package network.grape.service;
+
+import java.net.InetAddress;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * This enum is used to manage the mapping of (src IP, src port, dest IP, dest port, protocol) to
+ * the appropriate Vpn Session. Note this design pattern with the enum is to enforce a singleton
+ * without having to call a getInstance function:
+ * https://stackoverflow.com/questions/26285520/implementing-singleton-with-an-enum-in-java
+ * You can think of this thing as a sort of a local NAT within the phone because it has to keep
+ * track of all of the outbound <-> inbound mappings of ports and IPs like a NAT table does.
+ */
+public enum SessionManager {
+  INSTANCE;
+
+  private final Map<String, Session> table = new ConcurrentHashMap<>();
+
+  public Session getSession(InetAddress sourceIp, short sourcePort, InetAddress destinationIp,
+                            short destinationPort, byte protocol) {
+    String key = createKey(sourceIp, sourcePort, destinationIp, destinationPort, protocol);
+    return getSessionByKey(key);
+  }
+
+  public Session getSessionByKey(String key) {
+    return table.get(key);
+  }
+
+  /**
+   * Create session key based on sourceIp:sourcePort,destinationIp:destinationPort::protocol.
+   *
+   * @param sourceIp        the source IP address (typically the IP of the phone on the internal
+   *                        network)
+   * @param sourcePort      the source port of the VPN session (typically a random high-numbered
+   *                        port)
+   * @param destinationIp   the destination IP - where the actual request is going to
+   * @param destinationPort the destiation port where the actual request is going to
+   * @param protocol        this is the protocol number representing either TCP or UDP
+   * @return a string representation of the key
+   */
+  public String createKey(InetAddress sourceIp, short sourcePort, InetAddress destinationIp,
+                          short destinationPort, byte protocol) {
+    return sourceIp.toString() + ":" + sourceIp + "," + destinationIp.toString() + ":"
+        + destinationPort + "::" + protocol;
+  }
+}

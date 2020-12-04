@@ -28,8 +28,8 @@ public class Ip4Header implements IpHeader {
   private byte ttl;
   private byte protocol;
   private short checksum;
-  private Inet4Address sourceIp;
-  private Inet4Address destinationIp;
+  private Inet4Address sourceAddress;
+  private Inet4Address destinationAddress;
   private ArrayList<Ip4Option> options;
 
   /**
