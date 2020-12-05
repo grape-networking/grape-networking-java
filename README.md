@@ -1,8 +1,7 @@
 # grape-networking-java
-Rewrite of grape-networking in java.
+[![codecov.io](https://codecov.io/gh/compscidr/grape-networking-java/graphs/badge.svg?token=UJRIIV9LF5)](https://codecov.io/gh/compscidr/grape-networking-java)
 
-[![codecov.io](https://codecov.io/gh/compscidr/grape-networking-java/graphs/badge.svg?token=UJRIIV9LF5)]
-(https://codecov.io/gh/compscidr/grape-networking-java)
+A proxy/vpn app on Android. Rewrite of grape-networking in java.
 
 # First setup of Android Studio
 - install the checkstyle-idea plugin

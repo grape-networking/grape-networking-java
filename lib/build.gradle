@@ -9,6 +9,9 @@ buildscript {
 apply plugin: 'java-library'
 
 dependencies {
+    // note: this gives a lint warning, but if we take it out, it doesn't find annotations
+    // https://stackoverflow.com/a/64726112
+    //noinspection AnnotationProcessorOnCompilePath
     implementation 'org.projectlombok:lombok:1.18.16'
     annotationProcessor 'org.projectlombok:lombok:1.18.16'
 }
