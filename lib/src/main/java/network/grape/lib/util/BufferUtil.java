@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
  * A collection of functions making it easier to deal with buffers, particularly putting and getting
  * unsigned values. https://stackoverflow.com/a/9883582
  */
-public class BuferUtil {
+public class BufferUtil {
   public static short getUnsignedByte(ByteBuffer bb) {
     return ((short) (bb.get() & 0xff));
   }

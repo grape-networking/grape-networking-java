@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import network.grape.lib.PacketHeaderException;
+import network.grape.lib.util.BufferUtil;
 
 /**
  * This class is a representation of an Ipv6 header:
@@ -16,12 +17,12 @@ import network.grape.lib.PacketHeaderException;
 @Data
 @AllArgsConstructor
 public class Ip6Header implements IpHeader {
-  private byte version;
-  private byte trafficClass;
-  private int flowLabel;
-  private short payloadLength;
-  private byte protocol;        // also known as Next Header
-  private byte hopLimit;        // similar to ttl
+  private short version;
+  private short trafficClass;
+  private long flowLabel;
+  private int payloadLength;
+  private short protocol;        // also known as Next Header
+  private short hopLimit;        // similar to ttl
   private Inet6Address sourceAddress;
   private Inet6Address destinationAddress;
 
@@ -43,18 +44,18 @@ public class Ip6Header implements IpHeader {
           + " bytes. There are only " + stream.remaining() + " bytes remaining");
     }
 
-    int versionInt = stream.getInt();
-    byte version = (byte) (versionInt >> 28);
+    long versionInt = BufferUtil.getUnsignedInt(stream);
+    short version = (short) (versionInt >> 28);
     if (version != IP6_VERSION) {
       throw new PacketHeaderException("This packet is not an Ipv6 packet, the version is: "
           + version);
     }
 
-    byte trafficClass = (byte) ((versionInt & 0xFF00000) >> 20);
-    int flowLabel = (versionInt & 0xFFFFF);
-    short payloadLength = stream.getShort();
-    byte protocol = stream.get();
-    byte hopLimit = stream.get();
+    short trafficClass = (short) ((versionInt & 0xFF00000) >> 20);
+    long flowLabel = versionInt & 0xFFFFF;
+    int payloadLength = BufferUtil.getUnsignedShort(stream);
+    short protocol = BufferUtil.getUnsignedByte(stream);
+    short hopLimit = BufferUtil.getUnsignedByte(stream);
 
     byte[] sourceBuffer = new byte[16];
     stream.get(sourceBuffer);

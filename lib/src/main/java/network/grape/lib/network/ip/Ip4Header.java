@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import network.grape.lib.PacketHeaderException;
+import network.grape.lib.util.BufferUtil;
 
 /**
  * The header for an Internet Protocol Version 4 packet.
@@ -17,17 +18,17 @@ import network.grape.lib.PacketHeaderException;
 @AllArgsConstructor
 public class Ip4Header implements IpHeader {
 
-  private byte version;
-  private byte ihl;
-  private byte dscp;
-  private byte ecn;
-  private short length;
-  private short id;
-  private byte flags;
-  private short fragmentOffset;
-  private byte ttl;
-  private byte protocol;
-  private short checksum;
+  private short version;
+  private short ihl;
+  private short dscp;
+  private short ecn;
+  private int length;
+  private int id;
+  private short flags;
+  private int fragmentOffset;
+  private short ttl;
+  private short protocol;
+  private int checksum;
   private Inet4Address sourceAddress;
   private Inet4Address destinationAddress;
   private ArrayList<Ip4Option> options;
@@ -48,35 +49,35 @@ public class Ip4Header implements IpHeader {
       throw new PacketHeaderException("Minimum Ipv4 header length is " + IP4HEADER_LEN
           + " bytes. There are only " + stream.remaining() + " bytes remaining");
     }
-    byte versionIhlByte = stream.get();
-    byte ipVersion = (byte) (versionIhlByte >> 4);
+    short versionIhlByte = BufferUtil.getUnsignedByte(stream);
+    short ipVersion = (short) (versionIhlByte >> 4);
     if (ipVersion != IP4_VERSION) {
       throw new PacketHeaderException("This packet is not an Ipv4 packet, the version is: "
           + ipVersion);
     }
-    byte ihl = (byte) (versionIhlByte & 0x0f);
+    short ihl = (short) (versionIhlByte & 0x0f);
     if (stream.capacity() < ihl * IP4_WORD_LEN) {
       throw new PacketHeaderException("Not enough space in the buffer for an IP Header. Capacity: "
           + stream.capacity() + " but buffer reporting IHL: " + (ihl * IP4_WORD_LEN));
     }
 
-    byte dscpByte = stream.get();
-    byte dscp = (byte) ((dscpByte & 0xfc) >> 2);
-    byte ecn = (byte) (dscpByte & 0x03);
+    short dscpByte = BufferUtil.getUnsignedByte(stream);
+    short dscp = (short) ((dscpByte & 0xfc) >> 2);
+    short ecn = (short) (dscpByte & 0x03);
 
-    short length = stream.getShort();
-    short id = stream.getShort();
+    int length = BufferUtil.getUnsignedShort(stream);
+    int id = BufferUtil.getUnsignedShort(stream);
 
-    short flagsShort = stream.getShort();
-    byte flags = (byte) ((flagsShort & 0xe000) >> 13);
-    short fragmentOffset = (short) (flagsShort & 0x1FFF);
+    int flagsShort = BufferUtil.getUnsignedShort(stream);
+    short flags = (short) ((flagsShort & 0xe000) >> 13);
+    int fragmentOffset = flagsShort & 0x1FFF;
 
-    byte ttl = stream.get();
-    byte protocol = stream.get();
-    short checksum = stream.getShort();
+    short ttl = BufferUtil.getUnsignedByte(stream);
+    short protocol = BufferUtil.getUnsignedByte(stream);
+    int checksum = BufferUtil.getUnsignedShort(stream);
 
-    int sourceIp = stream.getInt();
-    int destinationIp = stream.getInt();
+    long sourceIp = BufferUtil.getUnsignedInt(stream);
+    long destinationIp = BufferUtil.getUnsignedInt(stream);
 
     // todo (jason): process the options properly, for now just skip them
     // https://github.com/LipiLee/ToyShark/blob/master/app/src/main/java/com/lipisoft/toyshark/network/ip/IPPacketFactory.java#L123
@@ -89,9 +90,9 @@ public class Ip4Header implements IpHeader {
     return new Ip4Header(ipVersion, ihl, dscp, ecn, length, id, flags, fragmentOffset, ttl,
         protocol, checksum,
         (Inet4Address) Inet4Address
-            .getByAddress(ByteBuffer.allocate(IP4_WORD_LEN).putInt(sourceIp).array()),
+            .getByAddress(ByteBuffer.allocate(IP4_WORD_LEN).putInt((int) sourceIp).array()),
         (Inet4Address) InetAddress
-            .getByAddress(ByteBuffer.allocate(IP4_WORD_LEN).putInt(destinationIp).array()),
+            .getByAddress(ByteBuffer.allocate(IP4_WORD_LEN).putInt((int) destinationIp).array()),
         new ArrayList<>());
   }
 }
