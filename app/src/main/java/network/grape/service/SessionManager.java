@@ -1,5 +1,6 @@
 package network.grape.service;
 
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,12 +23,12 @@ public enum SessionManager {
 
   private final Logger logger = LoggerFactory.getLogger(SessionManager.class);
   private final Map<String, Session> table = new ConcurrentHashMap<>();
-  private Selector selector;
+  @Getter private Selector selector;
 
   SessionManager() {
     try {
       selector = Selector.open();
-    } catch(IOException ex) {
+    } catch (IOException ex) {
       logger.error("Failed to create socket selector: " + ex.toString());
     }
   }
@@ -36,12 +37,6 @@ public enum SessionManager {
                             int destinationPort, short protocol) {
     String key = createKey(sourceIp, sourcePort, destinationIp, destinationPort, protocol);
     return getSessionByKey(key);
-  }
-
-  public boolean putSession(InetAddress sourceIp, short sourcePort, InetAddress destinationIp,
-                            short destinationPort, byte protocol, Session session) {
-    String key = createKey(sourceIp, sourcePort, destinationIp, destinationPort, protocol);
-    return putSessionByKey(key, session);
   }
 
   public boolean putSession(Session session) {
