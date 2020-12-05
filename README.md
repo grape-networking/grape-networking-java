@@ -1,5 +1,8 @@
 # grape-networking-java
-Rewrite of grape-networking in java
+Rewrite of grape-networking in java.
+
+[![codecov.io](https://codecov.io/gh/compscidr/grape-networking-java/graphs/badge.svg?token=UJRIIV9LF5)]
+(https://codecov.io/gh/compscidr/grape-networking-java)
 
 # First setup of Android Studio
 - install the checkstyle-idea plugin
