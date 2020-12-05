@@ -32,8 +32,8 @@ public enum SessionManager {
     }
   }
 
-  public Session getSession(InetAddress sourceIp, short sourcePort, InetAddress destinationIp,
-                            short destinationPort, byte protocol) {
+  public Session getSession(InetAddress sourceIp, int sourcePort, InetAddress destinationIp,
+                            int destinationPort, short protocol) {
     String key = createKey(sourceIp, sourcePort, destinationIp, destinationPort, protocol);
     return getSessionByKey(key);
   }
@@ -72,8 +72,8 @@ public enum SessionManager {
    * @param protocol        this is the protocol number representing either TCP or UDP
    * @return a string representation of the key
    */
-  public String createKey(InetAddress sourceIp, short sourcePort, InetAddress destinationIp,
-                          short destinationPort, byte protocol) {
+  public String createKey(InetAddress sourceIp, int sourcePort, InetAddress destinationIp,
+                          int destinationPort, short protocol) {
     return sourceIp.toString() + ":" + sourcePort + "," + destinationIp.toString() + ":"
         + destinationPort + "::" + protocol;
   }

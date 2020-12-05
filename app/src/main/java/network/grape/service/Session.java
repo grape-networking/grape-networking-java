@@ -20,9 +20,9 @@ public class Session {
 
   private InetAddress sourceIp;
   private InetAddress destinationIp;
-  private short sourcePort;
-  private short destinationPort;
-  private byte protocol;
+  private int sourcePort;
+  private int destinationPort;
+  private short protocol;
 
   @Setter
   @Getter
@@ -45,8 +45,8 @@ public class Session {
    * @param destinationPort the destiation port where the actual request is going to
    * @param protocol        this is the protocol number representing either TCP or UDP
    */
-  public Session(InetAddress sourceIp, short sourcePort, InetAddress destinationIp,
-                 short destinationPort, byte protocol) {
+  public Session(InetAddress sourceIp, int sourcePort, InetAddress destinationIp,
+                 int destinationPort, short protocol) {
     this.sourceIp = sourceIp;
     this.destinationIp = destinationIp;
     this.sourcePort = sourcePort;

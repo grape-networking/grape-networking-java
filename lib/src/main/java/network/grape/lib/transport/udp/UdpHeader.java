@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.transport.TransportHeader;
+import network.grape.lib.util.BufferUtil;
 
 /**
  * https://en.wikipedia.org/wiki/User_Datagram_Protocol
@@ -13,10 +14,10 @@ import network.grape.lib.transport.TransportHeader;
 @AllArgsConstructor
 public class UdpHeader implements TransportHeader {
 
-  private short sourcePort;
-  private short destinationPort;
-  private short length;
-  private short checksum;
+  private int sourcePort;
+  private int destinationPort;
+  private int length;
+  private int checksum;
 
   /**
    *
@@ -26,10 +27,10 @@ public class UdpHeader implements TransportHeader {
    */
   public static UdpHeader parseBuffer(ByteBuffer stream) throws PacketHeaderException {
 
-    short sourcePort = stream.getShort();
-    short destinationPort = stream.getShort();
-    short length = stream.getShort();
-    short checksum = stream.getShort();
+    int sourcePort = BufferUtil.getUnsignedShort(stream);
+    int destinationPort = BufferUtil.getUnsignedShort(stream);
+    int length = BufferUtil.getUnsignedShort(stream);
+    int checksum = BufferUtil.getUnsignedShort(stream);
 
     return new UdpHeader(sourcePort, destinationPort, length, checksum);
   }

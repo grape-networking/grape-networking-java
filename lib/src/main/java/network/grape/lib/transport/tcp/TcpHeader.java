@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.transport.TransportHeader;
+import network.grape.lib.util.BufferUtil;
 
 /**
  * Attempts to process a buffer of bytes into a TCP header, or throws exceptions if its not
@@ -16,29 +17,29 @@ import network.grape.lib.transport.TransportHeader;
 @Data
 @AllArgsConstructor
 public class TcpHeader implements TransportHeader {
-  private short sourcePort;
-  private short destinationPort;
-  private int sequenceNumber;
-  private int ackNumber;
-  private byte offset;
-  private short flags;
-  private short windowSize;
-  private short checksum;
-  private short urgentPointer;
+  private int sourcePort;
+  private int destinationPort;
+  private long sequenceNumber;
+  private long ackNumber;
+  private short offset;
+  private int flags;
+  private int windowSize;
+  private int checksum;
+  private int urgentPointer;
   private ArrayList<TcpOption> options;
 
   public static TcpHeader parseBuffer(ByteBuffer stream) throws PacketHeaderException {
-    short sourcePort = stream.getShort();
-    short destinationPort = stream.getShort();
-    int sequenceNumber = stream.getInt();
-    int ackNumber = stream.getInt();
-    byte offSetByte = stream.get();
-    byte offset = (byte) ((offSetByte & 0xF0) >> 4);
-    byte flagsLowByte = stream.get();
-    short flags = (short) (((offSetByte & 0x0f) << 8) + flagsLowByte);
-    short windowSize = stream.getShort();
-    short checksum = stream.getShort();
-    short urgentPointer = stream.getShort();
+    int sourcePort = BufferUtil.getUnsignedShort(stream);
+    int destinationPort = BufferUtil.getUnsignedShort(stream);
+    long sequenceNumber = BufferUtil.getUnsignedInt(stream);
+    long ackNumber = BufferUtil.getUnsignedInt(stream);
+    short offSetByte = BufferUtil.getUnsignedByte(stream);
+    short offset = (byte) ((offSetByte & 0xF0) >> 4);
+    short flagsLowByte = BufferUtil.getUnsignedByte(stream);
+    int flags = (short) (((offSetByte & 0x0f) << 8) + flagsLowByte);
+    int windowSize = BufferUtil.getUnsignedShort(stream);
+    int checksum = BufferUtil.getUnsignedShort(stream);
+    int urgentPointer = BufferUtil.getUnsignedShort(stream);
 
     // TODO (jason): actually process the tcp options, for now just skip
     // https://www.iana.org/assignments/tcp-parameters/tcp-parameters.xhtml
