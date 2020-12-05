@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import java.io.ByteArrayOutputStream;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
 import lombok.Getter;
 import lombok.Setter;
 import network.grape.lib.network.ip.IpHeader;
@@ -24,12 +25,9 @@ public class Session {
   private int destinationPort;
   private short protocol;
 
-  @Setter
-  @Getter
-  private IpHeader lastIpHeader;
-  @Setter
-  @Getter
-  private TransportHeader lastTransportHeader;
+  @Setter @Getter private IpHeader lastIpHeader;
+  @Setter @Getter private TransportHeader lastTransportHeader;
+  @Setter @Getter private SelectionKey selectionKey;
 
   private ByteArrayOutputStream sendingStream;
 

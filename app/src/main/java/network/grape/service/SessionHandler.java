@@ -10,8 +10,11 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.DatagramChannel;
 
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.network.ip.Ip4Header;
@@ -29,14 +32,15 @@ import org.slf4j.LoggerFactory;
 public class SessionHandler {
   private final Logger logger = LoggerFactory.getLogger(SessionHandler.class);
   private static final SessionHandler handler = new SessionHandler();
+  private SocketProtector protector = SocketProtector.getInstance();
+  private Selector selector = SessionManager.INSTANCE.getSelector();
   private FileOutputStream outputStream;
 
   public static SessionHandler getInstance() {
     return handler;
   }
 
-  private SessionHandler() {
-  }
+  private SessionHandler() { }
 
   void setOutputStream(FileOutputStream outputStream) {
     this.outputStream = outputStream;
@@ -94,25 +98,44 @@ public class SessionHandler {
         channel = DatagramChannel.open();
         channel.socket().setSoTimeout(0);
         channel.configureBlocking(false);
-      } catch(IOException ex) {
+      } catch (IOException ex) {
         logger.error("Error creating datagram channel for session: " + session);
         return;
       }
 
-      // TODO (jason): protect the socket
       // apparently making a proper connection lowers latency with UDP - might want to verify this
       SocketAddress socketAddress = new InetSocketAddress(ipHeader.getDestinationAddress(), udpHeader.getDestinationPort());
       try {
         channel.connect(socketAddress);
         //session.setConnected(channel.isConnected());
-      } catch(IOException ex) {
+      } catch (IOException ex) {
         logger.error("Error connection on UDP channel " + session + ":" + ex.toString());
         ex.printStackTrace();
         return;
       }
+      protector.protect(channel.socket());
 
-      // TODO (jason): attach to selector so we know when we're ready to read / write to channel
-
+      try {
+        // we sync on this so that we don't add to the selection set while its been used
+        synchronized (VpnWriter.syncSelector2) {
+          selector.wakeup();
+          // we sync on this so that the other thread doesn't call select() while we are doing this
+          synchronized (VpnWriter.syncSelector) {
+            SelectionKey selectionKey;
+            if (channel.isConnected()) {
+              selectionKey = channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+            } else {
+              selectionKey = channel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+            }
+            session.setSelectionKey(selectionKey);
+            logger.info("Registered UDP selector successfully for sesion: " + session);
+          }
+        }
+      } catch (ClosedChannelException ex) {
+        ex.printStackTrace();
+        logger.error("Failed to register udp channel with selector: " + ex.getMessage());
+        return;
+      }
 
       // just in case we fail to add it (we should hopefully never get here)
       if (!SessionManager.INSTANCE.putSession(session)) {
