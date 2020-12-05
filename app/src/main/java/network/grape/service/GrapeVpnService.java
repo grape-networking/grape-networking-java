@@ -7,6 +7,8 @@ import dagger.hilt.android.AndroidEntryPoint;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import network.grape.lib.PacketHeaderException;
@@ -17,7 +19,7 @@ import org.slf4j.LoggerFactory;
  * The main VPN service of Grape.
  */
 @AndroidEntryPoint
-public class GrapeVpnService extends VpnService implements Runnable {
+public class GrapeVpnService extends VpnService implements Runnable, ProtectSocket {
 
   private static final int MAX_PACKET_LEN = 1500;
 
@@ -67,7 +69,11 @@ public class GrapeVpnService extends VpnService implements Runnable {
   public void run() {
     logger.info("running vpn service");
 
-    // might need to protect the socket here
+    // map this class into the socket protector implementation so that other classes like the
+    // SessionHandler can protect sockets later on (protect is provided by the VpnService which
+    // this class inherits).
+    SocketProtector protector = SocketProtector.getInstance();
+    protector.setProtector(this);
 
     try {
       if (startVpnService()) {
@@ -210,5 +216,20 @@ public class GrapeVpnService extends VpnService implements Runnable {
       }
       mThread = null;
     }
+  }
+
+  @Override
+  public void protectSocket(Socket socket) {
+    this.protect(socket);
+  }
+
+  @Override
+  public void protectSocket(int socket) {
+    this.protect(socket);
+  }
+
+  @Override
+  public void protectSocket(DatagramSocket socket) {
+    this.protect(socket);
   }
 }
