@@ -25,6 +25,7 @@ public class GrapeVpnService extends VpnService implements Runnable {
   private final Logger logger = LoggerFactory.getLogger(VpnService.class);
   private ParcelFileDescriptor mInterface;
   private Thread mThread;
+  private VpnWriter vpnWriter;
   private Thread vpnWriterThread;
   private boolean serviceValid;
 
@@ -132,7 +133,7 @@ public class GrapeVpnService extends VpnService implements Runnable {
     handler.setOutputStream(clientWriter);
 
     // background thread for writing output to the vpn outputstream
-    VpnWriter vpnWriter = new VpnWriter(clientWriter);
+    vpnWriter = new VpnWriter(clientWriter);
     vpnWriterThread = new Thread(vpnWriter);
     vpnWriterThread.start();
 
@@ -173,6 +174,10 @@ public class GrapeVpnService extends VpnService implements Runnable {
   public void onDestroy() {
     logger.info("onDestroy");
     serviceValid = false;
+
+    if (vpnWriter != null) {
+      vpnWriter.shutdown();
+    }
 
     if (vpnWriterThread != null) {
       vpnWriterThread.interrupt();
