@@ -1,6 +1,11 @@
 package network.grape.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.channels.Selector;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,7 +20,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public enum SessionManager {
   INSTANCE;
 
+  private final Logger logger = LoggerFactory.getLogger(SessionManager.class);
   private final Map<String, Session> table = new ConcurrentHashMap<>();
+  private Selector selector;
+
+  SessionManager() {
+    try {
+      selector = Selector.open();
+    } catch(IOException ex) {
+      logger.error("Failed to create socket selector: " + ex.toString());
+    }
+  }
 
   public Session getSession(InetAddress sourceIp, short sourcePort, InetAddress destinationIp,
                             short destinationPort, byte protocol) {

@@ -5,8 +5,12 @@ import static network.grape.lib.network.ip.IpHeader.IP6_VERSION;
 
 
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.nio.channels.DatagramChannel;
 
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.transport.TransportHeader;
@@ -84,6 +88,31 @@ public class SessionHandler {
       session = new Session(ipHeader.getSourceAddress(), udpHeader.getSourcePort(),
           ipHeader.getDestinationAddress(),
           udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL);
+
+      DatagramChannel channel;
+      try {
+        channel = DatagramChannel.open();
+        channel.socket().setSoTimeout(0);
+        channel.configureBlocking(false);
+      } catch(IOException ex) {
+        logger.error("Error creating datagram channel for session: " + session);
+        return;
+      }
+
+      // TODO (jason): protect the socket
+      // apparently making a proper connection lowers latency with UDP - might want to verify this
+      SocketAddress socketAddress = new InetSocketAddress(ipHeader.getDestinationAddress(), udpHeader.getDestinationPort());
+      try {
+        channel.connect(socketAddress);
+        //session.setConnected(channel.isConnected());
+      } catch(IOException ex) {
+        logger.error("Error connection on UDP channel " + session + ":" + ex.toString());
+        ex.printStackTrace();
+        return;
+      }
+
+      // TODO (jason): attach to selector so we know when we're ready to read / write to channel
+
 
       // just in case we fail to add it (we should hopefully never get here)
       if (!SessionManager.INSTANCE.putSession(session)) {
