@@ -95,4 +95,39 @@ public class Ip4Header implements IpHeader {
             .getByAddress(ByteBuffer.allocate(IP4_WORD_LEN).putInt((int) destinationIp).array()),
         new ArrayList<>());
   }
+
+  @Override
+  public void swapAddresses() {
+    Inet4Address temp = sourceAddress;
+    sourceAddress = destinationAddress;
+    destinationAddress = temp;
+  }
+
+  /**
+   * Serializes the header into a byte array.
+   * @return the byte array representation of the header
+   */
+  public byte[] toByteArray() {
+    ByteBuffer buffer = ByteBuffer.allocate(ihl * IP4_WORD_LEN);
+
+    // combine version and ihl
+    BufferUtil.putUnsignedByte(buffer, (version << 4) + ihl);
+    // combine dscp and ecn
+    BufferUtil.putUnsignedByte(buffer, (dscp << 2) + ecn);
+
+    BufferUtil.putUnsignedShort(buffer, length);
+    BufferUtil.putUnsignedShort(buffer, id);
+
+    // combine flags + fragmentation
+    BufferUtil.putUnsignedShort(buffer, (flags << 13) + fragmentOffset);
+
+    BufferUtil.putUnsignedByte(buffer, ttl);
+    BufferUtil.putUnsignedByte(buffer, protocol);
+
+    BufferUtil.putUnsignedShort(buffer, checksum);
+    buffer.put(sourceAddress.getAddress());
+    buffer.put(destinationAddress.getAddress());
+
+    return buffer.array();
+  }
 }

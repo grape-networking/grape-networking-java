@@ -67,4 +67,28 @@ public class Ip6Header implements IpHeader {
     return new Ip6Header(version, trafficClass, flowLabel, payloadLength, protocol, hopLimit,
         sourceAddress, destinationAddress);
   }
+
+  @Override
+  public void swapAddresses() {
+    Inet6Address temp = sourceAddress;
+    sourceAddress = destinationAddress;
+    destinationAddress = temp;
+  }
+
+  @Override
+  public byte[] toByteArray() {
+    ByteBuffer buffer = ByteBuffer.allocate(IP6HEADER_LEN);
+
+    // combine version, traffic class, flowlabel into a single int
+    long versionInt = (version << 28) + (trafficClass << 20) + flowLabel;
+    BufferUtil.putUnsignedInt(buffer, versionInt);
+
+    BufferUtil.putUnsignedShort(buffer, payloadLength);
+    BufferUtil.putUnsignedByte(buffer, protocol);
+    BufferUtil.putUnsignedByte(buffer, hopLimit);
+    buffer.put(sourceAddress.getAddress());
+    buffer.put(destinationAddress.getAddress());
+
+    return buffer.array();
+  }
 }

@@ -29,6 +29,10 @@ public class TcpHeader implements TransportHeader {
   private ArrayList<TcpOption> options;
 
   public static TcpHeader parseBuffer(ByteBuffer stream) throws PacketHeaderException {
+    if (stream.remaining() < TCP_HEADER_LEN_NO_OPTIONS) {
+      throw new PacketHeaderException("Minimum Tcp header length is " + TCP_HEADER_LEN_NO_OPTIONS
+          + " bytes. There are only " + stream.remaining() + " bytes remaining");
+    }
     int sourcePort = BufferUtil.getUnsignedShort(stream);
     int destinationPort = BufferUtil.getUnsignedShort(stream);
     long sequenceNumber = BufferUtil.getUnsignedInt(stream);
@@ -45,11 +49,21 @@ public class TcpHeader implements TransportHeader {
     // https://www.iana.org/assignments/tcp-parameters/tcp-parameters.xhtml
     // https://tools.ietf.org/html/rfc793
     // https://tools.ietf.org/html/rfc2018
-    for (int i = 0; i < (offset * TCP_WORD_LEN) - TCP_HEADER_LEN_NO_OPTIONS; i++) {
+    int optionsLength = (offset * TCP_WORD_LEN) - TCP_HEADER_LEN_NO_OPTIONS;
+    if (stream.remaining() < optionsLength) {
+      throw new PacketHeaderException("There should be " + optionsLength + " bytes left for options"
+        + " but there is only " + stream.remaining() + " bytes left");
+    }
+    for (int i = 0; i < optionsLength; i++) {
       stream.get();
     }
 
     return new TcpHeader(sourcePort, destinationPort, sequenceNumber, ackNumber, offset, flags,
         windowSize, checksum, urgentPointer, new ArrayList<>());
+  }
+
+  @Override
+  public byte[] toByteArray() {
+    return new byte[0];
   }
 }

@@ -7,8 +7,14 @@ import java.net.InetAddress;
  */
 public interface IpHeader {
   short getProtocol();
+
   InetAddress getSourceAddress();
+
   InetAddress getDestinationAddress();
+
+  void swapAddresses();
+
+  byte[] toByteArray();
 
   short IP4_VERSION = 0x04;
   short IP6_VERSION = 0x06;

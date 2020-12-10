@@ -1,5 +1,7 @@
 package network.grape.service;
 
+import java.nio.channels.spi.AbstractSelectableChannel;
+import java.util.Collection;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,10 +35,24 @@ public enum SessionManager {
     }
   }
 
+  public Session getSessionByKey(String key) {
+    return table.get(key);
+  }
+
   public Session getSession(InetAddress sourceIp, int sourcePort, InetAddress destinationIp,
                             int destinationPort, short protocol) {
     String key = createKey(sourceIp, sourcePort, destinationIp, destinationPort, protocol);
     return getSessionByKey(key);
+  }
+
+  public Session getSessionByChannel(AbstractSelectableChannel channel) {
+    Collection<Session> sessions = table.values();
+    for (Session session: sessions) {
+      if (channel == session.getChannel()) {
+        return session;
+      }
+    }
+    return null;
   }
 
   public boolean putSession(Session session) {
@@ -51,8 +67,17 @@ public enum SessionManager {
     return true;
   }
 
-  public Session getSessionByKey(String key) {
-    return table.get(key);
+  public void closeSession(Session session) {
+    table.remove(session.getKey());
+    try {
+      AbstractSelectableChannel channel = session.getChannel();
+      if (channel != null) {
+        channel.close();
+      }
+    } catch (IOException ex) {
+      logger.error("Error closing session: " + ex.toString());
+    }
+    logger.info("Closed sesion: " + session.getKey());
   }
 
   /**

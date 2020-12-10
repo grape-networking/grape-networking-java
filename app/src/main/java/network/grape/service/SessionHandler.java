@@ -6,6 +6,7 @@ import static network.grape.lib.network.ip.IpHeader.IP6_VERSION;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
@@ -40,7 +41,8 @@ public class SessionHandler {
     return handler;
   }
 
-  private SessionHandler() { }
+  private SessionHandler() {
+  }
 
   void setOutputStream(FileOutputStream outputStream) {
     this.outputStream = outputStream;
@@ -61,6 +63,11 @@ public class SessionHandler {
       ipHeader = Ip6Header.parseBuffer(stream);
     } else {
       throw new PacketHeaderException("Got a packet which isn't Ip4 or Ip6: " + version);
+    }
+
+    if (!ipHeader.getDestinationAddress().equals(Inet4Address.getByName("10.0.0.111")) ||
+        (!ipHeader.getSourceAddress().equals(Inet4Address.getByName("10.0.0.111")))) {
+      return;
     }
 
     final TransportHeader transportHeader;
@@ -102,18 +109,19 @@ public class SessionHandler {
         logger.error("Error creating datagram channel for session: " + session);
         return;
       }
+      protector.protect(channel.socket());
 
       // apparently making a proper connection lowers latency with UDP - might want to verify this
-      SocketAddress socketAddress = new InetSocketAddress(ipHeader.getDestinationAddress(), udpHeader.getDestinationPort());
+      SocketAddress socketAddress =
+          new InetSocketAddress(ipHeader.getDestinationAddress(), udpHeader.getDestinationPort());
       try {
         channel.connect(socketAddress);
-        //session.setConnected(channel.isConnected());
+        session.setConnected(channel.isConnected());
       } catch (IOException ex) {
         logger.error("Error connection on UDP channel " + session + ":" + ex.toString());
         ex.printStackTrace();
         return;
       }
-      protector.protect(channel.socket());
 
       try {
         // we sync on this so that we don't add to the selection set while its been used
@@ -123,9 +131,11 @@ public class SessionHandler {
           synchronized (VpnWriter.syncSelector) {
             SelectionKey selectionKey;
             if (channel.isConnected()) {
-              selectionKey = channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+              selectionKey =
+                  channel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
             } else {
-              selectionKey = channel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+              selectionKey = channel.register(selector,
+                  SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
             }
             session.setSelectionKey(selectionKey);
             logger.info("Registered UDP selector successfully for sesion: " + session);
@@ -136,9 +146,10 @@ public class SessionHandler {
         logger.error("Failed to register udp channel with selector: " + ex.getMessage());
         return;
       }
+      session.setChannel(channel);
 
-      // just in case we fail to add it (we should hopefully never get here)
       if (!SessionManager.INSTANCE.putSession(session)) {
+        // just in case we fail to add it (we should hopefully never get here)
         logger.error("Unable to create a new session in the session manager for " + session);
         return;
       }
@@ -150,6 +161,10 @@ public class SessionHandler {
     int payloadSize = payload.limit() - payload.position();
     if (payloadSize > 0) {
       session.appendOutboundData(payload);
+      session.setDataForSendingReady(true);
+      logger.info("added UDP data for bg worker to send: " + payloadSize);
     }
+
+    //todo: keepalive?
   }
 }

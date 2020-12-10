@@ -2,22 +2,27 @@ package network.grape.service;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * This class is used to both read from the outgoing Internet sockets, and to write back to the VPN
  * client when data is received. We need to use the session in order to determine which source IP
- * and source port initiated the stream in the first place.
- *
- * The selector lets us use a single thread to handle all of the outgoing connections rather than
- * having one thread for each.
+ * and source port initiated the stream in the first place. The selector lets us use a single thread
+ * to handle all of the outgoing connections rather than having one thread for each.
  */
 public class VpnWriter implements Runnable {
 
@@ -26,10 +31,14 @@ public class VpnWriter implements Runnable {
   public static final Object syncSelector2 = new Object();
   private FileOutputStream outputStream;
   private Selector selector;
+  //create thread pool for reading/writing data to socket
+  private ThreadPoolExecutor workerPool;
   private volatile boolean running;
 
   public VpnWriter(FileOutputStream outputStream) {
     this.outputStream = outputStream;
+    final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
+    workerPool = new ThreadPoolExecutor(8, 100, 10, TimeUnit.SECONDS, taskQueue);
   }
 
   public void run() {
@@ -66,7 +75,7 @@ public class VpnWriter implements Runnable {
           if (selectableChannel instanceof SocketChannel) {
             logger.info("TCP Channel ready");
           } else if (selectableChannel instanceof DatagramChannel) {
-            logger.info("UDP Channel ready");
+            processUdpSelectionKey(key);
           }
           iterator.remove();
           if (!running) {
@@ -74,6 +83,75 @@ public class VpnWriter implements Runnable {
           }
         }
       }
+    }
+  }
+
+  private void processUdpSelectionKey(SelectionKey key) {
+    if (!key.isValid()) {
+      logger.error("Invalid SelectionKey for UDP");
+      return;
+    }
+    DatagramChannel channel = (DatagramChannel) key.channel();
+    Session session = SessionManager.INSTANCE.getSessionByChannel(channel);
+    String keyString = channel.socket().getLocalAddress().toString() + ":"
+        + channel.socket().getLocalPort() + ","
+        + channel.socket().getInetAddress().toString() + ":"
+        + channel.socket().getPort();
+
+    if (session == null) {
+      logger.error("Can't find session for channel: " + keyString);
+      return;
+    }
+
+    if (!session.isConnected() && key.isConnectable()) {
+      InetAddress inetAddress = session.getDestinationIp();
+      int port = session.getDestinationPort();
+      SocketAddress address = new InetSocketAddress(inetAddress, port);
+      try {
+        logger.info("selector: connecting to remote UDP server: " + address);
+        channel = channel.connect(address);
+        session.setChannel(channel);
+        session.setConnected(channel.isConnected());
+      } catch (IOException ex) {
+        ex.printStackTrace();
+        logger.error("Aborted connecting: " + ex.toString());
+        session.setAbortingConnection(true);
+      }
+    }
+    /*
+    else {
+      if (session.isConnected()) {
+        logger.info("Session already connected.");
+      }
+      if (!key.isConnectable()) {
+        logger.info("Key is not connectable");
+      }
+    }*/
+    if (channel.isConnected()) {
+      processSelector(key, session);
+    }
+  }
+
+  /**
+   * Generic selector handling for both TCP and UDP sessions.
+   *
+   * @param selectionKey
+   * @param session
+   */
+  private void processSelector(SelectionKey selectionKey, Session session) {
+    // tcp has PSH flag when data is ready for sending, UDP does not have this
+    if (selectionKey.isValid() && selectionKey.isWritable() && !session.isBusyWrite()
+        && session.hasDataToSend() && session.isDataForSendingReady()) {
+      session.setBusyWrite(true);
+      final SocketDataWriterWorker worker =
+          new SocketDataWriterWorker(outputStream, session.getKey());
+      workerPool.execute(worker);
+    }
+    if (selectionKey.isValid() && selectionKey.isReadable() && !session.isBusyRead()) {
+      session.setBusyRead(true);
+      final SocketDataReaderWorker worker =
+          new SocketDataReaderWorker(outputStream, session.getKey());
+      workerPool.execute(worker);
     }
   }
 

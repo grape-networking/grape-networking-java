@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
+import java.nio.channels.spi.AbstractSelectableChannel;
 import lombok.Getter;
 import lombok.Setter;
 import network.grape.lib.network.ip.IpHeader;
@@ -19,15 +20,27 @@ import org.slf4j.LoggerFactory;
 public class Session {
   private final Logger logger = LoggerFactory.getLogger(Session.class);
 
-  private InetAddress sourceIp;
-  private InetAddress destinationIp;
-  private int sourcePort;
-  private int destinationPort;
-  private short protocol;
+  @Getter private InetAddress sourceIp;
+  @Getter private InetAddress destinationIp;
+  @Getter private int sourcePort;
+  @Getter private int destinationPort;
+  @Getter private short protocol;
 
   @Setter @Getter private IpHeader lastIpHeader;
   @Setter @Getter private TransportHeader lastTransportHeader;
   @Setter @Getter private SelectionKey selectionKey;
+  @Setter @Getter private AbstractSelectableChannel channel;
+
+  @Getter @Setter private boolean isConnected = false;
+  //closing session and aborting connection, will be done by background task
+  @Getter @Setter private volatile boolean abortingConnection = false;
+  //indicate that this session is currently being worked on by some SocketDataWorker already
+  @Getter @Setter private volatile boolean isBusyRead = false;
+  @Getter @Setter private volatile boolean isBusyWrite = false;
+  //indicate data from client is ready for sending to destination
+  @Getter @Setter private boolean isDataForSendingReady = false;
+
+  @Getter @Setter private long connectionStartTime = 0;
 
   private ByteArrayOutputStream sendingStream;
 
@@ -63,9 +76,27 @@ public class Session {
     final int remaining = data.remaining();
     sendingStream.write(data.array(), data.position(), data.remaining());
     logger.info(
-        "Enqueued: " + remaining + " bytes in the outbound queue for " + this + " total size: " +
-            sendingStream.size());
+        "Enqueued: " + remaining + " bytes in the outbound queue for " + this + " total size: "
+            + sendingStream.size());
     return remaining;
+  }
+
+  /**
+   * Buffer contains data for sending to destination server.
+   * @return boolean true if there is data to be sent, false otherwise.
+   */
+  public boolean hasDataToSend() {
+    return sendingStream.size() > 0;
+  }
+
+  /**
+   * Dequeue data for sending to server.
+   * @return byte[] a byte array of data to be sent
+   */
+  public synchronized byte[] getSendingData() {
+    byte[] data = sendingStream.toByteArray();
+    sendingStream.reset();
+    return data;
   }
 
   @NonNull
