@@ -8,6 +8,9 @@ import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.AbstractSelectableChannel;
 import java.util.Date;
+import network.grape.lib.PacketHeaderException;
+import network.grape.lib.network.ip.Ip4Header;
+import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.transport.udp.UdpHeader;
 import network.grape.lib.transport.udp.UdpPacketFactory;
 import network.grape.lib.util.Constants;
@@ -113,6 +116,17 @@ public class SocketDataReaderWorker implements Runnable {
           byte[] packetData = UdpPacketFactory.createResponsePacket(session.getLastIpHeader(),
               (UdpHeader) session.getLastTransportHeader(), data);
 
+          System.out.println("packet data len: " + packetData.length);
+          try {
+            ByteBuffer t = ByteBuffer.allocate(packetData.length);
+            t.put(packetData);
+            t.rewind();
+            IpHeader testip = Ip4Header.parseBuffer(t);
+            UdpHeader test = UdpHeader.parseBuffer(t);
+            System.out.println(testip.toString() + " " + test.toString());
+          } catch (PacketHeaderException e) {
+            e.printStackTrace();
+          }
           outputStream.write(packetData);
           buffer.clear();
         }

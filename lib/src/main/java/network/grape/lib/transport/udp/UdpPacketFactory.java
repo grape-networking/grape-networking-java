@@ -6,6 +6,7 @@ import static network.grape.lib.network.ip.IpPacketFactory.copyIpHeader;
 import static network.grape.lib.transport.TransportHeader.TCP_WORD_LEN;
 import static network.grape.lib.transport.TransportHeader.UDP_HEADER_LEN;
 
+
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.Ip6Header;
 import network.grape.lib.network.ip.IpHeader;
@@ -22,8 +23,9 @@ public class UdpPacketFactory {
 
   /**
    * create packet data for responding to vpn client.
-   * @param ip IpHeader sent from VPN client, will be used as the template for response
-   * @param udp UdpHeader sent from VPN client
+   *
+   * @param ip         IpHeader sent from VPN client, will be used as the template for response
+   * @param udp        UdpHeader sent from VPN client
    * @param packetData packet data to be sent to client
    * @return array of byte
    */
@@ -58,9 +60,12 @@ public class UdpPacketFactory {
     byte[] buffer = new byte[totalLength];
     System.arraycopy(ipData, 0, buffer, 0, ipData.length);
 
-    // copy Udp header to buffer
+    // copy Udp header to buffer, swap the src and dest ports
     int start = ipData.length;
-    byte[] udpData = udp.toByteArray();
+    UdpHeader udpHeader =
+        new UdpHeader(udp.getDestinationPort(), udp.getSourcePort(), udp.getLength(),
+            udp.getChecksum());
+    byte[] udpData = udpHeader.toByteArray();
     System.arraycopy(udpData, 0, buffer, start, udpData.length);
     start += udpData.length;
 

@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
     setContentView(R.layout.activity_main);
 
     startVpn();
-    testVpn();
+    ///testVpn();
   }
 
   @Override
@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
           socket.send(request);
 
           try {
-            socket.setSoTimeout(1000);
+            socket.setSoTimeout(5000);
             DatagramPacket response = new DatagramPacket(recvbuffer, recvbuffer.length);
             socket.receive(response);
             logger.error("GOT RSP: " + response.getLength() + " bytes");
