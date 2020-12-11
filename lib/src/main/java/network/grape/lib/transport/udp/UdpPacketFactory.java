@@ -1,14 +1,12 @@
 package network.grape.lib.transport.udp;
 
 import static network.grape.lib.network.ip.IpHeader.IP6HEADER_LEN;
-import static network.grape.lib.network.ip.IpPacketFactory.copyIp4Header;
 import static network.grape.lib.network.ip.IpPacketFactory.copyIpHeader;
 import static network.grape.lib.transport.TransportHeader.TCP_WORD_LEN;
 import static network.grape.lib.transport.TransportHeader.UDP_HEADER_LEN;
 
 
 import network.grape.lib.network.ip.Ip4Header;
-import network.grape.lib.network.ip.Ip6Header;
 import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.util.PacketUtil;
 import org.slf4j.Logger;
