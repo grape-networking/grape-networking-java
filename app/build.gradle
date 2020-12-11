@@ -107,4 +107,4 @@ junitJacoco {
     includeInstrumentationCoverageInMergedReport = true // type boolean
 }
 
-apply from: 'checkstyle.gradle'
+apply from: '../checkstyle.gradle'

@@ -10,6 +10,8 @@ import java.net.Socket;
  */
 public interface ProtectSocket {
   void protectSocket(Socket socket);
+
   void protectSocket(int socket);
+
   void protectSocket(DatagramSocket socket);
 }

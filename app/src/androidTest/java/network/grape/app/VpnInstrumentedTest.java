@@ -44,7 +44,8 @@ public class VpnInstrumentedTest {
   //un-disable this test once the VPN accepts traffic correctly
   @Disabled
   @Test
-  public void testVpnConnection() throws InterruptedException, ExecutionException, TimeoutException {
+  public void testVpnConnection()
+      throws InterruptedException, ExecutionException, TimeoutException {
 
     //start the service up
     Context context = getInstrumentation().getTargetContext();
@@ -66,7 +67,8 @@ public class VpnInstrumentedTest {
     context.stopService(serviceIntent);
   }
 
-  @Test void startFromActivityTest() throws InterruptedException {
+  @Test
+  void startFromActivityTest() throws InterruptedException {
     Context context = getInstrumentation().getTargetContext();
     Intent activityIntent = new Intent(context, MainActivity.class);
     activityIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);

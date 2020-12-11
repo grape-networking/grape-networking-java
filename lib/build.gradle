@@ -7,13 +7,18 @@ buildscript {
         roboelectricVersion = "4.5-alpha-1"
     }
     repositories {
+        google()
+        jcenter()
+        mavenCentral()
     }
 
     dependencies {
+        classpath "com.android.tools.build:gradle:4.1.1"
     }
 }
 
 apply plugin: 'java-library'
+apply plugin: 'com.android.lint'
 
 dependencies {
     // note: this gives a lint warning, but if we take it out, it doesn't find annotations
@@ -33,3 +38,13 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}"
     testAnnotationProcessor "com.google.dagger:hilt-android-compiler:${hiltVersion}"
 }
+
+lintOptions {
+    warningsAsErrors true
+    showAll true
+    explainIssues true
+    xmlOutput file("build/reports/lint/report.xml")
+    htmlOutput file("build/reports/lint/report.html")
+}
+
+apply from: '../checkstyle.gradle'

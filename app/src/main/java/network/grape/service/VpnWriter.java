@@ -35,12 +35,19 @@ public class VpnWriter implements Runnable {
   private ThreadPoolExecutor workerPool;
   private volatile boolean running;
 
+  /**
+   * Construct a new VpnWriter.
+   * @param outputStream the stream to write back into the VPN interface.
+   */
   public VpnWriter(FileOutputStream outputStream) {
     this.outputStream = outputStream;
     final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
     workerPool = new ThreadPoolExecutor(8, 100, 10, TimeUnit.SECONDS, taskQueue);
   }
 
+  /**
+   * Main thread for the VpnWriter.
+   */
   public void run() {
     logger.info("VpnWriter starting in the background");
     selector = SessionManager.INSTANCE.getSelector();
@@ -135,8 +142,8 @@ public class VpnWriter implements Runnable {
   /**
    * Generic selector handling for both TCP and UDP sessions.
    *
-   * @param selectionKey
-   * @param session
+   * @param selectionKey the key in the selection set which is marked for reading or writing.
+   * @param session the session associated with the selection key.
    */
   private void processSelector(SelectionKey selectionKey, Session session) {
     // tcp has PSH flag when data is ready for sending, UDP does not have this

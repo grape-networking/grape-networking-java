@@ -1,16 +1,15 @@
 package network.grape.service;
 
-import java.nio.channels.spi.AbstractSelectableChannel;
-import java.util.Collection;
-import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.channels.Selector;
+import java.nio.channels.spi.AbstractSelectableChannel;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This enum is used to manage the mapping of (src IP, src port, dest IP, dest port, protocol) to
@@ -25,7 +24,8 @@ public enum SessionManager {
 
   private final Logger logger = LoggerFactory.getLogger(SessionManager.class);
   private final Map<String, Session> table = new ConcurrentHashMap<>();
-  @Getter private Selector selector;
+  @Getter
+  private Selector selector;
 
   SessionManager() {
     try {
@@ -45,9 +45,14 @@ public enum SessionManager {
     return getSessionByKey(key);
   }
 
+  /**
+   * Attempts to lookup a session by the channel.
+   * @param channel the channel to look for
+   * @return the session, or null if not found
+   */
   public Session getSessionByChannel(AbstractSelectableChannel channel) {
     Collection<Session> sessions = table.values();
-    for (Session session: sessions) {
+    for (Session session : sessions) {
       if (channel == session.getChannel()) {
         return session;
       }
@@ -59,6 +64,12 @@ public enum SessionManager {
     return putSessionByKey(session.getKey(), session);
   }
 
+  /**
+   * Stores a session in the map by key.
+   * @param key the key to store the session in the map with
+   * @param session the session to store
+   * @return true if the session was added, false if key exists.
+   */
   public synchronized boolean putSessionByKey(String key, Session session) {
     if (table.containsKey(key)) {
       return false;
@@ -67,6 +78,10 @@ public enum SessionManager {
     return true;
   }
 
+  /**
+   * Removes the session from the map and closes the session channel if its open.
+   * @param session the session to remove.
+   */
   public void closeSession(Session session) {
     table.remove(session.getKey());
     try {

@@ -25,8 +25,8 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
 
   // SLF4J
   private final Logger logger = LoggerFactory.getLogger(VpnService.class);
-  private ParcelFileDescriptor mInterface;
-  private Thread mThread;
+  private ParcelFileDescriptor vpnInterface;
+  private Thread captureThread;
   private VpnWriter vpnWriter;
   private Thread vpnWriterThread;
   private boolean serviceValid;
@@ -47,10 +47,10 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
       return START_STICKY;
     }
 
-    if (mThread != null) {
-      mThread.interrupt();
+    if (captureThread != null) {
+      captureThread.interrupt();
       int reps = 0;
-      while (mThread.isAlive()) {
+      while (captureThread.isAlive()) {
         logger.info("Waiting for previous session to terminate " + ++reps);
         try {
           Thread.sleep(1000);
@@ -60,8 +60,8 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
       }
     }
 
-    mThread = new Thread(this, "CaptureThread");
-    mThread.start();
+    captureThread = new Thread(this, "CaptureThread");
+    captureThread.start();
     return START_STICKY;
   }
 
@@ -91,12 +91,11 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
   /**
    * setup VPN interface.
    *
-   * @return boolean
-   * @throws IOException
+   * @return boolean true if the service started successfully, false otherwise
    */
-  boolean startVpnService() throws IOException {
+  boolean startVpnService() {
     // If the old interface has exactly the same parameters, use it!
-    if (mInterface != null) {
+    if (vpnInterface != null) {
       logger.info("Using the previous interface");
       return false;
     }
@@ -107,10 +106,10 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
         .addAddress("10.101.0.1", 32)
         .addRoute("0.0.0.0", 0)
         .setSession("GrapeVpn");
-    mInterface = builder.establish();
+    vpnInterface = builder.establish();
 
-    if (mInterface != null) {
-      logger.info("VPN Established:interface = " + mInterface.getFileDescriptor().toString());
+    if (vpnInterface != null) {
+      logger.info("VPN Established:interface = " + vpnInterface.getFileDescriptor().toString());
       return true;
     } else {
       logger.info("mInterface is null");
@@ -122,15 +121,15 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
    * Starts a background thread to handle writing to the VPN tun0 interface. This thread handles
    * the incoming packets from the VPN tun0 interface.
    *
-   * @throws IOException
+   * @throws IOException if reading from the VPN stream fails.
    */
   void startTrafficHandler() throws IOException {
     logger.info("startTrafficHandler() :traffic handling starting");
     // Packets to be sent are queued in this input stream.
-    FileInputStream clientReader = new FileInputStream(mInterface.getFileDescriptor());
+    FileInputStream clientReader = new FileInputStream(vpnInterface.getFileDescriptor());
 
     // Packets received need to be written to this output stream.
-    FileOutputStream clientWriter = new FileOutputStream(mInterface.getFileDescriptor());
+    FileOutputStream clientWriter = new FileOutputStream(vpnInterface.getFileDescriptor());
 
     // Allocate the buffer for a single packet.
     ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_LEN);
@@ -190,9 +189,9 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     }
 
     try {
-      if (mInterface != null) {
+      if (vpnInterface != null) {
         logger.info("mInterface.close()");
-        mInterface.close();
+        vpnInterface.close();
       }
     } catch (IOException e) {
       logger.error("mInterface.close():" + e.getMessage());
@@ -200,10 +199,10 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     }
 
     // Stop the previous session by interrupting the thread.
-    if (mThread != null) {
-      mThread.interrupt();
+    if (captureThread != null) {
+      captureThread.interrupt();
       int reps = 0;
-      while (mThread.isAlive()) {
+      while (captureThread.isAlive()) {
         logger.info("Waiting to exit " + ++reps);
         try {
           Thread.sleep(1000);
@@ -214,7 +213,7 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
           break;
         }
       }
-      mThread = null;
+      captureThread = null;
     }
   }
 

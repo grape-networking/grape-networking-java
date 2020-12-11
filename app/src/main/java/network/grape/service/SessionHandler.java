@@ -3,7 +3,6 @@ package network.grape.service;
 import static network.grape.lib.network.ip.IpHeader.IP4_VERSION;
 import static network.grape.lib.network.ip.IpHeader.IP6_VERSION;
 
-
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Inet4Address;
@@ -13,14 +12,13 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.DatagramChannel;
-
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import network.grape.lib.PacketHeaderException;
-import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.Ip6Header;
 import network.grape.lib.network.ip.IpHeader;
+import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.transport.tcp.TcpHeader;
 import network.grape.lib.transport.udp.UdpHeader;
 import org.slf4j.Logger;
@@ -65,12 +63,14 @@ public class SessionHandler {
       throw new PacketHeaderException("Got a packet which isn't Ip4 or Ip6: " + version);
     }
 
-    if (!ipHeader.getDestinationAddress().equals(Inet4Address.getByName("10.0.0.111")) &&
-        (!ipHeader.getSourceAddress().equals(Inet4Address.getByName("10.0.0.111")))) {
-      //logger.info(ipHeader.getDestinationAddress().toString() + " " + ipHeader.getSourceAddress().toString());
+    if (!ipHeader.getDestinationAddress().equals(Inet4Address.getByName("10.0.0.111"))
+        && (!ipHeader.getSourceAddress().equals(Inet4Address.getByName("10.0.0.111")))) {
+      //logger.info(ipHeader.getDestinationAddress().toString() + " "
+      // + ipHeader.getSourceAddress().toString());
       return;
     }
-    logger.info("GOT TRAFFIC FOR 10.0.0.111: " + ipHeader.getDestinationAddress().toString() + " " + ipHeader.getSourceAddress().toString());
+    logger.info("GOT TRAFFIC FOR 10.0.0.111: " + ipHeader.getDestinationAddress().toString() + " "
+        + ipHeader.getSourceAddress().toString());
     logger.info("PROTO: " + ipHeader.getProtocol());
 
     final TransportHeader transportHeader;
