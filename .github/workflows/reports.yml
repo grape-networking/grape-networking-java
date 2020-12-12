@@ -1,0 +1,26 @@
+name: Upload reports
+
+jobs:
+  # https://github.com/dawidd6/action-download-artifact
+  collection_reports:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect lib reports
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: lib-test.yml
+          workflow_conclusion: success
+          name: lib-reports
+          path: ./lib-reports/
+      - name: Collect app reports
+          uses: dawidd6/action-download-artifact@v2
+          with:
+            workflow: app-test.yml
+            workflow_conclusion: success
+            name: app-reports
+            path: ./app-reports/
+      - name: Upload Test Report to CodeCov
+          uses: codecov/codecov-action@v1
+          with:
+            token: ${{ secrets.CODECOV_TOKEN }}
+            files: ./app-reports/app/build/reports/jacocoCombined/debug/jacoco.xml,./lib-reports/lib/build/reports/jacoco/jacoco.xml
