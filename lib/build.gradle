@@ -88,5 +88,6 @@ apply from: '../checkstyle.gradle'
 task updatePom(type: Copy) {
     from "$buildDir/publications/maven/pom-default.xml"
     into "."
+    rename ("pom-default.xml", "pom.xml")
     dependsOn(generatePomFileForMavenPublication)
 }

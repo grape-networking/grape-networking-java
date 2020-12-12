@@ -148,6 +148,7 @@ afterEvaluate {
     task updatePom(type: Copy) {
         from "$buildDir/publications/debug/pom-default.xml"
         into "."
+        rename ("pom-default.xml", "pom.xml")
         dependsOn(generatePomFileForDebugPublication)
     }
 }
