@@ -5,7 +5,6 @@ import static network.grape.lib.network.ip.IpPacketFactory.copyIpHeader;
 import static network.grape.lib.transport.TransportHeader.TCP_WORD_LEN;
 import static network.grape.lib.transport.TransportHeader.UDP_HEADER_LEN;
 
-
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.util.PacketUtil;

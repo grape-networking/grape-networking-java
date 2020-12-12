@@ -28,6 +28,12 @@ public class TcpHeader implements TransportHeader {
   private int urgentPointer;
   private ArrayList<TcpOption> options;
 
+  /**
+   * Parses a stream for a TcpHeader.
+   * @param stream the stream to process
+   * @return a filled in TcpHeader
+   * @throws PacketHeaderException if the header is not valid in the stream
+   */
   public static TcpHeader parseBuffer(ByteBuffer stream) throws PacketHeaderException {
     if (stream.remaining() < TCP_HEADER_LEN_NO_OPTIONS) {
       throw new PacketHeaderException("Minimum Tcp header length is " + TCP_HEADER_LEN_NO_OPTIONS

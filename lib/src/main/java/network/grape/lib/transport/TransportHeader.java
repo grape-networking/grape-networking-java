@@ -1,7 +1,7 @@
 package network.grape.lib.transport;
 
 /**
- * Abstraction of common functions to transport layers
+ * Abstraction of common functions to transport layers.
  */
 public interface TransportHeader {
   int getSourcePort();

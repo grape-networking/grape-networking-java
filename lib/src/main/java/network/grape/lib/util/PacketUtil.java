@@ -1,13 +1,13 @@
 package network.grape.lib.util;
 
 /**
- * Helper class for Packets
+ * Helper class for Packets.
  */
 public class PacketUtil {
 
-  private volatile static int packetId = 0;
+  private static volatile int packetId = 0;
 
-  public synchronized static int getPacketId() {
+  public static synchronized int getPacketId() {
     return packetId++;
   }
 
@@ -30,7 +30,7 @@ public class PacketUtil {
   }
 
   /**
-   * convert array of max 4 bytes to int
+   * convert array of max 4 bytes to int.
    *
    * @param buffer byte array
    * @param start  Starting point to be read in byte array
@@ -56,7 +56,7 @@ public class PacketUtil {
   }
 
   /**
-   * Computes the checksum of a byte array with a given offset and length
+   * Computes the checksum of a byte array with a given offset and length.
    *
    * @param data   the raw byte array to compute the checksum over
    * @param offset where to start in the array
@@ -89,12 +89,13 @@ public class PacketUtil {
    * Uesd to dump raw packet data into a format that can be read easily by humans, or imported into
    * wireshark.
    *
-   * @param data the raw data buffer
+   * @param data   the raw data buffer
    * @param offset where to start in the buffer
    * @param length the length to dump until
    * @return a String representation of the buffer
    */
-  public String hexDump(byte[] data, int offset, int length, boolean addresses, boolean dummyEthernet) {
+  public String hexDump(byte[] data, int offset, int length, boolean addresses,
+                        boolean dummyEthernet) {
     StringBuilder output = new StringBuilder();
     int count = 0;
 

@@ -20,6 +20,7 @@ public class UdpHeader implements TransportHeader {
   private int checksum;
 
   /**
+   * Parse a Udp packet out of a byte stream.
    *
    * @param stream the raw byte stream of the UDP header
    * @return a new UDP header parsed from the stream

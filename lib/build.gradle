@@ -10,6 +10,8 @@ buildscript {
         google()
         jcenter()
         mavenCentral()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+        maven { url "https://plugins.gradle.org/m2/" }
     }
 
     dependencies {
@@ -19,6 +21,7 @@ buildscript {
 
 apply plugin: 'java-library'
 apply plugin: 'com.android.lint'
+apply plugin: 'jacoco'
 
 dependencies {
     // note: this gives a lint warning, but if we take it out, it doesn't find annotations
@@ -45,6 +48,17 @@ lintOptions {
     explainIssues true
     xmlOutput file("build/reports/lint/report.xml")
     htmlOutput file("build/reports/lint/report.html")
+}
+
+jacoco {
+    toolVersion = '0.8.5' // type String
+}
+
+test {
+    finalizedBy jacocoTestReport // report is always generated after tests run
+}
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
 }
 
 apply from: '../checkstyle.gradle'
