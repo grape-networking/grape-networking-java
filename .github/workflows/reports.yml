@@ -13,14 +13,14 @@ jobs:
           name: lib-reports
           path: ./lib-reports/
       - name: Collect app reports
-          uses: dawidd6/action-download-artifact@v2
-          with:
-            workflow: app-test.yml
-            workflow_conclusion: success
-            name: app-reports
-            path: ./app-reports/
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: app-test.yml
+          workflow_conclusion: success
+          name: app-reports
+          path: ./app-reports/
       - name: Upload Test Report to CodeCov
-          uses: codecov/codecov-action@v1
-          with:
-            token: ${{ secrets.CODECOV_TOKEN }}
-            files: ./app-reports/app/build/reports/jacocoCombined/debug/jacoco.xml,./lib-reports/lib/build/reports/jacoco/jacoco.xml
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./app-reports/app/build/reports/jacocoCombined/debug/jacoco.xml,./lib-reports/lib/build/reports/jacoco/jacoco.xml
