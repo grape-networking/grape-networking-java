@@ -22,6 +22,7 @@ buildscript {
 apply plugin: 'java-library'
 apply plugin: 'com.android.lint'
 apply plugin: 'jacoco'
+apply plugin: 'maven-publish'
 
 dependencies {
     // note: this gives a lint warning, but if we take it out, it doesn't find annotations
@@ -70,4 +71,22 @@ jacocoTestReport {
     }
 }
 
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'network.grape'
+            artifactId = 'lib'
+            version = '1.0'
+
+            from components.java
+        }
+    }
+}
+
 apply from: '../checkstyle.gradle'
+
+task updatePom(type: Copy) {
+    from "$buildDir/publications/maven/pom-default.xml"
+    into "."
+    dependsOn(generatePomFileForMavenPublication)
+}
