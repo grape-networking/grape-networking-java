@@ -16,7 +16,7 @@ jobs:
         with:
           java-version: 1.8
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v2.0.1
+        uses: android-actions/setup-android@v2.0.2
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
       - name: check app dependency update
