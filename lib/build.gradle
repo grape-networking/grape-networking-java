@@ -55,10 +55,19 @@ jacoco {
 }
 
 test {
-    finalizedBy jacocoTestReport // report is always generated after tests run
+    useJUnitPlatform()
 }
+
 jacocoTestReport {
     dependsOn test // tests are required to run before generating the report
+    reports {
+        xml.enabled true
+        xml.destination file("${buildDir}/reports/jacoco/jacoco.xml")
+        csv.enabled true
+        csv.destination file("${buildDir}/reports/jacoco/jacoco.csv")
+        html.enabled true
+        html.destination file("${buildDir}/reports/jacoco/")
+    }
 }
 
 apply from: '../checkstyle.gradle'

@@ -43,18 +43,13 @@ jobs:
         run: ./gradlew lib:checkstyle
       - name: Run junit5 unit tests
         run: ./gradlew lib:test
-      #      - name: Run junit5 instrumented tests
-      #        run: ./gradlew app:connectedCheck
       - name: Run jacoco debug coverage reports
-        run: ./gradlew lib:combinedTestReportDebug && ./gradlew lib:combinedTestReportDebug
-      #      - name: Run jacoco release coverage reports
-      #        run: ./gradlew app:combinedTestReportRelease && ./gradlew app:combinedTestReportRelease
+        run: ./gradlew lib:jacocoTestReport
       - name: Upload Test Report to CodeCov
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: app/build/reports/jacocoCombined/debug/jacoco.xml
-      #          files: app/build/reports/jacocoCombined/debug/jacoco.xml,app/build/reports/jacocoCombined/release/jacoco.xml
+          files: lib/build/reports/jacocoCombined/debug/jacoco.xml
       - name: Archive results
         uses: actions/upload-artifact@v2
         with:
