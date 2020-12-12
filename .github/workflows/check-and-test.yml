@@ -37,6 +37,8 @@ jobs:
         run: ./gradlew app:connectedCheck
       - name: jacoco app debug coverage reports
         run: ./gradlew app:combinedTestReportDebug && ./gradlew app:combinedTestReportDebug
+      - name: jacoco lub debug coverage reports
+        run: ./gradlew lib:jacocoTestReport
       - name: codecov upload
         uses: codecov/codecov-action@v1
         with:
