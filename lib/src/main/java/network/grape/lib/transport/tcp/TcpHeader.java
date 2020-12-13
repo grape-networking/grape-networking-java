@@ -1,5 +1,6 @@
 package network.grape.lib.transport.tcp;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import lombok.AllArgsConstructor;
@@ -70,6 +71,24 @@ public class TcpHeader implements TransportHeader {
 
   @Override
   public byte[] toByteArray() {
-    return new byte[0];
+    ByteBuffer buffer = ByteBuffer.allocate(offset * TCP_WORD_LEN);
+    BufferUtil.putUnsignedShort(buffer, sourcePort);
+    BufferUtil.putUnsignedShort(buffer, destinationPort);
+    BufferUtil.putUnsignedInt(buffer, sequenceNumber);
+    BufferUtil.putUnsignedInt(buffer, ackNumber);
+
+    short offsetByte = (short) ((offset << 4) + (flags >> 8));
+    BufferUtil.putUnsignedByte(buffer, offsetByte);
+
+    short flagsByte = (short) (flags & 0xFFFF);
+    BufferUtil.putUnsignedByte(buffer, flagsByte);
+
+    BufferUtil.putUnsignedShort(buffer, windowSize);
+    BufferUtil.putUnsignedShort(buffer, checksum);
+    BufferUtil.putUnsignedShort(buffer, urgentPointer);
+
+    // todo: output options
+
+    return buffer.array();
   }
 }
