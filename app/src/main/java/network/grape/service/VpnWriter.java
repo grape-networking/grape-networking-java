@@ -46,6 +46,16 @@ public class VpnWriter implements Runnable {
   }
 
   /**
+   * Construct a new VpnWriter with the workerpool provided.
+   * @param outputStream the stream to write back into the VPN interface.
+   * @param workerPool the worker pool to execute reader and writer threads in.
+   */
+  public VpnWriter(FileOutputStream outputStream, ThreadPoolExecutor workerPool) {
+    this.outputStream = outputStream;
+    this.workerPool = workerPool;
+  }
+
+  /**
    * Main thread for the VpnWriter.
    */
   public void run() {
@@ -145,7 +155,7 @@ public class VpnWriter implements Runnable {
    * @param selectionKey the key in the selection set which is marked for reading or writing.
    * @param session the session associated with the selection key.
    */
-  private void processSelector(SelectionKey selectionKey, Session session) {
+  protected void processSelector(SelectionKey selectionKey, Session session) {
     // tcp has PSH flag when data is ready for sending, UDP does not have this
     if (selectionKey.isValid() && selectionKey.isWritable() && !session.isBusyWrite()
         && session.hasDataToSend() && session.isDataForSendingReady()) {

@@ -32,13 +32,14 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.16'
 
     implementation "org.slf4j:slf4j-api:1.7.30"
-    implementation('com.papertrailapp:logback-syslog4j:1.0.0') {
+    implementation ('com.papertrailapp:logback-syslog4j:1.0.0') {
         exclude group: 'ch.qos.logback'
     }
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter-params:${jUnitVersion}"
     testImplementation "com.google.dagger:hilt-android-testing:${hiltVersion}"
+    testImplementation "org.mockito:mockito-inline:3.4.0"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}"
     testAnnotationProcessor "com.google.dagger:hilt-android-compiler:${hiltVersion}"
 }
