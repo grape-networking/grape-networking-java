@@ -11,7 +11,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 
-public class IpTestCommon {
+public class IpTestCommon extends IpPacketFactory {
   public static Ip4Header testIp4Header() throws UnknownHostException {
     return new Ip4Header((short) 4, (short) 5, (short) 0, (short) 0, 10,
         27, (short) 4, 0, (short) 64, (short) 17, 25,
