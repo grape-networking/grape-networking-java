@@ -1,9 +1,15 @@
 package network.grape.lib.network.ip;
 
+import static network.grape.lib.network.ip.IpPacketFactory.copyIpHeader;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import org.junit.jupiter.api.Test;
 
 public class IpTestCommon {
   public static Ip4Header testIp4Header() throws UnknownHostException {
@@ -17,5 +23,16 @@ public class IpTestCommon {
     return new Ip6Header((short) 6, (short) 12, 36L, 25, (short) 17,
         (short) 64, (Inet6Address) Inet6Address.getByName("::1"),
         (Inet6Address) Inet6Address.getByName("fec0::9256:a00:fe12:528"));
+  }
+
+  @Test
+  public void IpFactoryCopy() throws UnknownHostException {
+    IpHeader ipHeader = copyIpHeader(testIp4Header());
+    IpHeader ipHeader1 = copyIpHeader(testIp6Header());
+
+    assertTrue(ipHeader instanceof Ip4Header);
+    assertTrue(ipHeader1 instanceof Ip6Header);
+
+    assertNotEquals(ipHeader, ipHeader1);
   }
 }
