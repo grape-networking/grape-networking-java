@@ -1,5 +1,6 @@
 # grape-networking-java
 [![codecov.io](https://codecov.io/gh/compscidr/grape-networking-java/graphs/badge.svg?token=UJRIIV9LF5)](https://codecov.io/gh/compscidr/grape-networking-java)
+![App Test](https://github.com/compscidr/grape-networking-java/workflows/App%20Test/badge.svg)
 
 A proxy/vpn app on Android. Rewrite of grape-networking in java.
 
