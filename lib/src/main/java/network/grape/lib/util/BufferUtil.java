@@ -138,6 +138,10 @@ public class BufferUtil {
     bb.putInt(position, (int) (value & 0xffffffffL));
   }
 
+  public static String dummyEthernetData() {
+    return "14 c0 3e 55 0b 35 74 d0 2b 29 a5 18 08 00 ";
+  }
+
   /**
    * Uesd to dump raw packet data into a format that can be read easily by humans, or imported into
    * wireshark.
@@ -157,7 +161,7 @@ public class BufferUtil {
     }
 
     if (dummyEthernet) {
-      output.append("14 c0 3e 55 0b 35 74 d0 2b 29 a5 18 08 00 ");
+      output.append(dummyEthernetData());
       count += 14;
     }
 
@@ -168,7 +172,7 @@ public class BufferUtil {
 
     while (offset < length) {
       byte b = data[offset];
-      if (count == 0 && addresses) {
+      if (count == 0 && addresses && address != 0) {
         output.append(String.format("%04X ", address));
       }
       count++;
@@ -178,7 +182,7 @@ public class BufferUtil {
         count = 0;
         address += 16;
       } else {
-        if (count + 1 < length) {
+        if (offset + 1 < length) {
           output.append(" ");
         }
       }
