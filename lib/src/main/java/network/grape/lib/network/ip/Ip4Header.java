@@ -56,7 +56,7 @@ public class Ip4Header implements IpHeader {
           + ipVersion);
     }
     short ihl = (short) (versionIhlByte & 0x0f);
-    if (stream.capacity() < ihl * IP4_WORD_LEN) {
+    if (stream.capacity() < (ihl * IP4_WORD_LEN)) {
       throw new PacketHeaderException("Not enough space in the buffer for an IP Header. Capacity: "
           + stream.capacity() + " but buffer reporting IHL: " + (ihl * IP4_WORD_LEN));
     }
