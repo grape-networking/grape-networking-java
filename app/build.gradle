@@ -165,4 +165,10 @@ configurations.all { config ->
         println "Replacing module in configuration " + config.name
         exclude group: "com.github.tony19", module: "logback-android"
     }
+
+    // can't assemble AndroidTest with mockito: https://github.com/mockito/mockito/issues/2007
+    if (config.name.contains('Android')) {
+        println "Replacing module in configuration " + config.name
+        exclude group: "org.mockito", module: "mockito-inline"
+    }
 }
