@@ -12,6 +12,11 @@
   <packaging>aab</packaging>
   <dependencies>
     <dependency>
+      <groupId>grape-networking-java</groupId>
+      <artifactId>lib</artifactId>
+      <version>unspecified</version>
+    </dependency>
+    <dependency>
       <groupId>com.google.android.material</groupId>
       <artifactId>material</artifactId>
       <version>1.2.1</version>
@@ -41,11 +46,6 @@
       <groupId>androidx.appcompat</groupId>
       <artifactId>appcompat</artifactId>
       <version>1.3.0-alpha02</version>
-    </dependency>
-    <dependency>
-      <groupId>grape-networking-java</groupId>
-      <artifactId>lib</artifactId>
-      <version>unspecified</version>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
