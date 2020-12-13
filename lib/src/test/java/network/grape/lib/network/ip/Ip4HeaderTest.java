@@ -11,7 +11,6 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import network.grape.lib.PacketHeaderException;
-import network.grape.lib.util.BufferUtil;
 import org.junit.jupiter.api.Test;
 
 /**

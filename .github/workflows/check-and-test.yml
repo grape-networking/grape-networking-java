@@ -22,7 +22,7 @@ jobs:
       - name: check app dependency update
         run: ./gradlew app:generatePomFileForDebugPublication && diff app/pom.xml app/build/publications/debug/pom-default.xml
       - name: check lib dependency update
-          run: ./gradlew lib:generatePomFileForMavenPublication && diff lib/pom.xml lib/build/publications/maven/pom-default.xml
+        run: ./gradlew lib:generatePomFileForMavenPublication && diff lib/pom.xml lib/build/publications/maven/pom-default.xml
       - name: lint
         run: ./gradlew lib:lint app:lint
       - name: app lint results
