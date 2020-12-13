@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
  */
 public class UdpTest {
 
-  UdpHeader testUdpHeader() {
+  public static UdpHeader testUdpHeader() {
     return new UdpHeader(34476, 9999, 1024, 0);
   }
 
