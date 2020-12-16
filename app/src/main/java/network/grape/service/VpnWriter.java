@@ -103,7 +103,7 @@ public class VpnWriter implements Runnable {
     }
   }
 
-  private void processUdpSelectionKey(SelectionKey key) {
+  protected void processUdpSelectionKey(SelectionKey key) {
     if (!key.isValid()) {
       logger.error("Invalid SelectionKey for UDP");
       return;

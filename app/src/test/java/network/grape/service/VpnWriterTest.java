@@ -15,6 +15,17 @@ import org.mockito.Mockito;
 public class VpnWriterTest {
 
   @Test
+  public void testProcessUdpKey() {
+    FileOutputStream fileOutputStream = mock(FileOutputStream.class);
+    ThreadPoolExecutor workerPool = mock(ThreadPoolExecutor.class);
+    VpnWriter vpnWriter = new VpnWriter(fileOutputStream, workerPool);
+    SelectionKey selectionKey = mock(SelectionKey.class);
+
+    when(selectionKey.isValid()).thenReturn(false);
+    vpnWriter.processUdpSelectionKey(selectionKey);
+  }
+
+  @Test
   public void testProcessSelector() {
     FileOutputStream fileOutputStream = mock(FileOutputStream.class);
     Session session = mock(Session.class);
