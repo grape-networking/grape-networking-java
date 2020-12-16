@@ -19,15 +19,15 @@ import org.slf4j.LoggerFactory;
  * You can think of this thing as a sort of a local NAT within the phone because it has to keep
  * track of all of the outbound <-> inbound mappings of ports and IPs like a NAT table does.
  */
-public enum SessionManager {
-  INSTANCE;
+public class SessionManager {
 
-  private final Logger logger = LoggerFactory.getLogger(SessionManager.class);
-  private final Map<String, Session> table = new ConcurrentHashMap<>();
-  @Getter
-  private Selector selector;
+  private final Logger logger;
+  private final Map<String, Session> table;
+  @Getter private Selector selector;
 
   SessionManager() {
+    logger = LoggerFactory.getLogger(SessionManager.class);
+    table = new ConcurrentHashMap<>();
     try {
       selector = Selector.open();
     } catch (IOException ex) {

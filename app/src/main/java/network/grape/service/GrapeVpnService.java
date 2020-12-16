@@ -11,6 +11,10 @@ import java.net.DatagramSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import network.grape.lib.PacketHeaderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,12 +72,6 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
   @Override
   public void run() {
     logger.info("running vpn service");
-
-    // map this class into the socket protector implementation so that other classes like the
-    // SessionHandler can protect sockets later on (protect is provided by the VpnService which
-    // this class inherits).
-    SocketProtector protector = SocketProtector.getInstance();
-    protector.setProtector(this);
 
     try {
       if (startVpnService()) {
@@ -134,11 +132,13 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     // Allocate the buffer for a single packet.
     ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_LEN);
 
-    SessionHandler handler = SessionHandler.getInstance();
-    handler.setOutputStream(clientWriter);
+    SessionManager sessionManager = new SessionManager();
+    SessionHandler handler = new SessionHandler(sessionManager, new SocketProtector(this));
 
     // background thread for writing output to the vpn outputstream
-    vpnWriter = new VpnWriter(clientWriter);
+    final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
+    ThreadPoolExecutor executor = new ThreadPoolExecutor(8, 100, 10, TimeUnit.SECONDS, taskQueue);
+    vpnWriter = new VpnWriter(clientWriter, sessionManager, executor);
     vpnWriterThread = new Thread(vpnWriter);
     vpnWriterThread.start();
 

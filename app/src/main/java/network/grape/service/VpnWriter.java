@@ -26,33 +26,36 @@ import org.slf4j.LoggerFactory;
  */
 public class VpnWriter implements Runnable {
 
-  private final Logger logger = LoggerFactory.getLogger(VpnWriter.class);
+  private final Logger logger;
   public static final Object syncSelector = new Object();
   public static final Object syncSelector2 = new Object();
-  private FileOutputStream outputStream;
+  private final FileOutputStream outputStream;
+  private final SessionManager sessionManager;
   private Selector selector;
   //create thread pool for reading/writing data to socket
   private ThreadPoolExecutor workerPool;
   private volatile boolean running;
 
   /**
-   * Construct a new VpnWriter.
+   * Construct a new VpnWriter with the workerpool provided.
+   *
    * @param outputStream the stream to write back into the VPN interface.
+   * @param workerPool   the worker pool to execute reader and writer threads in.
    */
-  public VpnWriter(FileOutputStream outputStream) {
+  public VpnWriter(FileOutputStream outputStream, SessionManager sessionManager,
+                   ThreadPoolExecutor workerPool) {
+    this.logger = LoggerFactory.getLogger(VpnWriter.class);
     this.outputStream = outputStream;
-    final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
-    workerPool = new ThreadPoolExecutor(8, 100, 10, TimeUnit.SECONDS, taskQueue);
+    this.sessionManager = sessionManager;
+    this.workerPool = workerPool;
   }
 
-  /**
-   * Construct a new VpnWriter with the workerpool provided.
-   * @param outputStream the stream to write back into the VPN interface.
-   * @param workerPool the worker pool to execute reader and writer threads in.
-   */
-  public VpnWriter(FileOutputStream outputStream, ThreadPoolExecutor workerPool) {
-    this.outputStream = outputStream;
-    this.workerPool = workerPool;
+  boolean isRunning() {
+    return running;
+  }
+
+  boolean notRunning() {
+    return !running;
   }
 
   /**
@@ -60,9 +63,9 @@ public class VpnWriter implements Runnable {
    */
   public void run() {
     logger.info("VpnWriter starting in the background");
-    selector = SessionManager.INSTANCE.getSelector();
+    selector = sessionManager.getSelector();
     running = true;
-    while (running) {
+    while (isRunning()) {
 
       // first just try to wait for a socket to be ready for a connect, read, etc
       try {
@@ -79,7 +82,7 @@ public class VpnWriter implements Runnable {
         continue;
       }
 
-      if (!running) {
+      if (notRunning()) {
         break;
       }
 
@@ -95,7 +98,7 @@ public class VpnWriter implements Runnable {
             processUdpSelectionKey(key);
           }
           iterator.remove();
-          if (!running) {
+          if (notRunning()) {
             break;
           }
         }
@@ -109,7 +112,7 @@ public class VpnWriter implements Runnable {
       return;
     }
     DatagramChannel channel = (DatagramChannel) key.channel();
-    Session session = SessionManager.INSTANCE.getSessionByChannel(channel);
+    Session session = sessionManager.getSessionByChannel(channel);
     String keyString = channel.socket().getLocalAddress().toString() + ":"
         + channel.socket().getLocalPort() + ","
         + channel.socket().getInetAddress().toString() + ":"
@@ -153,7 +156,7 @@ public class VpnWriter implements Runnable {
    * Generic selector handling for both TCP and UDP sessions.
    *
    * @param selectionKey the key in the selection set which is marked for reading or writing.
-   * @param session the session associated with the selection key.
+   * @param session      the session associated with the selection key.
    */
   protected void processSelector(SelectionKey selectionKey, Session session) {
     // tcp has PSH flag when data is ready for sending, UDP does not have this
@@ -161,13 +164,13 @@ public class VpnWriter implements Runnable {
         && session.hasDataToSend() && session.isDataForSendingReady()) {
       session.setBusyWrite(true);
       final SocketDataWriterWorker worker =
-          new SocketDataWriterWorker(outputStream, session.getKey());
+          new SocketDataWriterWorker(outputStream, session.getKey(), sessionManager);
       workerPool.execute(worker);
     }
     if (selectionKey.isValid() && selectionKey.isReadable() && !session.isBusyRead()) {
       session.setBusyRead(true);
       final SocketDataReaderWorker worker =
-          new SocketDataReaderWorker(outputStream, session.getKey());
+          new SocketDataReaderWorker(outputStream, session.getKey(), sessionManager);
       workerPool.execute(worker);
     }
   }
