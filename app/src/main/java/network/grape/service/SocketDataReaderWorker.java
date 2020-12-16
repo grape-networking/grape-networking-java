@@ -23,18 +23,21 @@ import org.slf4j.LoggerFactory;
  * terminates.
  */
 public class SocketDataReaderWorker implements Runnable {
-  private final Logger logger = LoggerFactory.getLogger(SocketDataReaderWorker.class);
+  private final Logger logger;
+  private final SessionManager sessionManager;
   private FileOutputStream outputStream;
   private String sessionKey;
 
-  SocketDataReaderWorker(FileOutputStream outputStream, String sessionKey) {
+  SocketDataReaderWorker(FileOutputStream outputStream, String sessionKey, SessionManager sessionManager) {
+    this.logger = LoggerFactory.getLogger(SocketDataReaderWorker.class);
     this.outputStream = outputStream;
     this.sessionKey = sessionKey;
+    this.sessionManager = sessionManager;
   }
 
   @Override
   public void run() {
-    Session session = SessionManager.INSTANCE.getSessionByKey(sessionKey);
+    Session session = sessionManager.getSessionByKey(sessionKey);
     if (session == null) {
       logger.error("Session NOT FOUND: " + sessionKey);
       return;
@@ -82,7 +85,7 @@ public class SocketDataReaderWorker implements Runnable {
         return;
       }
 
-      SessionManager.INSTANCE.closeSession(session);
+      sessionManager.closeSession(session);
     } else {
       session.setBusyRead(false);
     }

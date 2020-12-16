@@ -3,7 +3,6 @@ package network.grape.service;
 import static network.grape.lib.network.ip.IpHeader.IP4_VERSION;
 import static network.grape.lib.network.ip.IpHeader.IP6_VERSION;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
@@ -30,20 +29,14 @@ import org.slf4j.LoggerFactory;
  */
 public class SessionHandler {
   private final Logger logger = LoggerFactory.getLogger(SessionHandler.class);
-  private static final SessionHandler handler = new SessionHandler();
-  private SocketProtector protector = SocketProtector.getInstance();
-  private Selector selector = SessionManager.INSTANCE.getSelector();
-  private FileOutputStream outputStream;
+  private final SocketProtector protector;
+  private final Selector selector;
+  private final SessionManager sessionManager;
 
-  public static SessionHandler getInstance() {
-    return handler;
-  }
-
-  private SessionHandler() {
-  }
-
-  void setOutputStream(FileOutputStream outputStream) {
-    this.outputStream = outputStream;
+  public SessionHandler(SessionManager sessionManager, SocketProtector protector) {
+    this.sessionManager = sessionManager;
+    this.selector = sessionManager.getSelector();
+    this.protector = protector;
   }
 
   /**
@@ -92,10 +85,10 @@ public class SessionHandler {
 
   private void handleUdpPacket(ByteBuffer payload, IpHeader ipHeader, UdpHeader udpHeader) {
     // try to find an existing session
-    Session session = SessionManager.INSTANCE
-        .getSession(ipHeader.getSourceAddress(), udpHeader.getSourcePort(),
-            ipHeader.getDestinationAddress(),
-            udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL);
+    Session session = sessionManager.getSession(ipHeader.getSourceAddress(),
+        udpHeader.getSourcePort(),
+        ipHeader.getDestinationAddress(),
+        udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL);
 
     // otherwise create a new one
     if (session == null) {
@@ -151,7 +144,7 @@ public class SessionHandler {
       }
       session.setChannel(channel);
 
-      if (!SessionManager.INSTANCE.putSession(session)) {
+      if (!sessionManager.putSession(session)) {
         // just in case we fail to add it (we should hopefully never get here)
         logger.error("Unable to create a new session in the session manager for " + session);
         return;

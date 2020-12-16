@@ -69,12 +69,6 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
   public void run() {
     logger.info("running vpn service");
 
-    // map this class into the socket protector implementation so that other classes like the
-    // SessionHandler can protect sockets later on (protect is provided by the VpnService which
-    // this class inherits).
-    SocketProtector protector = SocketProtector.getInstance();
-    protector.setProtector(this);
-
     try {
       if (startVpnService()) {
         logger.info("VPN Service started");
@@ -134,11 +128,11 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     // Allocate the buffer for a single packet.
     ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_LEN);
 
-    SessionHandler handler = SessionHandler.getInstance();
-    handler.setOutputStream(clientWriter);
+    SessionManager sessionManager = new SessionManager();
+    SessionHandler handler = new SessionHandler(sessionManager, new SocketProtector(this));
 
     // background thread for writing output to the vpn outputstream
-    vpnWriter = new VpnWriter(clientWriter);
+    vpnWriter = new VpnWriter(clientWriter, sessionManager);
     vpnWriterThread = new Thread(vpnWriter);
     vpnWriterThread.start();
 

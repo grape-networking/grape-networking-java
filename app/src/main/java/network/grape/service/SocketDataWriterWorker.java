@@ -16,18 +16,22 @@ import org.slf4j.LoggerFactory;
  * TCP connection, writes an RST to the VPN stream to reset the connection.
  */
 public class SocketDataWriterWorker implements Runnable {
-  private final Logger logger = LoggerFactory.getLogger(SocketDataWriterWorker.class);
+  private final Logger logger;
   private FileOutputStream outputStream; // really only used for sending RST packet on TCP
   private String sessionKey;
+  private SessionManager sessionManager;
 
-  SocketDataWriterWorker(FileOutputStream outputStream, String sessionKey) {
+  SocketDataWriterWorker(FileOutputStream outputStream, String sessionKey,
+                         SessionManager sessionManager) {
+    this.logger = LoggerFactory.getLogger(SocketDataWriterWorker.class);
     this.outputStream = outputStream;
     this.sessionKey = sessionKey;
+    this.sessionManager = sessionManager;
   }
 
   @Override
   public void run() {
-    final Session session = SessionManager.INSTANCE.getSessionByKey(sessionKey);
+    final Session session = sessionManager.getSessionByKey(sessionKey);
     if (session == null) {
       logger.error("No session related to " + sessionKey + "for write");
       return;
@@ -73,7 +77,7 @@ public class SocketDataWriterWorker implements Runnable {
         return;
       }
 
-      SessionManager.INSTANCE.closeSession(session);
+      sessionManager.closeSession(session);
     }
   }
 
