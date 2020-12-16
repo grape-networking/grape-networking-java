@@ -37,19 +37,6 @@ public class VpnWriter implements Runnable {
   private volatile boolean running;
 
   /**
-   * Construct a new VpnWriter.
-   *
-   * @param outputStream the stream to write back into the VPN interface.
-   */
-  public VpnWriter(FileOutputStream outputStream, SessionManager sessionManager) {
-    this.logger = LoggerFactory.getLogger(VpnWriter.class);
-    this.outputStream = outputStream;
-    this.sessionManager = sessionManager;
-    final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
-    workerPool = new ThreadPoolExecutor(8, 100, 10, TimeUnit.SECONDS, taskQueue);
-  }
-
-  /**
    * Construct a new VpnWriter with the workerpool provided.
    *
    * @param outputStream the stream to write back into the VPN interface.
@@ -63,6 +50,14 @@ public class VpnWriter implements Runnable {
     this.workerPool = workerPool;
   }
 
+  boolean isRunning() {
+    return running;
+  }
+
+  boolean notRunning() {
+    return !running;
+  }
+
   /**
    * Main thread for the VpnWriter.
    */
@@ -70,7 +65,7 @@ public class VpnWriter implements Runnable {
     logger.info("VpnWriter starting in the background");
     selector = sessionManager.getSelector();
     running = true;
-    while (running) {
+    while (isRunning()) {
 
       // first just try to wait for a socket to be ready for a connect, read, etc
       try {
@@ -87,7 +82,7 @@ public class VpnWriter implements Runnable {
         continue;
       }
 
-      if (!running) {
+      if (notRunning()) {
         break;
       }
 
@@ -103,7 +98,7 @@ public class VpnWriter implements Runnable {
             processUdpSelectionKey(key);
           }
           iterator.remove();
-          if (!running) {
+          if (notRunning()) {
             break;
           }
         }

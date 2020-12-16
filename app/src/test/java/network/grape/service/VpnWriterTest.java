@@ -10,12 +10,20 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.channels.DatagramChannel;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -127,12 +135,9 @@ public class VpnWriterTest {
 
   @Test
   public void testProcessSelector() {
-    FileOutputStream fileOutputStream = mock(FileOutputStream.class);
     Session session = mock(Session.class);
     SelectionKey selectionKey = mock(SelectionKey.class);
-    ThreadPoolExecutor workerPool = mock(ThreadPoolExecutor.class);
-    SessionManager sessionManager = mock(SessionManager.class);
-    VpnWriter vpnWriter = new VpnWriter(fileOutputStream, sessionManager, workerPool);
+    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
 
     when(selectionKey.isValid()).thenReturn(false);
     vpnWriter.processSelector(selectionKey, session);
@@ -184,5 +189,108 @@ public class VpnWriterTest {
     when(session.isDataForSendingReady()).thenReturn(true);
     vpnWriter.processSelector(selectionKey, session);
     verify(session, Mockito.times(1)).setBusyWrite(true);
+  }
+
+  @Test
+  public void runTest() throws InterruptedException, IOException {
+
+    // base case, nothing back from the selector
+    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    Selector selector = mock(Selector.class);
+    when(sessionManager.getSelector()).thenReturn(selector);
+    when(vpnWriter.isRunning()).thenReturn(true).thenReturn(false);
+    Thread t = new Thread(vpnWriter);
+    t.start();
+    t.join();
+
+    // exception on select
+    vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    selector = mock(Selector.class);
+    when(selector.select()).thenThrow(IOException.class);
+    when(sessionManager.getSelector()).thenReturn(selector);
+    when(vpnWriter.isRunning()).thenReturn(true).thenReturn(false);
+    t = new Thread(vpnWriter);
+    t.start();
+    t.join();
+
+    // exception on select + interrupt in handler
+    vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    selector = mock(Selector.class);
+    when(selector.select()).thenThrow(IOException.class);
+    when(sessionManager.getSelector()).thenReturn(selector);
+    when(vpnWriter.isRunning()).thenReturn(true).thenReturn(false);
+    t = new Thread(vpnWriter);
+    t.start();
+    // there is a chance thread scheduling will be bad and the interrupted exception be thrown
+    // in time here, but its okay.
+    Thread.sleep(100);
+    t.interrupt();
+    t.join();
+  }
+
+  @Test public void runTestSelectionSet() throws InterruptedException {
+    // non-empty iterator
+    Set<SelectionKey> selectionKeySet = new HashSet<>();
+    SelectionKey udpKey = mock(SelectionKey.class);
+    DatagramChannel udpChannel = mock(DatagramChannel.class);
+    when(udpKey.channel()).thenReturn(udpChannel);
+    selectionKeySet.add(udpKey);
+
+    SelectionKey tcpKey = mock(SelectionKey.class);
+    SocketChannel tcpChannel = mock(SocketChannel.class);
+    when(tcpKey.channel()).thenReturn(tcpChannel);
+    selectionKeySet.add(tcpKey);
+
+    SelectionKey serverSocketKey = mock(SelectionKey.class);
+    ServerSocketChannel serverSocketChannel = mock(ServerSocketChannel.class);
+    when(serverSocketKey.channel()).thenReturn(serverSocketChannel);
+    selectionKeySet.add(serverSocketKey);
+
+    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    doNothing().when(vpnWriter).processUdpSelectionKey(any());
+
+    Selector selector = mock(Selector.class);
+    when(sessionManager.getSelector()).thenReturn(selector);
+    when(selector.selectedKeys()).thenReturn(selectionKeySet);
+    Thread t = new Thread(vpnWriter);
+    t.start();
+    when(vpnWriter.isRunning()).thenReturn(true).thenReturn(false);
+    when(vpnWriter.notRunning()).thenReturn(false);
+    vpnWriter.shutdown();
+    t.join();
+  }
+
+  @Test public void runTestNotRunning() throws InterruptedException {
+    // base case, nothing back from the selector
+    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    Selector selector = mock(Selector.class);
+    when(sessionManager.getSelector()).thenReturn(selector);
+    when(vpnWriter.isRunning()).thenReturn(true).thenReturn(false);
+    when(vpnWriter.notRunning()).thenReturn(true);
+    Thread t = new Thread(vpnWriter);
+    t.start();
+    t.join();
+  }
+
+  @Test public void runTestNotRunningNonEmptyIterator() throws InterruptedException {
+    // non-empty iterator
+    Set<SelectionKey> selectionKeySet = new HashSet<>();
+    SelectionKey udpKey = mock(SelectionKey.class);
+    DatagramChannel udpChannel = mock(DatagramChannel.class);
+    when(udpKey.channel()).thenReturn(udpChannel);
+    selectionKeySet.add(udpKey);
+
+    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    doNothing().when(vpnWriter).processUdpSelectionKey(any());
+
+    Selector selector = mock(Selector.class);
+    when(sessionManager.getSelector()).thenReturn(selector);
+    when(selector.selectedKeys()).thenReturn(selectionKeySet);
+    Thread t = new Thread(vpnWriter);
+    t.start();
+    when(vpnWriter.isRunning()).thenReturn(true).thenReturn(false);
+    when(vpnWriter.notRunning()).thenReturn(false).thenReturn(true);
+    vpnWriter.shutdown();
+    t.join();
   }
 }

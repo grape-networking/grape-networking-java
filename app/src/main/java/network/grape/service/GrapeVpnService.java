@@ -11,6 +11,10 @@ import java.net.DatagramSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import network.grape.lib.PacketHeaderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,7 +136,9 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     SessionHandler handler = new SessionHandler(sessionManager, new SocketProtector(this));
 
     // background thread for writing output to the vpn outputstream
-    vpnWriter = new VpnWriter(clientWriter, sessionManager);
+    final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
+    ThreadPoolExecutor executor = new ThreadPoolExecutor(8, 100, 10, TimeUnit.SECONDS, taskQueue);
+    vpnWriter = new VpnWriter(clientWriter, sessionManager, executor);
     vpnWriterThread = new Thread(vpnWriter);
     vpnWriterThread.start();
 
