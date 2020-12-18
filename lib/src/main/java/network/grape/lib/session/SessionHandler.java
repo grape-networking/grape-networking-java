@@ -69,6 +69,7 @@ public class SessionHandler {
       throw new PacketHeaderException("Got a packet which isn't Ip4 or Ip6: " + version);
     }
 
+    /*
     if (!ipHeader.getDestinationAddress().equals(Inet4Address.getByName("10.0.0.111"))
         && (!ipHeader.getSourceAddress().equals(Inet4Address.getByName("10.0.0.111")))) {
       //logger.info(ipHeader.getDestinationAddress().toString() + " "
@@ -78,6 +79,7 @@ public class SessionHandler {
     logger.info("GOT TRAFFIC FOR 10.0.0.111: " + ipHeader.getDestinationAddress().toString() + " "
         + ipHeader.getSourceAddress().toString());
     logger.info("PROTO: " + ipHeader.getProtocol());
+     */
 
     final TransportHeader transportHeader;
     if (ipHeader.getProtocol() == TransportHeader.UDP_PROTOCOL) {
@@ -92,11 +94,11 @@ public class SessionHandler {
     }
   }
 
-  private void handleTcpPacket(ByteBuffer payload, IpHeader ipHeader, TcpHeader tcpHeader) {
+  protected void handleTcpPacket(ByteBuffer payload, IpHeader ipHeader, TcpHeader tcpHeader) {
 
   }
 
-  private void handleUdpPacket(ByteBuffer payload, IpHeader ipHeader, UdpHeader udpHeader) {
+  protected void handleUdpPacket(ByteBuffer payload, IpHeader ipHeader, UdpHeader udpHeader) {
     // try to find an existing session
     Session session = sessionManager.getSession(ipHeader.getSourceAddress(),
         udpHeader.getSourcePort(),

@@ -10,7 +10,7 @@ import network.grape.lib.PacketHeaderException;
 import org.junit.jupiter.api.Test;
 
 public class TcpTest {
-  TcpHeader testTcpHeader() {
+  public static TcpHeader testTcpHeader() {
     return new TcpHeader(34645, 443, 1, 0,
         (short) 5, 2, 1024, 0, 0, new ArrayList<>());
   }
