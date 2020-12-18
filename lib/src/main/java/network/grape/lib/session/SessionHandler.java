@@ -35,6 +35,14 @@ public class SessionHandler {
   private final Selector selector;
   private final SessionManager sessionManager;
 
+  /**
+   * Construct a SessionHandler with a SessionManager to keep track of sessions and SocketProtector
+   * to ensure the VPN actually alllows the outbound connections to use the real internet instad of
+   * looping back into VPN.
+   *
+   * @param sessionManager the session manager which maps the SelectorKey and SessionKey to Session
+   * @param protector the protector which prevents vpn loopback
+   */
   public SessionHandler(SessionManager sessionManager, SocketProtector protector) {
     this.sessionManager = sessionManager;
     this.selector = sessionManager.getSelector();

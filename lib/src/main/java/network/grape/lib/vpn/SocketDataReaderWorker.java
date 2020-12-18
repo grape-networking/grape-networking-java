@@ -30,7 +30,14 @@ public class SocketDataReaderWorker implements Runnable {
   private FileOutputStream outputStream;
   private String sessionKey;
 
-  SocketDataReaderWorker(FileOutputStream outputStream, String sessionKey, SessionManager sessionManager) {
+  /**
+   * Construct a new read worker.
+   * @param outputStream the VPN outputstream with which to write responses / data into
+   * @param sessionKey the sessionKey for this writer
+   * @param sessionManager the sessionManager instance
+   */
+  SocketDataReaderWorker(FileOutputStream outputStream, String sessionKey,
+                         SessionManager sessionManager) {
     this.logger = LoggerFactory.getLogger(SocketDataReaderWorker.class);
     this.outputStream = outputStream;
     this.sessionKey = sessionKey;

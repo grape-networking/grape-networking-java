@@ -2,7 +2,6 @@ package network.grape.lib.transport.udp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import network.grape.lib.PacketHeaderException;

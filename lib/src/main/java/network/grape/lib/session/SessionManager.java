@@ -25,6 +25,9 @@ public class SessionManager {
   private final Map<String, Session> table;
   @Getter private Selector selector;
 
+  /**
+   * Construct a new SessionManager which keeps track of sessions in a map.
+   */
   public SessionManager() {
     logger = LoggerFactory.getLogger(SessionManager.class);
     table = new ConcurrentHashMap<>();

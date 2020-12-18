@@ -3,7 +3,6 @@ package network.grape.lib.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-
 import org.junit.jupiter.api.Test;
 
 public class PacketUtilTest extends PacketUtil {
@@ -19,8 +18,8 @@ public class PacketUtilTest extends PacketUtil {
     writeIntToBytes(100, buf, 0);
 
     //read too early
-    int bad_result = getNetworkInt(buf, 4, 4);
-    assertNotEquals(bad_result, 100);
+    int badResult = getNetworkInt(buf, 4, 4);
+    assertNotEquals(badResult, 100);
 
     //good read
     int result = getNetworkInt(buf, 0, 4);

@@ -3,7 +3,6 @@ package network.grape.lib.transport.udp;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-
 import java.nio.ByteBuffer;
 import network.grape.lib.PacketHeaderException;
 import org.junit.jupiter.api.Test;

@@ -6,12 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.network.ip.Ip4Header;
-import network.grape.lib.session.SessionHandler;
 import network.grape.lib.vpn.SocketProtector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,10 +47,8 @@ public class SessionHandlerTest {
     Ip4Header ip4Header = copyIp4Header(testIp4Header());
     byte[] buffer = ip4Header.toByteArray();
     ByteBuffer ip4HeaderNoPayload = ByteBuffer.allocate(buffer.length);
-    ip4HeaderNoPayload.put(ip4HeaderNoPayload);
+    ip4HeaderNoPayload.put(buffer);
     ip4HeaderNoPayload.rewind();
-    assertThrows(PacketHeaderException.class, () -> {
-      sessionHandler.handlePacket(ip4HeaderNoPayload);
-    });
+    sessionHandler.handlePacket(ip4HeaderNoPayload);
   }
 }
