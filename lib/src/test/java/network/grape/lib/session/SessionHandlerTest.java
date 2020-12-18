@@ -9,23 +9,31 @@ import static network.grape.lib.transport.udp.UdpTest.testUdpHeader;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyByte;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 
+import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.Ip6Header;
+import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.transport.tcp.TcpHeader;
 import network.grape.lib.transport.udp.UdpHeader;
 import network.grape.lib.vpn.SocketProtector;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -98,5 +106,23 @@ public class SessionHandlerTest {
     doNothing().when(sessionHandler).handleTcpPacket(any(), any(), any());
     sessionHandler.handlePacket(ip6HeaderPayload);
     verify(sessionHandler, times(1)).handleTcpPacket(any(),any(),any());
+  }
+
+  // I think this is because constructing the key throws NPE.
+  @Disabled
+  @Test
+  public void handleUdpPacketTest() throws UnknownHostException {
+    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector));
+    ByteBuffer buffer = mock(ByteBuffer.class);
+    IpHeader ipHeader = mock(IpHeader.class);
+    UdpHeader udpHeader = mock(UdpHeader.class);
+
+    when(ipHeader.getDestinationAddress()).thenReturn(Inet4Address.getLocalHost());
+    when(ipHeader.getSourceAddress()).thenReturn(Inet4Address.getLocalHost());
+
+    // session found
+    Session sessionMock = mock(Session.class);
+    when(sessionManager.getSession(any(), any(), any(), any(), any())).thenReturn(sessionMock);
+    sessionHandler.handleUdpPacket(buffer, ipHeader, udpHeader);
   }
 }
