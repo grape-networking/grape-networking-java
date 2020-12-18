@@ -1,4 +1,4 @@
-package network.grape.service;
+package network.grape.lib.session;
 
 import static network.grape.lib.network.ip.IpHeader.IP4_VERSION;
 import static network.grape.lib.network.ip.IpHeader.IP6_VERSION;
@@ -45,6 +45,9 @@ public class SessionHandler {
    * @param stream raw bytes to be read
    */
   void handlePacket(ByteBuffer stream) throws PacketHeaderException, UnknownHostException {
+    if (stream.remaining() < 1) {
+      throw new PacketHeaderException("Need at least a single byte to determine the packet type");
+    }
     byte version = (byte) (stream.get() >> 4);
     stream.rewind();
     final IpHeader ipHeader;

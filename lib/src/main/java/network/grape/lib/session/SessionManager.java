@@ -1,4 +1,4 @@
-package network.grape.service;
+package network.grape.lib.session;
 
 import java.io.IOException;
 import java.net.InetAddress;
