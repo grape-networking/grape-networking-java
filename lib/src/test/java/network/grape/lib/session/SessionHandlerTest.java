@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.session.SessionHandler;
+import network.grape.lib.vpn.SocketProtector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
