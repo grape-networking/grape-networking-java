@@ -49,11 +49,11 @@ public class VpnWriter implements Runnable {
     this.workerPool = workerPool;
   }
 
-  boolean isRunning() {
+  public boolean isRunning() {
     return running;
   }
 
-  boolean notRunning() {
+  public boolean notRunning() {
     return !running;
   }
 

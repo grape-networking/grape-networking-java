@@ -2,6 +2,7 @@ package network.grape.lib.vpn;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -273,7 +274,6 @@ public class VpnWriterTest {
     t.join();
   }
 
-  @Disabled
   @Test public void runTestNotRunningNonEmptyIterator() throws InterruptedException {
     // non-empty iterator
     Set<SelectionKey> selectionKeySet = new HashSet<>();
@@ -288,10 +288,12 @@ public class VpnWriterTest {
     Selector selector = mock(Selector.class);
     when(sessionManager.getSelector()).thenReturn(selector);
     when(selector.selectedKeys()).thenReturn(selectionKeySet);
+
+    doReturn(true, false).when(vpnWriter).isRunning();
+    doReturn(false, true).when(vpnWriter).notRunning();
+
     Thread t = new Thread(vpnWriter);
     t.start();
-    when(vpnWriter.isRunning()).thenReturn(true).thenReturn(false);
-    when(vpnWriter.notRunning()).thenReturn(false).thenReturn(true);
     vpnWriter.shutdown();
     t.join();
   }
