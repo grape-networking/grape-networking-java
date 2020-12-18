@@ -1,4 +1,4 @@
-package network.grape.service;
+package network.grape.lib.vpn;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -11,6 +11,7 @@ import java.util.Date;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.IpHeader;
+import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionManager;
 import network.grape.lib.transport.udp.UdpHeader;
 import network.grape.lib.transport.udp.UdpPacketFactory;

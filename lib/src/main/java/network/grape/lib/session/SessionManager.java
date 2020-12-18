@@ -25,7 +25,7 @@ public class SessionManager {
   private final Map<String, Session> table;
   @Getter private Selector selector;
 
-  SessionManager() {
+  public SessionManager() {
     logger = LoggerFactory.getLogger(SessionManager.class);
     table = new ConcurrentHashMap<>();
     try {

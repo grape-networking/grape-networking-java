@@ -20,6 +20,8 @@ import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.transport.tcp.TcpHeader;
 import network.grape.lib.transport.udp.UdpHeader;
+import network.grape.lib.vpn.SocketProtector;
+import network.grape.lib.vpn.VpnWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +46,7 @@ public class SessionHandler {
    *
    * @param stream raw bytes to be read
    */
-  void handlePacket(ByteBuffer stream) throws PacketHeaderException, UnknownHostException {
+  public void handlePacket(ByteBuffer stream) throws PacketHeaderException, UnknownHostException {
     if (stream.remaining() < 1) {
       throw new PacketHeaderException("Need at least a single byte to determine the packet type");
     }

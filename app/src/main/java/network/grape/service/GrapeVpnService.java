@@ -16,7 +16,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import network.grape.lib.PacketHeaderException;
+import network.grape.lib.session.SessionHandler;
 import network.grape.lib.session.SessionManager;
+import network.grape.lib.vpn.ProtectSocket;
+import network.grape.lib.vpn.SocketProtector;
+import network.grape.lib.vpn.VpnWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

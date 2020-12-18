@@ -1,4 +1,4 @@
-package network.grape.service;
+package network.grape.lib.vpn;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,6 +12,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.concurrent.ThreadPoolExecutor;
+import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
