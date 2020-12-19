@@ -28,18 +28,24 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}
+          arch: x86_64
+          profile: Nexus 6
           script: ./gradlew app:generatePomFileForDebugPublication && diff app/pom.xml app/build/publications/debug/pom-default.xml
       - name: check lib dependency update
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}
+          arch: x86_64
+          profile: Nexus 6
           script: ./gradlew lib:generatePomFileForMavenPublication && diff lib/pom.xml lib/build/publications/maven/pom-default.xml
       - name: lint
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}
+          arch: x86_64
+          profile: Nexus 6
           script: ./gradlew lib:lint app:lint
       - name: app lint results
         uses: yutailang0119/action-android-lint@v1.0.2
@@ -54,30 +60,40 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}
+          arch: x86_64
+          profile: Nexus 6
           script: ./gradlew lib:checkstyle app:checkstyle
       - name: junit5 unit tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}
+          arch: x86_64
+          profile: Nexus 6
           script: ./gradlew lib:test app:test
       - name: junit5 instrumented tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}
+          arch: x86_64
+          profile: Nexus 6
           script: ./gradlew app:connectedCheck
       - name: jacoco app debug coverage reports
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}
+          arch: x86_64
+          profile: Nexus 6
           script: ./gradlew app:combinedTestReportDebug && ./gradlew app:combinedTestReportDebug
       - name: jacoco lub debug coverage reports
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}
+          arch: x86_64
+          profile: Nexus 6
           script: ./gradlew lib:jacocoTestReport
       - name: codecov upload
         uses: codecov/codecov-action@v1
