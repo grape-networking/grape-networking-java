@@ -1,6 +1,5 @@
-package network.grape.service;
+package network.grape.lib.session;
 
-import androidx.annotation.NonNull;
 import java.io.ByteArrayOutputStream;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
@@ -10,7 +9,6 @@ import lombok.Getter;
 import lombok.Setter;
 import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.transport.TransportHeader;
-import network.grape.lib.transport.tcp.TcpHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,7 +97,6 @@ public class Session {
     return data;
   }
 
-  @NonNull
   @Override
   public String toString() {
     return "Session (" + getKey() + ")";

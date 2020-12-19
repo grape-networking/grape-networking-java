@@ -1,4 +1,4 @@
-package network.grape.service;
+package network.grape.lib.vpn;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -11,6 +11,8 @@ import java.util.Date;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.IpHeader;
+import network.grape.lib.session.Session;
+import network.grape.lib.session.SessionManager;
 import network.grape.lib.transport.udp.UdpHeader;
 import network.grape.lib.transport.udp.UdpPacketFactory;
 import network.grape.lib.util.Constants;
@@ -28,7 +30,14 @@ public class SocketDataReaderWorker implements Runnable {
   private FileOutputStream outputStream;
   private String sessionKey;
 
-  SocketDataReaderWorker(FileOutputStream outputStream, String sessionKey, SessionManager sessionManager) {
+  /**
+   * Construct a new read worker.
+   * @param outputStream the VPN outputstream with which to write responses / data into
+   * @param sessionKey the sessionKey for this writer
+   * @param sessionManager the sessionManager instance
+   */
+  SocketDataReaderWorker(FileOutputStream outputStream, String sessionKey,
+                         SessionManager sessionManager) {
     this.logger = LoggerFactory.getLogger(SocketDataReaderWorker.class);
     this.outputStream = outputStream;
     this.sessionKey = sessionKey;

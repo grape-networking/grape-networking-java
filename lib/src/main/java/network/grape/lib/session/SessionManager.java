@@ -1,4 +1,4 @@
-package network.grape.service;
+package network.grape.lib.session;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -25,7 +25,10 @@ public class SessionManager {
   private final Map<String, Session> table;
   @Getter private Selector selector;
 
-  SessionManager() {
+  /**
+   * Construct a new SessionManager which keeps track of sessions in a map.
+   */
+  public SessionManager() {
     logger = LoggerFactory.getLogger(SessionManager.class);
     table = new ConcurrentHashMap<>();
     try {

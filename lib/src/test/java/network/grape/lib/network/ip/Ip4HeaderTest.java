@@ -7,7 +7,6 @@ import static network.grape.lib.network.ip.IpTestCommon.testIp6Header;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import network.grape.lib.PacketHeaderException;

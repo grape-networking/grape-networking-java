@@ -1,4 +1,4 @@
-package network.grape.service;
+package network.grape.lib.vpn;
 
 import java.net.DatagramSocket;
 import java.net.Socket;

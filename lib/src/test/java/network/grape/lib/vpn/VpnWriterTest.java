@@ -1,30 +1,29 @@
-package network.grape.service;
+package network.grape.lib.vpn;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.channels.DatagramChannel;
-import java.nio.channels.FileChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
+import network.grape.lib.session.Session;
+import network.grape.lib.session.SessionManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -36,6 +35,9 @@ public class VpnWriterTest {
   ThreadPoolExecutor workerPool;
   SessionManager sessionManager;
 
+  /**
+   * Setup the mocks for the test.
+   */
   @BeforeEach
   public void before() {
     fileOutputStream = mock(FileOutputStream.class);
@@ -286,10 +288,12 @@ public class VpnWriterTest {
     Selector selector = mock(Selector.class);
     when(sessionManager.getSelector()).thenReturn(selector);
     when(selector.selectedKeys()).thenReturn(selectionKeySet);
+
+    doReturn(true, false).when(vpnWriter).isRunning();
+    doReturn(false, true).when(vpnWriter).notRunning();
+
     Thread t = new Thread(vpnWriter);
     t.start();
-    when(vpnWriter.isRunning()).thenReturn(true).thenReturn(false);
-    when(vpnWriter.notRunning()).thenReturn(false).thenReturn(true);
     vpnWriter.shutdown();
     t.join();
   }

@@ -7,7 +7,6 @@ import static network.grape.lib.network.ip.IpTestCommon.testIp6Header;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import network.grape.lib.PacketHeaderException;
@@ -51,7 +50,7 @@ public class Ip6HeaderTest {
   @Test
   public void wrongVersion() throws UnknownHostException {
     Ip4Header ip4Header = copyIp4Header(testIp4Header());
-    ip4Header.setIhl((short)10); // if we don't increae IHL, packet isn't long enough for Ip6
+    ip4Header.setIhl((short) 10); // if we don't increae IHL, packet isn't long enough for Ip6
     assertThrows(PacketHeaderException.class, () -> {
       byte[] buffer = ip4Header.toByteArray();
       ByteBuffer buf = ByteBuffer.allocate(buffer.length);

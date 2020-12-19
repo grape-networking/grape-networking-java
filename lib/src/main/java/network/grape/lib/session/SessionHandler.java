@@ -1,4 +1,4 @@
-package network.grape.service;
+package network.grape.lib.session;
 
 import static network.grape.lib.network.ip.IpHeader.IP4_VERSION;
 import static network.grape.lib.network.ip.IpHeader.IP6_VERSION;
@@ -20,6 +20,8 @@ import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.transport.tcp.TcpHeader;
 import network.grape.lib.transport.udp.UdpHeader;
+import network.grape.lib.vpn.SocketProtector;
+import network.grape.lib.vpn.VpnWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +35,14 @@ public class SessionHandler {
   private final Selector selector;
   private final SessionManager sessionManager;
 
+  /**
+   * Construct a SessionHandler with a SessionManager to keep track of sessions and SocketProtector
+   * to ensure the VPN actually alllows the outbound connections to use the real internet instad of
+   * looping back into VPN.
+   *
+   * @param sessionManager the session manager which maps the SelectorKey and SessionKey to Session
+   * @param protector the protector which prevents vpn loopback
+   */
   public SessionHandler(SessionManager sessionManager, SocketProtector protector) {
     this.sessionManager = sessionManager;
     this.selector = sessionManager.getSelector();
@@ -44,7 +54,10 @@ public class SessionHandler {
    *
    * @param stream raw bytes to be read
    */
-  void handlePacket(ByteBuffer stream) throws PacketHeaderException, UnknownHostException {
+  public void handlePacket(ByteBuffer stream) throws PacketHeaderException, UnknownHostException {
+    if (stream.remaining() < 1) {
+      throw new PacketHeaderException("Need at least a single byte to determine the packet type");
+    }
     byte version = (byte) (stream.get() >> 4);
     stream.rewind();
     final IpHeader ipHeader;
@@ -56,6 +69,7 @@ public class SessionHandler {
       throw new PacketHeaderException("Got a packet which isn't Ip4 or Ip6: " + version);
     }
 
+    /*
     if (!ipHeader.getDestinationAddress().equals(Inet4Address.getByName("10.0.0.111"))
         && (!ipHeader.getSourceAddress().equals(Inet4Address.getByName("10.0.0.111")))) {
       //logger.info(ipHeader.getDestinationAddress().toString() + " "
@@ -65,6 +79,7 @@ public class SessionHandler {
     logger.info("GOT TRAFFIC FOR 10.0.0.111: " + ipHeader.getDestinationAddress().toString() + " "
         + ipHeader.getSourceAddress().toString());
     logger.info("PROTO: " + ipHeader.getProtocol());
+     */
 
     final TransportHeader transportHeader;
     if (ipHeader.getProtocol() == TransportHeader.UDP_PROTOCOL) {
@@ -79,11 +94,11 @@ public class SessionHandler {
     }
   }
 
-  private void handleTcpPacket(ByteBuffer payload, IpHeader ipHeader, TcpHeader tcpHeader) {
+  protected void handleTcpPacket(ByteBuffer payload, IpHeader ipHeader, TcpHeader tcpHeader) {
 
   }
 
-  private void handleUdpPacket(ByteBuffer payload, IpHeader ipHeader, UdpHeader udpHeader) {
+  protected void handleUdpPacket(ByteBuffer payload, IpHeader ipHeader, UdpHeader udpHeader) {
     // try to find an existing session
     Session session = sessionManager.getSession(ipHeader.getSourceAddress(),
         udpHeader.getSourcePort(),

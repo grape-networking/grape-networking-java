@@ -3,7 +3,6 @@ package network.grape.lib.util;
 import static network.grape.lib.network.ip.IpTestCommon.testIp4Header;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-
 import java.net.UnknownHostException;
 import org.junit.jupiter.api.Test;
 
