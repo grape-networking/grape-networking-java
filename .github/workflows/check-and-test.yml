@@ -23,7 +23,6 @@ jobs:
 #        uses: android-actions/setup-android@v2.0.2
 #        env:
 #          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-      -
       - name: check app dependency update
         uses: reactivecircus/android-emulator-runner@v2
         with:
