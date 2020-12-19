@@ -44,9 +44,9 @@ jobs:
           script: ./gradlew app:connectedCheck
       - name: jacoco app debug coverage reports
         uses: reactivecircus/android-emulator-runner@v2
-          with:
-            api-level: 18
-            script: ./gradlew app:combinedTestReportDebug && ./gradlew app:combinedTestReportDebug
+        with:
+          api-level: 18
+          script: ./gradlew app:combinedTestReportDebug && ./gradlew app:combinedTestReportDebug
       - name: jacoco lib debug coverage reports
         run: ./gradlew lib:jacocoTestReport
       - name: codecov upload
