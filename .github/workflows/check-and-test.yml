@@ -34,7 +34,6 @@ jobs:
         with:
           xml_path: lib/build/reports/lint/report.xml
       - name: checkstyle
-        uses: reactivecircus/android-emulator-runner@v2
         run: ./gradlew lib:checkstyle app:checkstyle
       - name: junit5 unit tests
         run: ./gradlew lib:test app:test
