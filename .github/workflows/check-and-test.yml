@@ -32,7 +32,6 @@ jobs:
           path: lib/build/reports
 
   android_checks:
-    needs: [lib_checks]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
@@ -75,4 +74,4 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: app/build/reports/coverage/debug/jacoco.xml,lib/build/reports/jacoco/jacoco.xml
+          files: app-reports/coverage/debug/report.xml,lib-reports/jacoco/jacoco.xml
