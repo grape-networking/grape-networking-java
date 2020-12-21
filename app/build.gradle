@@ -23,8 +23,8 @@ buildscript {
 
 apply plugin: 'com.android.application'
 apply plugin: 'de.mannodermaus.android-junit5'
-apply plugin: 'com.vanniktech.android.junit.jacoco'
 apply plugin: 'dagger.hilt.android.plugin'
+apply plugin: 'jacoco'
 apply plugin: 'maven-publish'
 
 android {
@@ -66,6 +66,12 @@ android {
     }
 }
 
+sourceSets {
+    main {
+        java.srcDirs = ['src/main/java']
+    }
+}
+
 dependencies {
     implementation project(path: ':lib')
     implementation 'com.google.android.material:material:1.2.1'
@@ -104,14 +110,6 @@ dependencies {
     androidTestImplementation "org.mockito:mockito-inline:3.6.28"
     androidTestRuntimeOnly "de.mannodermaus.junit5:android-test-runner:1.2.0"
     androidTestAnnotationProcessor "com.google.dagger:hilt-android-compiler:${hiltVersion}"
-}
-
-junitJacoco {
-    jacocoVersion = '0.8.5' // type String
-    ignoreProjects = [] // type String array
-    excludes = ['Hilt**', 'hilt**', '**Generated**', 'Dagger**'] // type String List
-    includeNoLocationClasses = false // type boolean
-    includeInstrumentationCoverageInMergedReport = true // type boolean
 }
 
 apply from: '../checkstyle.gradle'
@@ -171,4 +169,8 @@ configurations.all { config ->
         println "Replacing module in configuration " + config.name
         exclude group: "org.mockito", module: "mockito-inline"
     }
+}
+
+jacoco {
+    toolVersion = '0.8.5' // type String
 }
