@@ -30,10 +30,6 @@ jobs:
         with:
           name: lib-reports
           path: lib/build/reports
-      - uses: actions/upload-artifact@v2
-        with:
-          name: lib-jacoco
-          path: lib/build/jacoco
 
   android_checks:
     needs: [lib_checks]
@@ -58,21 +54,15 @@ jobs:
           xml_path: app/build/reports/lint/report.xml
       - name: checkstyle
         run: ./gradlew app:checkstyle
-      - name: junit5 unit tests
-        run: ./gradlew app:test
       - name: junit5 instrumented tests (with jacoco coverage reports))
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 18
-          script: ./gradlew app:jacocoTestReportDebug
+          script: ./gradlew app:connectedCheck
       - uses: actions/upload-artifact@v2
         with:
           name: app-reports
           path: app/build/reports
-      - uses: actions/upload-artifact@v2
-        with:
-          name: app-jacoco
-          path: app/build/jacoco
 
   upload-coverage-reports:
     needs: [lib_checks, android_checks]
