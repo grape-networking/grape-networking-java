@@ -23,9 +23,9 @@ jobs:
         with:
           xml_path: lib/build/reports/lint/report.xml
       - name: checkstyle
-          run: ./gradlew lib:checkstyle
+        run: ./gradlew lib:checkstyle
       - name: junit5 units tests (with jacoco covarege reports)
-          run: ./gradlew lib:jacocoTestReport
+        run: ./gradlew lib:jacocoTestReport
       - uses: actions/upload-artifact@v2
         with:
           name: lib-reports
