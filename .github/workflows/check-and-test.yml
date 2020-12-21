@@ -36,6 +36,7 @@ jobs:
           path: lib/build/jacoco
 
   android_checks:
+    needs: [lib_checks]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
@@ -74,6 +75,7 @@ jobs:
           path: app/build/jacoco
 
   upload-coverage-reports:
+    needs: [lib_checks, android_checks]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v2
