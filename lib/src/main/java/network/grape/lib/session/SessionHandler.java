@@ -138,10 +138,12 @@ public class SessionHandler {
 
       try {
         // we sync on this so that we don't add to the selection set while its been used
-        synchronized (vpnWriter.getSyncSelector2()) {
+        Object selectionLock = vpnWriter.getSyncSelector2();
+        synchronized (selectionLock) {
           selector.wakeup();
           // we sync on this so that the other thread doesn't call select() while we are doing this
-          synchronized (vpnWriter.getSyncSelector()) {
+          Object readWriteLock = vpnWriter.getSyncSelector();
+          synchronized (readWriteLock) {
             SelectionKey selectionKey;
             if (channel.isConnected()) {
               selectionKey =

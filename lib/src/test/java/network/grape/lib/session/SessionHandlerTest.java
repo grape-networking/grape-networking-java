@@ -19,6 +19,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
+import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -44,12 +45,15 @@ public class SessionHandlerTest {
   SessionManager sessionManager;
   SocketProtector protector;
   VpnWriter vpnWriter;
+  Selector selector;
 
   @BeforeEach
-  public void initTests() {
+  public void initTests() throws IOException {
     sessionManager = mock(SessionManager.class);
     protector = mock(SocketProtector.class);
     vpnWriter = mock(VpnWriter.class);
+    selector = spy(Selector.open());
+    when(sessionManager.getSelector()).thenReturn(selector);
   }
 
   @Test
@@ -123,6 +127,8 @@ public class SessionHandlerTest {
     when(ipHeader.getSourceAddress()).thenReturn(Inet4Address.getLocalHost());
 
     // session not found
+    when(vpnWriter.getSyncSelector()).thenReturn(new Object());
+    when(vpnWriter.getSyncSelector2()).thenReturn(new Object());
     when(sessionManager.getSession(ipHeader.getSourceAddress(), udpHeader.getSourcePort(), ipHeader.getDestinationAddress(), udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL)).thenReturn(null);
     sessionHandler.handleUdpPacket(buffer, ipHeader, udpHeader);
 
