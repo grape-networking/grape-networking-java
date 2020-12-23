@@ -10,8 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyByte;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -23,6 +25,8 @@ import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import network.grape.lib.PacketHeaderException;
@@ -117,7 +121,7 @@ public class SessionHandlerTest {
 
   // I think this is because constructing the key throws NPE.
   @Test
-  public void handleUdpPacketTest() throws UnknownHostException {
+  public void handleUdpPacketTest() throws IOException {
     SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter));
     ByteBuffer buffer = mock(ByteBuffer.class);
     IpHeader ipHeader = mock(IpHeader.class);
@@ -132,10 +136,54 @@ public class SessionHandlerTest {
     when(sessionManager.getSession(ipHeader.getSourceAddress(), udpHeader.getSourcePort(), ipHeader.getDestinationAddress(), udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL)).thenReturn(null);
     sessionHandler.handleUdpPacket(buffer, ipHeader, udpHeader);
 
-    // session found
+    // successful put
+    when(vpnWriter.getSyncSelector()).thenReturn(new Object());
+    when(vpnWriter.getSyncSelector2()).thenReturn(new Object());
+    when(sessionManager.getSession(ipHeader.getSourceAddress(), udpHeader.getSourcePort(), ipHeader.getDestinationAddress(), udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL)).thenReturn(null);
+    when(sessionManager.putSession(any())).thenReturn(true);
+    sessionHandler.handleUdpPacket(buffer, ipHeader, udpHeader);
 
+    // exception on connect
+    when(vpnWriter.getSyncSelector()).thenReturn(new Object());
+    when(vpnWriter.getSyncSelector2()).thenReturn(new Object());
+    when(sessionManager.getSession(ipHeader.getSourceAddress(), udpHeader.getSourcePort(), ipHeader.getDestinationAddress(), udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL)).thenReturn(null);
+    DatagramChannel channelMock = mock(DatagramChannel.class);
+    doReturn(channelMock).when(sessionHandler).prepareDatagramChannel();
+    doThrow(IOException.class).when(channelMock).connect(any());
+    sessionHandler.handleUdpPacket(buffer, ipHeader, udpHeader);
+
+    // exception on prepare datagram channel
+    when(vpnWriter.getSyncSelector()).thenReturn(new Object());
+    when(vpnWriter.getSyncSelector2()).thenReturn(new Object());
+    when(sessionManager.getSession(ipHeader.getSourceAddress(), udpHeader.getSourcePort(), ipHeader.getDestinationAddress(), udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL)).thenReturn(null);
+    doThrow(IOException.class).when(sessionHandler).prepareDatagramChannel();
+    sessionHandler.handleUdpPacket(buffer, ipHeader, udpHeader);
+
+    // channel not connected
+    when(vpnWriter.getSyncSelector()).thenReturn(new Object());
+    when(vpnWriter.getSyncSelector2()).thenReturn(new Object());
+    when(sessionManager.getSession(ipHeader.getSourceAddress(), udpHeader.getSourcePort(), ipHeader.getDestinationAddress(), udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL)).thenReturn(null);
+    channelMock = mock(DatagramChannel.class);
+    doReturn(channelMock).when(sessionHandler).prepareDatagramChannel();
+    doReturn(false).when(channelMock).isConnected();
+    sessionHandler.handleUdpPacket(buffer, ipHeader, udpHeader);
+
+    // ClosedChannelException
+    when(vpnWriter.getSyncSelector()).thenReturn(new Object());
+    when(vpnWriter.getSyncSelector2()).thenReturn(new Object());
+    when(sessionManager.getSession(ipHeader.getSourceAddress(), udpHeader.getSourcePort(), ipHeader.getDestinationAddress(), udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL)).thenReturn(null);
+    channelMock = mock(DatagramChannel.class);
+    doReturn(channelMock).when(sessionHandler).prepareDatagramChannel();
+    doThrow(ClosedChannelException.class).when(channelMock).register(any(), anyInt());
+    sessionHandler.handleUdpPacket(buffer, ipHeader, udpHeader);
+
+    // session found
     Session sessionMock = mock(Session.class);
     when(sessionManager.getSession(ipHeader.getSourceAddress(), udpHeader.getSourcePort(), ipHeader.getDestinationAddress(), udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL)).thenReturn(sessionMock);
+    sessionHandler.handleUdpPacket(buffer, ipHeader, udpHeader);
+
+    // payload not empty
+    buffer = ByteBuffer.allocate(10);
     sessionHandler.handleUdpPacket(buffer, ipHeader, udpHeader);
   }
 }

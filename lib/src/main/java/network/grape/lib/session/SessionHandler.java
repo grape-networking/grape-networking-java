@@ -100,6 +100,14 @@ public class SessionHandler {
 
   }
 
+  protected DatagramChannel prepareDatagramChannel() throws IOException {
+    DatagramChannel channel = DatagramChannel.open();
+    channel.socket().setSoTimeout(0);
+    channel.configureBlocking(false);
+    protector.protect(channel.socket());
+    return channel;
+  }
+
   protected void handleUdpPacket(ByteBuffer payload, IpHeader ipHeader, UdpHeader udpHeader) {
     // try to find an existing session
     Session session = sessionManager.getSession(ipHeader.getSourceAddress(),
@@ -115,14 +123,11 @@ public class SessionHandler {
 
       DatagramChannel channel;
       try {
-        channel = DatagramChannel.open();
-        channel.socket().setSoTimeout(0);
-        channel.configureBlocking(false);
+        channel = prepareDatagramChannel();
       } catch (IOException ex) {
         logger.error("Error creating datagram channel for session: " + session);
         return;
       }
-      protector.protect(channel.socket());
 
       // apparently making a proper connection lowers latency with UDP - might want to verify this
       SocketAddress socketAddress =
