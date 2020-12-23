@@ -12,6 +12,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.concurrent.ThreadPoolExecutor;
+import lombok.Getter;
 import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionManager;
 import org.slf4j.Logger;
@@ -26,8 +27,8 @@ import org.slf4j.LoggerFactory;
 public class VpnWriter implements Runnable {
 
   private final Logger logger;
-  public static final Object syncSelector = new Object();
-  public static final Object syncSelector2 = new Object();
+  @Getter private final Object syncSelector  = new Object();
+  @Getter private final Object syncSelector2 = new Object();
   private final FileOutputStream outputStream;
   private final SessionManager sessionManager;
   private Selector selector;

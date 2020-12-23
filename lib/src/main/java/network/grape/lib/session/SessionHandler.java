@@ -34,6 +34,7 @@ public class SessionHandler {
   private final SocketProtector protector;
   private final Selector selector;
   private final SessionManager sessionManager;
+  private final VpnWriter vpnWriter;
 
   /**
    * Construct a SessionHandler with a SessionManager to keep track of sessions and SocketProtector
@@ -43,10 +44,11 @@ public class SessionHandler {
    * @param sessionManager the session manager which maps the SelectorKey and SessionKey to Session
    * @param protector the protector which prevents vpn loopback
    */
-  public SessionHandler(SessionManager sessionManager, SocketProtector protector) {
+  public SessionHandler(SessionManager sessionManager, SocketProtector protector, VpnWriter vpnWriter) {
     this.sessionManager = sessionManager;
     this.selector = sessionManager.getSelector();
     this.protector = protector;
+    this.vpnWriter = vpnWriter;
   }
 
   /**
@@ -98,6 +100,14 @@ public class SessionHandler {
 
   }
 
+  protected DatagramChannel prepareDatagramChannel() throws IOException {
+    DatagramChannel channel = DatagramChannel.open();
+    channel.socket().setSoTimeout(0);
+    channel.configureBlocking(false);
+    protector.protect(channel.socket());
+    return channel;
+  }
+
   protected void handleUdpPacket(ByteBuffer payload, IpHeader ipHeader, UdpHeader udpHeader) {
     // try to find an existing session
     Session session = sessionManager.getSession(ipHeader.getSourceAddress(),
@@ -113,14 +123,11 @@ public class SessionHandler {
 
       DatagramChannel channel;
       try {
-        channel = DatagramChannel.open();
-        channel.socket().setSoTimeout(0);
-        channel.configureBlocking(false);
+        channel = prepareDatagramChannel();
       } catch (IOException ex) {
         logger.error("Error creating datagram channel for session: " + session);
         return;
       }
-      protector.protect(channel.socket());
 
       // apparently making a proper connection lowers latency with UDP - might want to verify this
       SocketAddress socketAddress =
@@ -136,10 +143,12 @@ public class SessionHandler {
 
       try {
         // we sync on this so that we don't add to the selection set while its been used
-        synchronized (VpnWriter.syncSelector2) {
+        Object selectionLock = vpnWriter.getSyncSelector2();
+        synchronized (selectionLock) {
           selector.wakeup();
           // we sync on this so that the other thread doesn't call select() while we are doing this
-          synchronized (VpnWriter.syncSelector) {
+          Object readWriteLock = vpnWriter.getSyncSelector();
+          synchronized (readWriteLock) {
             SelectionKey selectionKey;
             if (channel.isConnected()) {
               selectionKey =
