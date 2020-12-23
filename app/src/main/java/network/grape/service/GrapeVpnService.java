@@ -138,13 +138,15 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_LEN);
 
     SessionManager sessionManager = new SessionManager();
-    SessionHandler handler = new SessionHandler(sessionManager, new SocketProtector(this));
 
     // background thread for writing output to the vpn outputstream
     final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
     ThreadPoolExecutor executor = new ThreadPoolExecutor(8, 100, 10, TimeUnit.SECONDS, taskQueue);
     vpnWriter = new VpnWriter(clientWriter, sessionManager, executor);
     vpnWriterThread = new Thread(vpnWriter);
+
+    SessionHandler handler = new SessionHandler(sessionManager, new SocketProtector(this), vpnWriter);
+
     vpnWriterThread.start();
 
     byte[] data;

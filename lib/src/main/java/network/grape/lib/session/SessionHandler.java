@@ -34,6 +34,7 @@ public class SessionHandler {
   private final SocketProtector protector;
   private final Selector selector;
   private final SessionManager sessionManager;
+  private final VpnWriter vpnWriter;
 
   /**
    * Construct a SessionHandler with a SessionManager to keep track of sessions and SocketProtector
@@ -43,10 +44,11 @@ public class SessionHandler {
    * @param sessionManager the session manager which maps the SelectorKey and SessionKey to Session
    * @param protector the protector which prevents vpn loopback
    */
-  public SessionHandler(SessionManager sessionManager, SocketProtector protector) {
+  public SessionHandler(SessionManager sessionManager, SocketProtector protector, VpnWriter vpnWriter) {
     this.sessionManager = sessionManager;
     this.selector = sessionManager.getSelector();
     this.protector = protector;
+    this.vpnWriter = vpnWriter;
   }
 
   /**
@@ -136,10 +138,10 @@ public class SessionHandler {
 
       try {
         // we sync on this so that we don't add to the selection set while its been used
-        synchronized (VpnWriter.syncSelector2) {
+        synchronized (vpnWriter.getSyncSelector2()) {
           selector.wakeup();
           // we sync on this so that the other thread doesn't call select() while we are doing this
-          synchronized (VpnWriter.syncSelector) {
+          synchronized (vpnWriter.getSyncSelector()) {
             SelectionKey selectionKey;
             if (channel.isConnected()) {
               selectionKey =

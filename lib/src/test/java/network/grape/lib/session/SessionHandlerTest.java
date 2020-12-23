@@ -32,6 +32,7 @@ import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.transport.tcp.TcpHeader;
 import network.grape.lib.transport.udp.UdpHeader;
 import network.grape.lib.vpn.SocketProtector;
+import network.grape.lib.vpn.VpnWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -42,16 +43,18 @@ import org.junit.jupiter.api.Test;
 public class SessionHandlerTest {
   SessionManager sessionManager;
   SocketProtector protector;
+  VpnWriter vpnWriter;
 
   @BeforeEach
   public void initTests() {
     sessionManager = mock(SessionManager.class);
     protector = mock(SocketProtector.class);
+    vpnWriter = mock(VpnWriter.class);
   }
 
   @Test
   public void handlePacketTest() throws PacketHeaderException, UnknownHostException {
-    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector));
+    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter));
 
     // empty stream
     ByteBuffer emptystream = ByteBuffer.allocate(0);
@@ -109,10 +112,9 @@ public class SessionHandlerTest {
   }
 
   // I think this is because constructing the key throws NPE.
-  @Disabled
   @Test
   public void handleUdpPacketTest() throws UnknownHostException {
-    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector));
+    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter));
     ByteBuffer buffer = mock(ByteBuffer.class);
     IpHeader ipHeader = mock(IpHeader.class);
     UdpHeader udpHeader = mock(UdpHeader.class);
@@ -120,9 +122,14 @@ public class SessionHandlerTest {
     when(ipHeader.getDestinationAddress()).thenReturn(Inet4Address.getLocalHost());
     when(ipHeader.getSourceAddress()).thenReturn(Inet4Address.getLocalHost());
 
+    // session not found
+    when(sessionManager.getSession(ipHeader.getSourceAddress(), udpHeader.getSourcePort(), ipHeader.getDestinationAddress(), udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL)).thenReturn(null);
+    sessionHandler.handleUdpPacket(buffer, ipHeader, udpHeader);
+
     // session found
+
     Session sessionMock = mock(Session.class);
-    when(sessionManager.getSession(any(), any(), any(), any(), any())).thenReturn(sessionMock);
+    when(sessionManager.getSession(ipHeader.getSourceAddress(), udpHeader.getSourcePort(), ipHeader.getDestinationAddress(), udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL)).thenReturn(sessionMock);
     sessionHandler.handleUdpPacket(buffer, ipHeader, udpHeader);
   }
 }
