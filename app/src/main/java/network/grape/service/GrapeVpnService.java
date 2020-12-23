@@ -144,13 +144,15 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     Map<String, Session> sessionTable = new ConcurrentHashMap<>();
     Selector selector = Selector.open();
     SessionManager sessionManager = new SessionManager(sessionTable, selector);
-    SessionHandler handler = new SessionHandler(sessionManager, new SocketProtector(this));
 
     // background thread for writing output to the vpn outputstream
     final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
     ThreadPoolExecutor executor = new ThreadPoolExecutor(8, 100, 10, TimeUnit.SECONDS, taskQueue);
     vpnWriter = new VpnWriter(clientWriter, sessionManager, executor);
     vpnWriterThread = new Thread(vpnWriter);
+
+    SessionHandler handler = new SessionHandler(sessionManager, new SocketProtector(this), vpnWriter);
+
     vpnWriterThread.start();
 
     byte[] data;
