@@ -11,11 +11,15 @@ import java.net.DatagramSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.nio.channels.Selector;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import network.grape.lib.PacketHeaderException;
+import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionHandler;
 import network.grape.lib.session.SessionManager;
 import network.grape.lib.vpn.ProtectSocket;
@@ -137,7 +141,9 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     // Allocate the buffer for a single packet.
     ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_LEN);
 
-    SessionManager sessionManager = new SessionManager();
+    Map<String, Session> sessionTable = new ConcurrentHashMap<>();
+    Selector selector = Selector.open();
+    SessionManager sessionManager = new SessionManager(sessionTable, selector);
     SessionHandler handler = new SessionHandler(sessionManager, new SocketProtector(this));
 
     // background thread for writing output to the vpn outputstream

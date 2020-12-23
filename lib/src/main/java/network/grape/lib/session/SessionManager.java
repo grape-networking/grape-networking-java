@@ -26,16 +26,15 @@ public class SessionManager {
   @Getter private Selector selector;
 
   /**
-   * Construct a new SessionManager which keeps track of sessions in a map.
+   * Dep injected constructor which provides the map and selector to make testing easier.
+   *
+   * @param table a Concurrent Map which is used to map the session key to the sesion
+   * @param selector the selector used for the entire VPN to prevent using tons of threads.
    */
-  public SessionManager() {
+  public SessionManager(Map<String, Session> table, Selector selector) {
     logger = LoggerFactory.getLogger(SessionManager.class);
-    table = new ConcurrentHashMap<>();
-    try {
-      selector = Selector.open();
-    } catch (IOException ex) {
-      logger.error("Failed to create socket selector: " + ex.toString());
-    }
+    this.table = table;
+    this.selector = selector;
   }
 
   public Session getSessionByKey(String key) {
