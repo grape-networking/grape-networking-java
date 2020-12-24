@@ -50,7 +50,7 @@ public class SocketDataWriterWorker extends SocketWorker implements Runnable {
     }
   }
 
-  private void writeUdp(Session session) {
+  protected void writeUdp(Session session) {
     if (!session.hasDataToSend()) {
       logger.info("No data to send for UDP session: " + sessionKey);
       return;
