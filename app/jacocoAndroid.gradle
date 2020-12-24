@@ -1,0 +1,31 @@
+// note: for this to work, we need to apply both the jacoco and the jacoco-android plugin
+
+// originally wanted to use this: https://github.com/arturdm/jacoco-android-gradle-plugin
+// but it no longer works with gradle >= 6.0
+// see: https://github.com/arturdm/jacoco-android-gradle-plugin/issues
+// so we're using this fork: https://github.com/autonomousapps/jacoco-android-gradle-plugin
+jacoco {
+    toolVersion = '0.8.5' // type String
+}
+
+tasks.withType(Test) {
+    jacoco.includeNoLocationClasses = true
+}
+
+jacocoAndroidUnitTestReport {
+    csv.enabled false
+    html.enabled true
+    xml.enabled true
+    destination "build/reports/jacoco"
+    excludes += [
+            '**/**Hilt**.class',
+    ]
+}
+
+// https://github.com/autonomousapps/jacoco-android-gradle-plugin/issues/1
+afterEvaluate {
+    def task = tasks.getByName("jacocoTestDebugUnitTestReport") as JacocoReportBase
+    def tree = fileTree(buildDir)
+    tree.include("outputs/code_coverage/**/*.ec")
+    task.executionData(tree)
+}

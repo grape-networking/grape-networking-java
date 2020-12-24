@@ -115,49 +115,7 @@ dependencies {
 }
 
 apply from: '../checkstyle.gradle'
-
-// Because the components are created only during the afterEvaluate phase, you must
-// configure your publications using the afterEvaluate() lifecycle method.
-afterEvaluate {
-    publishing {
-        publications {
-            debug(MavenPublication) {
-                from components.debug_aab
-                groupId = 'network.grape'
-                artifactId = 'app'
-                version = '1.0'
-
-                //The publication doesn't know about our dependencies, so we have to manually add them to the pom
-                pom.withXml {
-                    // for dependencies and exclusions
-                    def dependenciesNode = asNode().appendNode('dependencies')
-                    configurations.implementation.allDependencies.each { ModuleDependency dp ->
-                        def dependencyNode = dependenciesNode.appendNode('dependency')
-                        dependencyNode.appendNode('groupId', dp.group)
-                        dependencyNode.appendNode('artifactId', dp.name)
-                        dependencyNode.appendNode('version', dp.version)
-
-                        // for exclusions
-                        if (dp.excludeRules.size() > 0) {
-                            def exclusions = dependencyNode.appendNode('exclusions')
-                            dp.excludeRules.each { ExcludeRule ex ->
-                                def exclusion = exclusions.appendNode('exclusion')
-                                exclusion.appendNode('groupId', ex.group)
-                                exclusion.appendNode('artifactId', ex.module)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    task updatePom(type: Copy) {
-        from "$buildDir/publications/debug/pom-default.xml"
-        into "."
-        rename ("pom-default.xml", "pom.xml")
-        dependsOn(generatePomFileForDebugPublication)
-    }
-}
+apply from: 'dependencies.gradle'
 
 // disable the logback logging because it will fail unit tests where it can't access android storage
 configurations.all { config ->
@@ -173,27 +131,4 @@ configurations.all { config ->
     }
 }
 
-jacoco {
-    toolVersion = '0.8.5' // type String
-}
-
-tasks.withType(Test) {
-    jacoco.includeNoLocationClasses = true
-}
-
-jacocoAndroidUnitTestReport {
-    csv.enabled false
-    html.enabled true
-    xml.enabled true
-    destination "build/reports/jacoco"
-    excludes += [
-            '**/**Hilt**.class',
-    ]
-}
-
-afterEvaluate {
-    def task = tasks.getByName("jacocoTestDebugUnitTestReport") as JacocoReportBase
-    def tree = fileTree(buildDir)
-    tree.include("outputs/code_coverage/**/*.ec")
-    task.executionData(tree)
-}
+apply from: 'jacocoAndroid.gradle'
