@@ -3,8 +3,6 @@ package network.grape.app;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -58,5 +56,15 @@ public class GrapeVpnServiceTest {
     doReturn(fileDescriptor).when(vpnInterface).getFileDescriptor();
     doReturn(vpnInterface).when(builder).establish();
     assertTrue(grapeVpnService.startVpnService(builder));
+  }
+
+  @Test
+  public void startTrafficHandlerTest() throws IOException {
+    ParcelFileDescriptor vpnInterface = mock(ParcelFileDescriptor.class);
+    GrapeVpnService grapeVpnService = spy(new GrapeVpnService());
+    grapeVpnService.setVpnInterface(vpnInterface);
+    FileDescriptor fd = mock(FileDescriptor.class);
+    doReturn(fd).when(vpnInterface).getFileDescriptor();
+    grapeVpnService.startTrafficHandler();
   }
 }

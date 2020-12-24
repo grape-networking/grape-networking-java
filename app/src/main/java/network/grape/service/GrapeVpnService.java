@@ -25,6 +25,7 @@ import network.grape.lib.session.SessionHandler;
 import network.grape.lib.session.SessionManager;
 import network.grape.lib.vpn.ProtectSocket;
 import network.grape.lib.vpn.SocketProtector;
+import network.grape.lib.vpn.VpnReader;
 import network.grape.lib.vpn.VpnWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,11 +40,13 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
 
   // SLF4J
   private final Logger logger;
-  @Setter private ParcelFileDescriptor vpnInterface;
+  @Setter
+  private ParcelFileDescriptor vpnInterface;
   private Thread captureThread;
   private VpnWriter vpnWriter;
+  private VpnReader vpnReader;
   private Thread vpnWriterThread;
-  private boolean serviceValid;
+  private Thread vpnReaderThread;
 
   public GrapeVpnService() {
     logger = LoggerFactory.getLogger(VpnService.class);
@@ -143,9 +146,6 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     // Packets received need to be written to this output stream.
     FileOutputStream clientWriter = new FileOutputStream(vpnInterface.getFileDescriptor());
 
-    // Allocate the buffer for a single packet.
-    ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_LEN);
-
     Map<String, Session> sessionTable = new ConcurrentHashMap<>();
     Selector selector = Selector.open();
     SessionManager sessionManager = new SessionManager(sessionTable, selector);
@@ -153,50 +153,39 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     // background thread for writing output to the vpn outputstream
     final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
     ThreadPoolExecutor executor = new ThreadPoolExecutor(8, 100, 10, TimeUnit.SECONDS, taskQueue);
+
     vpnWriter = new VpnWriter(clientWriter, sessionManager, executor);
     vpnWriterThread = new Thread(vpnWriter);
 
-    SessionHandler handler = new SessionHandler(sessionManager, new SocketProtector(this), vpnWriter);
+    SessionHandler handler =
+        new SessionHandler(sessionManager, new SocketProtector(this), vpnWriter);
 
     vpnWriterThread.start();
 
-    byte[] data;
-    int length;
-    serviceValid = true;
-    while (serviceValid) {
-      data = packet.array();
-      length = clientReader.read(data);
-      if (length > 0) {
-        // logger.info("received packet from vpn client: " + length);
-        try {
-          packet.limit(length);
-          handler.handlePacket(packet);
-        } catch (PacketHeaderException | UnknownHostException ex) {
-          logger.error(ex.toString());
-        }
-        packet.clear();
-      } else {
-        try {
-          Thread.sleep(100);
-        } catch (InterruptedException e) {
-          logger.info("Failed to sleep: " + e.getMessage());
-        }
-      }
-    }
-    logger.info("startTrafficHandler() finished: serviceValid = " + serviceValid);
+    // Allocate the buffer for a single packet.
+    ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_LEN);
+    vpnReader = new VpnReader(clientReader, handler, packet);
+    vpnReaderThread = new Thread(vpnReader);
+    vpnReaderThread.start();
   }
 
   @Override
   public boolean stopService(Intent name) {
     logger.info("stopService(...)");
-    serviceValid = false;
     return super.stopService(name);
   }
 
   @Override
   public void onDestroy() {
     logger.info("onDestroy");
-    serviceValid = false;
+
+    if (vpnReader != null) {
+      vpnReader.shutdown();
+    }
+
+    if (vpnReaderThread != null) {
+      vpnReaderThread.interrupt();
+    }
 
     if (vpnWriter != null) {
       vpnWriter.shutdown();

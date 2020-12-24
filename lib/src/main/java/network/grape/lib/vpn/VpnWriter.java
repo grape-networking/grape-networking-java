@@ -27,13 +27,14 @@ import org.slf4j.LoggerFactory;
 public class VpnWriter implements Runnable {
 
   private final Logger logger;
-  @Getter private final Object syncSelector  = new Object();
-  @Getter private final Object syncSelector2 = new Object();
+  @Getter
+  private final Object syncSelector = new Object();
+  @Getter
+  private final Object syncSelector2 = new Object();
   private final FileOutputStream outputStream;
   private final SessionManager sessionManager;
-  private Selector selector;
-  //create thread pool for reading/writing data to socket
-  private ThreadPoolExecutor workerPool;
+  // create thread pool for reading/writing data to socket
+  private final ThreadPoolExecutor workerPool;
   private volatile boolean running;
 
   /**
@@ -63,7 +64,7 @@ public class VpnWriter implements Runnable {
    */
   public void run() {
     logger.info("VpnWriter starting in the background");
-    selector = sessionManager.getSelector();
+    Selector selector = sessionManager.getSelector();
     running = true;
     while (isRunning()) {
 
@@ -75,6 +76,7 @@ public class VpnWriter implements Runnable {
       } catch (IOException ex) {
         logger.error("Error in selector.select(): " + ex.toString());
         try {
+          // todo: remove this and make it spin on select
           Thread.sleep(100);
         } catch (InterruptedException e) {
           logger.error(e.toString());
