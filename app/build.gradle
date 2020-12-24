@@ -31,7 +31,7 @@ apply plugin: 'maven-publish'
 
 android {
     compileSdkVersion 30
-    buildToolsVersion "30.0.2"
+    buildToolsVersion "30.0.3"
     defaultConfig {
         applicationId "network.grape.app"
         minSdkVersion 18 // want 15, but uiautomator requires 18
@@ -47,6 +47,8 @@ android {
         explainIssues true
         xmlOutput file("build/reports/lint/report.xml")
         htmlOutput file("build/reports/lint/report.html")
+        disable "UnsafeExperimentalUsageError",
+                "UnsafeExperimentalUsageWarning"
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
