@@ -40,13 +40,12 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
 
   // SLF4J
   private final Logger logger;
-  @Setter
-  private ParcelFileDescriptor vpnInterface;
-  private Thread captureThread;
-  private VpnWriter vpnWriter;
-  private VpnReader vpnReader;
-  private Thread vpnWriterThread;
-  private Thread vpnReaderThread;
+  @Setter private ParcelFileDescriptor vpnInterface;
+  @Setter private Thread captureThread;
+  @Setter private VpnWriter vpnWriter;
+  @Setter private VpnReader vpnReader;
+  @Setter private Thread vpnWriterThread;
+  @Setter private Thread vpnReaderThread;
 
   public GrapeVpnService() {
     logger = LoggerFactory.getLogger(VpnService.class);

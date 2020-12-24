@@ -66,5 +66,33 @@ public class GrapeVpnServiceTest {
     FileDescriptor fd = mock(FileDescriptor.class);
     doReturn(fd).when(vpnInterface).getFileDescriptor();
     grapeVpnService.startTrafficHandler();
+    grapeVpnService.onDestroy();
+  }
+
+  @Test public void onDestroyTest() throws IOException {
+    GrapeVpnService grapeVpnService = spy(new GrapeVpnService());
+    // everything null
+    grapeVpnService.onDestroy();
+
+    // vpninterface ioexception on close
+    ParcelFileDescriptor vpnInterface = mock(ParcelFileDescriptor.class);
+    grapeVpnService.setVpnInterface(vpnInterface);
+    doThrow(IOException.class).when(vpnInterface).close();
+    grapeVpnService.onDestroy();
+
+    // capturethread !null
+    doNothing().when(vpnInterface).close();
+    Thread captureThread = mock(Thread.class);
+    grapeVpnService.setCaptureThread(captureThread);
+    grapeVpnService.onDestroy();
+
+    // capture thread != null, isalive true
+    // can't cover this because we can't mock the final method isAlive without PowerMockito, but
+    // it's not available to use with Junit5.
+//    doNothing().when(vpnInterface).close();
+//    captureThread = mock(Thread.class);
+//    doReturn(true).doReturn(false).when(captureThread).isAlive();
+//    grapeVpnService.setCaptureThread(captureThread);
+//    grapeVpnService.onDestroy();
   }
 }
