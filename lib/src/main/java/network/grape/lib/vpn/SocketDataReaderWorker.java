@@ -24,11 +24,8 @@ import org.slf4j.LoggerFactory;
  * clients. In the case of the TCP connection, it also writes FIN packets when the connection
  * terminates.
  */
-public class SocketDataReaderWorker implements Runnable {
+public class SocketDataReaderWorker extends SocketWorker implements Runnable {
   private final Logger logger;
-  private final SessionManager sessionManager;
-  private FileOutputStream outputStream;
-  private String sessionKey;
 
   /**
    * Construct a new read worker.
@@ -38,10 +35,8 @@ public class SocketDataReaderWorker implements Runnable {
    */
   SocketDataReaderWorker(FileOutputStream outputStream, String sessionKey,
                          SessionManager sessionManager) {
+    super(outputStream, sessionKey, sessionManager);
     this.logger = LoggerFactory.getLogger(SocketDataReaderWorker.class);
-    this.outputStream = outputStream;
-    this.sessionKey = sessionKey;
-    this.sessionManager = sessionManager;
   }
 
   @Override
@@ -64,37 +59,8 @@ public class SocketDataReaderWorker implements Runnable {
       return;
     }
 
-    // todo: find a way to factor this into common code with the writer
     if (session.isAbortingConnection()) {
-      logger.info("Removing aborted connection -> " + sessionKey);
-      session.getSelectionKey().cancel();
-
-      if (channel instanceof SocketChannel) {
-        try {
-          SocketChannel socketChannel = (SocketChannel) channel;
-          if (socketChannel.isConnected()) {
-            socketChannel.close();
-          }
-        } catch (IOException e) {
-          logger.error("Error closing the socket channel: " + e.toString());
-          e.printStackTrace();
-        }
-      } else if (channel instanceof DatagramChannel) {
-        try {
-          DatagramChannel datagramChannel = (DatagramChannel) channel;
-          if (datagramChannel.isConnected()) {
-            datagramChannel.close();
-          }
-        } catch (IOException e) {
-          logger.error("Error closing the datagram channel: " + e.toString());
-          e.printStackTrace();
-        }
-      } else {
-        logger.error("Channel isn't Socket or Datagram channel");
-        return;
-      }
-
-      sessionManager.closeSession(session);
+      abortSession(session);
     } else {
       session.setBusyRead(false);
     }

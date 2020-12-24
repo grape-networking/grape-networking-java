@@ -17,18 +17,13 @@ import org.slf4j.LoggerFactory;
  * Background task which writes data to the outgoing channel, or in the case of an Exception for a
  * TCP connection, writes an RST to the VPN stream to reset the connection.
  */
-public class SocketDataWriterWorker implements Runnable {
+public class SocketDataWriterWorker extends SocketWorker implements Runnable {
   private final Logger logger;
-  private FileOutputStream outputStream; // really only used for sending RST packet on TCP
-  private String sessionKey;
-  private SessionManager sessionManager;
 
   SocketDataWriterWorker(FileOutputStream outputStream, String sessionKey,
                          SessionManager sessionManager) {
+    super(outputStream, sessionKey, sessionManager);
     this.logger = LoggerFactory.getLogger(SocketDataWriterWorker.class);
-    this.outputStream = outputStream;
-    this.sessionKey = sessionKey;
-    this.sessionManager = sessionManager;
   }
 
   @Override
@@ -51,35 +46,7 @@ public class SocketDataWriterWorker implements Runnable {
 
     // todo: find a way to factor this into common code with the reader
     if (session.isAbortingConnection()) {
-      logger.info("Removing aborted connection -> " + sessionKey);
-      session.getSelectionKey().cancel();
-
-      if (channel instanceof SocketChannel) {
-        try {
-          SocketChannel socketChannel = (SocketChannel) channel;
-          if (socketChannel.isConnected()) {
-            socketChannel.close();
-          }
-        } catch (IOException e) {
-          logger.error("Error closing the socket channel: " + e.toString());
-          e.printStackTrace();
-        }
-      } else if (channel instanceof DatagramChannel) {
-        try {
-          DatagramChannel datagramChannel = (DatagramChannel) channel;
-          if (datagramChannel.isConnected()) {
-            datagramChannel.close();
-          }
-        } catch (IOException e) {
-          logger.error("Error closing the datagram channel: " + e.toString());
-          e.printStackTrace();
-        }
-      } else {
-        logger.error("Channel isn't Socket or Datagram channel");
-        return;
-      }
-
-      sessionManager.closeSession(session);
+      abortSession(session);
     }
   }
 
