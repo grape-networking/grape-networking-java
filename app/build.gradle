@@ -18,6 +18,7 @@ buildscript {
       classpath "de.mannodermaus.gradle.plugins:android-junit5:1.7.0.0"
       classpath "com.vanniktech:gradle-android-junit-jacoco-plugin:0.16.0"
       classpath "com.google.dagger:hilt-android-gradle-plugin:${hiltVersion}"
+      classpath "com.hiya:jacoco-android:0.2"
   }
 }
 
@@ -25,6 +26,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'de.mannodermaus.android-junit5'
 apply plugin: 'dagger.hilt.android.plugin'
 apply plugin: 'jacoco'
+apply plugin: 'com.hiya.jacoco-android'
 apply plugin: 'maven-publish'
 
 android {
@@ -173,4 +175,25 @@ configurations.all { config ->
 
 jacoco {
     toolVersion = '0.8.5' // type String
+}
+
+tasks.withType(Test) {
+    jacoco.includeNoLocationClasses = true
+}
+
+jacocoAndroidUnitTestReport {
+    csv.enabled false
+    html.enabled true
+    xml.enabled true
+    destination "build/reports/jacoco"
+    excludes += [
+            '**/**Hilt**.class',
+    ]
+}
+
+afterEvaluate {
+    def task = tasks.getByName("jacocoTestDebugUnitTestReport") as JacocoReportBase
+    def tree = fileTree(buildDir)
+    tree.include("outputs/code_coverage/**/*.ec")
+    task.executionData(tree)
 }

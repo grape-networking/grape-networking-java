@@ -82,7 +82,7 @@ jobs:
           disable-animations: true
           profile: Nexus 5X
           emulator-options: -no-snapshot -no-window -no-boot-anim -camera-back emulated -camera-front emulated -gpu swiftshader_indirect
-          script: ./gradlew app:connectedCheck
+          script: ./gradlew app:connectedCheck && ./gradlew app:jacocoTestDebugUnitTestReport
       - uses: actions/upload-artifact@v2
         with:
           name: app-reports
