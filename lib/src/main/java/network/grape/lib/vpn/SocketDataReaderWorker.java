@@ -2,6 +2,7 @@ package network.grape.lib.vpn;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.NotYetConnectedException;
@@ -66,7 +67,23 @@ public class SocketDataReaderWorker extends SocketWorker implements Runnable {
     }
   }
 
-  private void readUdp(Session session) {
+  protected boolean verifyPacketData(byte[] packetData) {
+    logger.debug("packet data len: " + packetData.length);
+    try {
+      ByteBuffer t = ByteBuffer.allocate(packetData.length);
+      t.put(packetData);
+      t.rewind();
+      IpHeader testip = Ip4Header.parseBuffer(t);
+      UdpHeader test = UdpHeader.parseBuffer(t);
+      logger.debug(testip.toString() + " " + test.toString());
+    } catch (PacketHeaderException | UnknownHostException e) {
+      logger.error("Problem constructing packet from previous headers: " + e.toString());
+      return false;
+    }
+    return true;
+  }
+
+  protected void readUdp(Session session) {
     DatagramChannel channel = (DatagramChannel) session.getChannel();
     ByteBuffer buffer = ByteBuffer.allocate(Constants.MAX_RECEIVE_BUFFER_SIZE);
     int len;
@@ -94,18 +111,11 @@ public class SocketDataReaderWorker extends SocketWorker implements Runnable {
           byte[] packetData = UdpPacketFactory.createResponsePacket(session.getLastIpHeader(),
               (UdpHeader) session.getLastTransportHeader(), data);
 
-          System.out.println("packet data len: " + packetData.length);
-          try {
-            ByteBuffer t = ByteBuffer.allocate(packetData.length);
-            t.put(packetData);
-            t.rewind();
-            IpHeader testip = Ip4Header.parseBuffer(t);
-            UdpHeader test = UdpHeader.parseBuffer(t);
-            System.out.println(testip.toString() + " " + test.toString());
-          } catch (PacketHeaderException e) {
-            e.printStackTrace();
+          if (verifyPacketData(packetData)) {
+            outputStream.write(packetData);
+          } else {
+            logger.warn("Skipping writing packet back to VPN because verification failed");
           }
-          outputStream.write(packetData);
           buffer.clear();
         }
       } while (len > 0);

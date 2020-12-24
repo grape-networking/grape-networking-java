@@ -38,7 +38,7 @@ public class SessionManagerTest {
     // empty map
     AbstractSelectableChannel channel = mock(AbstractSelectableChannel.class);
     Session s = sessionManager.getSessionByChannel(channel);
-    assertEquals(null, s);
+    assertNull(s);
 
     // map has Sessions, one matches, one doesn't
     Session session = mock(Session.class);
