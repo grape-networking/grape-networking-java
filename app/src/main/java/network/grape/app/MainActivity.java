@@ -18,6 +18,7 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.List;
+import lombok.Generated;
 import network.grape.lib.util.Constants;
 import network.grape.service.GrapeVpnService;
 import org.slf4j.Logger;
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
   /**
    * This should be removed eventually - but for now its a good way to see if VPN is working.
    */
+  @Generated
   private void testVpn() {
     new Thread(() -> {
       try {

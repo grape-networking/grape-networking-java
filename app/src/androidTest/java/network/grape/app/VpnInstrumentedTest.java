@@ -92,6 +92,8 @@ public class VpnInstrumentedTest {
           System.out.println("There is no permissions dialog to interact with");
         }
       }
+    } else {
+      System.out.println("API is too old, can't get permissions");
     }
   }
 }

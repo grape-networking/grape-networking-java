@@ -18,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import lombok.Setter;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionHandler;
@@ -37,12 +38,16 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
   private static final int MAX_PACKET_LEN = 1500;
 
   // SLF4J
-  private final Logger logger = LoggerFactory.getLogger(VpnService.class);
-  private ParcelFileDescriptor vpnInterface;
+  private final Logger logger;
+  @Setter private ParcelFileDescriptor vpnInterface;
   private Thread captureThread;
   private VpnWriter vpnWriter;
   private Thread vpnWriterThread;
   private boolean serviceValid;
+
+  public GrapeVpnService() {
+    logger = LoggerFactory.getLogger(VpnService.class);
+  }
 
   @Override
   public void onCreate() {
@@ -83,7 +88,8 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     logger.info("running vpn service");
 
     try {
-      if (startVpnService()) {
+      Builder builder = new Builder();
+      if (startVpnService(builder)) {
         logger.info("VPN Service started");
         startTrafficHandler();
         logger.info("Traffic handler terminated");
@@ -100,7 +106,7 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
    *
    * @return boolean true if the service started successfully, false otherwise
    */
-  boolean startVpnService() {
+  public boolean startVpnService(Builder builder) {
     // If the old interface has exactly the same parameters, use it!
     if (vpnInterface != null) {
       logger.info("Using the previous interface");
@@ -109,10 +115,9 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
 
     logger.info("startVpnService => create builder");
     // Configure a builder while parsing the parameters.
-    Builder builder = new Builder()
-        .addAddress("10.101.0.1", 32)
-        .addRoute("0.0.0.0", 0)
-        .setSession("GrapeVpn");
+    builder.addAddress("10.101.0.1", 32);
+    builder.addRoute("0.0.0.0", 0);
+    builder.setSession("GrapeVpn");
     vpnInterface = builder.establish();
 
     if (vpnInterface != null) {
@@ -130,7 +135,7 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
    *
    * @throws IOException if reading from the VPN stream fails.
    */
-  void startTrafficHandler() throws IOException {
+  public void startTrafficHandler() throws IOException {
     logger.info("startTrafficHandler() :traffic handling starting");
     // Packets to be sent are queued in this input stream.
     FileInputStream clientReader = new FileInputStream(vpnInterface.getFileDescriptor());

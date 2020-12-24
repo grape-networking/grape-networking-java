@@ -124,6 +124,11 @@ configurations.all { config ->
         exclude group: "com.github.tony19", module: "logback-android"
     }
 
+    if (config.name.contains('Unit')) {
+        println "Replacing module in configuration " + config.name
+        exclude group: "uk.org.lidalia", module: "slf4j-test"
+    }
+
     // can't assemble AndroidTest with mockito: https://github.com/mockito/mockito/issues/2007
     if (config.name.contains('Android')) {
         println "Replacing module in configuration " + config.name

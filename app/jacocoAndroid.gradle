@@ -26,6 +26,6 @@ jacocoAndroidUnitTestReport {
 afterEvaluate {
     def task = tasks.getByName("jacocoTestDebugUnitTestReport") as JacocoReportBase
     def tree = fileTree(buildDir)
-    tree.include("outputs/code_coverage/**/*.ec")
+    tree.include("**/*.ec")
     task.executionData(tree)
 }
