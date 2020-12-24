@@ -10,6 +10,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 
+import android.content.Intent;
 import android.net.VpnService;
 import android.os.ParcelFileDescriptor;
 import java.io.FileDescriptor;
@@ -94,5 +95,20 @@ public class GrapeVpnServiceTest {
 //    doReturn(true).doReturn(false).when(captureThread).isAlive();
 //    grapeVpnService.setCaptureThread(captureThread);
 //    grapeVpnService.onDestroy();
+  }
+
+  @Test public void onStartCommandTest() {
+    GrapeVpnService grapeVpnService = spy(new GrapeVpnService());
+
+    // null intent
+    grapeVpnService.onStartCommand(null, 0, 0);
+
+    // non-null intent
+    Intent intent = mock(Intent.class);
+    grapeVpnService.onStartCommand(intent, 0, 0);
+
+    // non-null intent, non-null cap thread
+    grapeVpnService.onStartCommand(intent, 0, 0);
+    grapeVpnService.onDestroy();
   }
 }
