@@ -33,11 +33,18 @@ public class UdpPacketFactory {
     int totalLength = 0;
     byte[] ipData;
 
+    // this must be computed before ipheader processing so that the ipheader has the correct payload
+    // length
+    int udpLen = UDP_HEADER_LEN;
+    if (packetData != null) {
+      udpLen += packetData.length;
+    }
+
     if (ipHeader instanceof Ip4Header) {
       // todo: set may fragment to false
       Ip4Header ip4Header = (Ip4Header) ipHeader;
       ip4Header.setId(PacketUtil.getPacketId());
-      totalLength = (ip4Header.getIhl() * TCP_WORD_LEN) + UDP_HEADER_LEN;
+      totalLength = (ip4Header.getIhl() * TCP_WORD_LEN) + udpLen;
       ip4Header.setLength(totalLength);
       ipData = ipHeader.toByteArray();
       byte[] ipChecksum = PacketUtil.calculateChecksum(ipData, 0, ipData.length);
@@ -49,12 +56,9 @@ public class UdpPacketFactory {
     }
 
     System.out.println("ipdata len: " + ipData.length);
+    byte[] buffer = new byte[totalLength];
 
     //copy ipdata into the destination buffer
-    if (packetData != null) {
-      totalLength += packetData.length;
-    }
-    byte[] buffer = new byte[totalLength];
     System.arraycopy(ipData, 0, buffer, 0, ipData.length);
 
     // copy Udp header to buffer, swap the src and dest ports
@@ -62,6 +66,7 @@ public class UdpPacketFactory {
     UdpHeader udpHeader =
         new UdpHeader(udp.getDestinationPort(), udp.getSourcePort(), udp.getLength(),
             udp.getChecksum());
+    udpHeader.setLength(udpLen);
     byte[] udpData = udpHeader.toByteArray();
     System.arraycopy(udpData, 0, buffer, start, udpData.length);
     start += udpData.length;

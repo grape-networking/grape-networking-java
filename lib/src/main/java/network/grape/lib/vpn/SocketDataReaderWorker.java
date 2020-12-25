@@ -16,6 +16,7 @@ import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionManager;
 import network.grape.lib.transport.udp.UdpHeader;
 import network.grape.lib.transport.udp.UdpPacketFactory;
+import network.grape.lib.util.BufferUtil;
 import network.grape.lib.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,14 +69,15 @@ public class SocketDataReaderWorker extends SocketWorker implements Runnable {
   }
 
   protected boolean verifyPacketData(byte[] packetData) {
-    logger.debug("packet data len: " + packetData.length);
+    logger.info("packet data len: " + packetData.length);
     try {
       ByteBuffer t = ByteBuffer.allocate(packetData.length);
       t.put(packetData);
       t.rewind();
       IpHeader testip = Ip4Header.parseBuffer(t);
       UdpHeader test = UdpHeader.parseBuffer(t);
-      logger.debug(testip.toString() + " " + test.toString());
+      logger.info(testip.toString() + "\n" + test.toString());
+      logger.info(BufferUtil.hexDump(packetData, 0, packetData.length, false, true));
     } catch (PacketHeaderException | UnknownHostException e) {
       logger.error("Problem constructing packet from previous headers: " + e.toString());
       return false;

@@ -14,10 +14,10 @@ import java.net.SocketException;
  */
 public class UdpServer {
 
-  private static final int DEFAULT_PORT = 9999;
+  private static final int DEFAULT_PORT = 8888;
   private DatagramSocket socket;
 
-  public UdpServer() throws SocketException  {
+  public UdpServer() throws SocketException {
     socket = new DatagramSocket(DEFAULT_PORT);
   }
 
@@ -27,14 +27,21 @@ public class UdpServer {
       DatagramPacket request = new DatagramPacket(buffer, MAX_RECEIVE_BUFFER_SIZE);
       socket.receive(request);
 
-      System.out.println("Got Data, sending back");
+      System.out.println("Got Data." + request.getLength() + " bytes from: " +
+          request.getSocketAddress().toString());
+
+      byte[] recv = new byte[request.getLength()];
+      System.arraycopy(request.getData(), 0, recv, 0, request.getLength());
+
+      System.out.println(new String(recv));
 
       InetAddress clientAddress = request.getAddress();
       int clientPort = request.getPort();
 
       byte[] sendback = "GOT IT".getBytes();
 
-      DatagramPacket response = new DatagramPacket(sendback, sendback.length, clientAddress, clientPort);
+      DatagramPacket response =
+          new DatagramPacket(sendback, sendback.length, clientAddress, clientPort);
       socket.send(response);
     }
   }
