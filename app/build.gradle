@@ -120,7 +120,7 @@ dependencies {
 }
 
 apply from: '../checkstyle.gradle'
-//apply from: 'dependencies.gradle'
+apply from: 'dependencies.gradle'
 
 // disable the logback logging because it will fail unit tests where it can't access android storage
 configurations.all { config ->
