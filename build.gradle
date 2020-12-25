@@ -21,4 +21,7 @@ allprojects {
             url "https://plugins.gradle.org/m2/"
         }
     }
+    configurations.all {
+        resolutionStrategy.force 'org.objenesis:objenesis:2.6'
+    }
 }

@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
   /**
    * Launch intent for user approval of VPN connection.
    */
-  private void startVpn() {
+  public void startVpn() {
     // check for VPN already running
     try {
       if (!checkForActiveInterface("tun0")) {
@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
           onActivityResult(0, RESULT_OK, null);
         }
       }
-    } catch (Exception e) {
+    } catch (SocketException e) {
       logger.error("Exception checking network interfaces :" + e.getMessage());
       e.printStackTrace();
     }
@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
    * @return true if interface exists and is active
    * @throws Exception throws Exception
    */
-  private boolean checkForActiveInterface(String networkInterfaceName) throws Exception {
+  public boolean checkForActiveInterface(String networkInterfaceName) throws SocketException {
     List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
     for (NetworkInterface networkInterface : interfaces) {
       if (networkInterface.getName().equals(networkInterfaceName)) {
