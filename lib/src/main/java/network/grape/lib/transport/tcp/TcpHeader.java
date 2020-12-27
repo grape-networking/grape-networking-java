@@ -91,4 +91,103 @@ public class TcpHeader implements TransportHeader {
 
     return buffer.array();
   }
+
+  public boolean isECN() {
+    return ((flags & 0x100) >> 8) == 1;
+  }
+
+  public boolean isCWR() {
+    return ((flags & 0x80) >> 7) == 1;
+  }
+
+  public boolean isECE() {
+    return ((flags & 0x40) >> 6) == 1;
+  }
+
+  public boolean isURG() {
+    return ((flags & 0x20) >> 5) == 1;
+  }
+
+  public boolean isACK() {
+    return ((flags & 0x10) >> 4) == 1;
+  }
+
+  public boolean isPSH() {
+    return ((flags & 0x8) >> 3) == 1;
+  }
+
+  public boolean isRST() {
+    return ((flags & 0x4) >> 2) == 1;
+  }
+
+  public boolean isSYN() {
+    return ((flags & 0x2) >> 1) == 1;
+  }
+
+  public boolean isFIN() {
+    return (flags & 0x1) == 1;
+  }
+
+  public void setECN(boolean ecn) {
+    flags = (flags & 0xFF); // clear the ECN bit
+    if (ecn) {
+      flags = flags + 0x100;
+    }
+  }
+
+  public void setCWR(boolean cwr) {
+    flags = (flags & 0x17F); // clear the CWR bit
+    if (cwr) {
+      flags = flags + 0x80;
+    }
+  }
+
+  public void setECE(boolean ece) {
+    flags = (flags & 0x1BF); // clear the ECE bit
+    if (ece) {
+      flags = flags + 0x40;
+    }
+  }
+
+  public void setURG(boolean urg) {
+    flags = (flags & 0x1DF); // clear the URG bit
+    if (urg) {
+      flags = flags + 0x20;
+    }
+  }
+
+  public void setACK(boolean ack) {
+    flags = (flags & 0x1EF); // clear the ACK bit
+    if (ack) {
+      flags = flags + 0x10;
+    }
+  }
+
+  public void setPSH(boolean psh) {
+    flags = (flags & 0x1F7); // clear the PSH bit
+    if (psh) {
+      flags = flags + 0x8;
+    }
+  }
+
+  public void setRST(boolean rst) {
+    flags = (flags & 0x1FB); // clear the RST bit
+    if (rst) {
+      flags = flags + 0x4;
+    }
+  }
+
+  public void setSYN(boolean syn) {
+    flags = (flags & 0x1FD); // clear the SYN bit
+    if (syn) {
+      flags = flags + 0x2;
+    }
+  }
+
+  public void setFIN(boolean fin) {
+    flags = (flags & 0x1FE); // clear the FIN bit
+    if (fin) {
+      flags = flags + 0x1;
+    }
+  }
 }

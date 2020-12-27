@@ -3,6 +3,7 @@ package network.grape.lib.session;
 import static network.grape.lib.network.ip.IpHeader.IP4_VERSION;
 import static network.grape.lib.network.ip.IpHeader.IP6_VERSION;
 
+
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
@@ -20,6 +21,7 @@ import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.transport.tcp.TcpHeader;
 import network.grape.lib.transport.udp.UdpHeader;
+import network.grape.lib.util.BufferUtil;
 import network.grape.lib.vpn.SocketProtector;
 import network.grape.lib.vpn.VpnWriter;
 import org.slf4j.Logger;
@@ -42,9 +44,10 @@ public class SessionHandler {
    * looping back into VPN.
    *
    * @param sessionManager the session manager which maps the SelectorKey and SessionKey to Session
-   * @param protector the protector which prevents vpn loopback
+   * @param protector      the protector which prevents vpn loopback
    */
-  public SessionHandler(SessionManager sessionManager, SocketProtector protector, VpnWriter vpnWriter) {
+  public SessionHandler(SessionManager sessionManager, SocketProtector protector,
+                        VpnWriter vpnWriter) {
     this.sessionManager = sessionManager;
     this.selector = sessionManager.getSelector();
     this.protector = protector;
@@ -83,8 +86,8 @@ public class SessionHandler {
 
     final TransportHeader transportHeader;
     if (ipHeader.getProtocol() == TransportHeader.UDP_PROTOCOL) {
-      transportHeader = UdpHeader.parseBuffer(stream);
-      handleUdpPacket(stream, ipHeader, (UdpHeader) transportHeader);
+      //transportHeader = UdpHeader.parseBuffer(stream);
+      //handleUdpPacket(stream, ipHeader, (UdpHeader) transportHeader);
     } else if (ipHeader.getProtocol() == TransportHeader.TCP_PROTOCOL) {
       transportHeader = TcpHeader.parseBuffer(stream);
       handleTcpPacket(stream, ipHeader, (TcpHeader) transportHeader);
@@ -95,15 +98,21 @@ public class SessionHandler {
   }
 
   protected void handleTcpPacket(ByteBuffer payload, IpHeader ipHeader, TcpHeader tcpHeader) {
-
-  }
-
-  protected DatagramChannel prepareDatagramChannel() throws IOException {
-    DatagramChannel channel = DatagramChannel.open();
-    channel.socket().setSoTimeout(0);
-    channel.configureBlocking(false);
-    protector.protect(channel.socket());
-    return channel;
+    if (tcpHeader.isSYN()) {
+      // 3-way handshake and create session
+      // set window scale, set reply time in options
+      logger.info("SYN");
+    } else if (tcpHeader.isACK()) {
+      logger.info("ACK");
+    } else if (tcpHeader.isFIN()) {
+      logger.info("FIN");
+    } else if (tcpHeader.isRST()) {
+      logger.info("RST");
+    } else {
+      byte[] tcpbuffer = tcpHeader.toByteArray();
+      logger.error("Unknown TCP header flag: " +
+          BufferUtil.hexDump(tcpbuffer, 0, tcpbuffer.length, false, false));
+    }
   }
 
   protected void handleUdpPacket(ByteBuffer payload, IpHeader ipHeader, UdpHeader udpHeader) {
@@ -184,5 +193,23 @@ public class SessionHandler {
     }
 
     //todo: keepalive?
+  }
+
+  protected DatagramChannel prepareDatagramChannel() throws IOException {
+    DatagramChannel channel = DatagramChannel.open();
+    channel.socket().setSoTimeout(0);
+    channel.configureBlocking(false);
+    protector.protect(channel.socket());
+    return channel;
+  }
+
+  /**
+   * Initiate a new TCP connection with the start of a session and replying with SYN-ACK.
+   * @param ip4Header
+   * @param tcpHeader
+   */
+  protected void replySynAck(Ip4Header ip4Header, TcpHeader tcpHeader) {
+    ip4Header.setId(0);
+
   }
 }
