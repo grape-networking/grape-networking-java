@@ -71,15 +71,15 @@ public class SessionHandler {
       throw new PacketHeaderException("Got a packet which isn't Ip4 or Ip6: " + version);
     }
 
-    if (!ipHeader.getDestinationAddress().equals(Inet4Address.getByName("192.168.1.20"))
-        && (!ipHeader.getSourceAddress().equals(Inet4Address.getByName("192.168.1.20")))) {
-      //logger.info(ipHeader.getDestinationAddress().toString() + " "
-      // + ipHeader.getSourceAddress().toString());
-      return;
-    }
-    logger.info("GOT TRAFFIC TO/FROM 192.168.1.20: " + ipHeader.getDestinationAddress().toString() + " "
-        + ipHeader.getSourceAddress().toString());
-    logger.info("PROTO: " + ipHeader.getProtocol());
+//    if (!ipHeader.getDestinationAddress().equals(Inet4Address.getByName("192.168.1.20"))
+//        && (!ipHeader.getSourceAddress().equals(Inet4Address.getByName("192.168.1.20")))) {
+//      //logger.info(ipHeader.getDestinationAddress().toString() + " "
+//      // + ipHeader.getSourceAddress().toString());
+//      return;
+//    }
+//    logger.info("GOT TRAFFIC TO/FROM 192.168.1.20: " + ipHeader.getDestinationAddress().toString() + " "
+//        + ipHeader.getSourceAddress().toString());
+//    logger.info("PROTO: " + ipHeader.getProtocol());
 
     final TransportHeader transportHeader;
     if (ipHeader.getProtocol() == TransportHeader.UDP_PROTOCOL) {
