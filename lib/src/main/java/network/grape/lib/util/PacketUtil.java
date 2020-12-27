@@ -70,6 +70,7 @@ public class PacketUtil {
       sum += PacketUtil.getNetworkInt(data, start, 2);
       start = start + 2;
     }
+
     //carry over one's complement
     while ((sum >> 16) > 0) {
       sum = (sum & 0xffff) + (sum >> 16);

@@ -77,7 +77,7 @@ public class SocketDataReaderWorker extends SocketWorker implements Runnable {
       IpHeader testip = Ip4Header.parseBuffer(t);
       UdpHeader test = UdpHeader.parseBuffer(t);
       logger.info(testip.toString() + "\n" + test.toString());
-      logger.info(BufferUtil.hexDump(packetData, 0, packetData.length, false, true));
+      logger.info(BufferUtil.hexDump(packetData, 0, packetData.length, true, true));
     } catch (PacketHeaderException | UnknownHostException e) {
       logger.error("Problem constructing packet from previous headers: " + e.toString());
       return false;
