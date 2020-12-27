@@ -100,6 +100,13 @@ public class BufferUtil {
     bb.putShort(position, (short) (value & 0xffff));
   }
 
+  public static void putUnsignedShort(byte[] buffer, int position, int value) {
+    byte highbyte = (byte) (value & 0xFF00 >> 8);
+    byte lowbyte = (byte) (value & 0x00FF);
+    buffer[position] = highbyte;
+    buffer[position+1] = lowbyte;
+  }
+
   // ---------------------------------------------------------------
 
   /**
