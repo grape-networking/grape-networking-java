@@ -27,13 +27,15 @@ test these locally before pushing you can do so as follows:
   - verify with `adb devices` should see a serial number followed by `device`
 
 # TODO
-- Setup dependency tree in github:
-  - https://docs.github.com/en/free-pro-team@latest/github/visualizing-repository-data-with-graphs/about-the-dependency-graph#supported-package-ecosystems
-  - https://github.com/isaacs/github/issues/1620
-- Figure out why the instrumented tests are being auto-skipped on the Nexus 6P but running fine on the Moto G7 Power
-- Test coverage for new code
 - Integrate a crash detection tool like firebase
 - Explore metrics pipeline for telemetry
+- UDP over Ipv6
+- TCP over Ipv4
+- TCP over Ipv6
+- Multiple outbound interfaces
+
+# Working
+- UDP over Ipv4
 
 # Similar projects
 - https://github.com/LipiLee/ToyShark
