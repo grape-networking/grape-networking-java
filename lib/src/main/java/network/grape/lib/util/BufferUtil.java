@@ -1,6 +1,13 @@
 package network.grape.lib.util;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 /**
  * A collection of functions making it easier to deal with buffers, particularly putting and getting
@@ -189,5 +196,63 @@ public class BufferUtil {
       offset++;
     }
     return output.toString();
+  }
+
+  /**
+   * Useful for reading back in a packet dump for testing.
+   * @param is inputstream of the file to read in (in UTF-8 encoding)
+   * @return a byte array of binary data
+   * @throws IOException
+   */
+  public static byte[] fromInputStreamToByteArray(InputStream is, boolean stripDummyEthHeader)
+      throws IOException {
+    BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+    int pos = 0;
+    int max_bytes = is.available();
+    byte[] buffer = new byte[max_bytes];
+
+    String line = br.readLine();
+    while (line != null) {
+      System.out.println(line);
+
+      int linepos = 0;
+      while (linepos + 1 < line.length()) {
+        if (!validHexChar(line.charAt(linepos))) {
+          linepos++;
+          continue;
+        }
+        if (validHexChar(line.charAt(linepos+1))) {
+          short highbyte = (short) (Character.digit(line.charAt(linepos), 16) << 4);
+          short lowbyte = (short) Character.digit(line.charAt(linepos + 1), 16);
+          byte joinedbyte = (byte)(highbyte + lowbyte);
+          buffer[pos++] = joinedbyte;
+          linepos += 2;
+        }
+      }
+      line = br.readLine();
+    }
+
+    if (stripDummyEthHeader) {
+      // make a new resized array which doesn't contain the extra space
+      byte[] returnbuffer = new byte[pos - 14];
+      System.arraycopy(buffer, 14, returnbuffer, 0, pos-14);
+      return returnbuffer;
+    } else {
+      // make a new resized array which doesn't contain the extra space
+      byte[] returnbuffer = new byte[pos];
+      System.arraycopy(buffer, 0, returnbuffer, 0, pos);
+      return returnbuffer;
+    }
+  }
+
+  static boolean validHexChar(char c) {
+    if (c >= '0' && c <= '9') {
+      return true;
+    } else if (c >= 'A' && c <= 'F') {
+      return true;
+    } else if (c >= 'a' && c <= 'f') {
+      return true;
+    }
+    return false;
   }
 }
