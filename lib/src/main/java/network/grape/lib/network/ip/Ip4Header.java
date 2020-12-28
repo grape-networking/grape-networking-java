@@ -19,10 +19,10 @@ import network.grape.lib.util.BufferUtil;
 public class Ip4Header implements IpHeader {
 
   private short version;
-  private short ihl;
+  private short ihl;    // this * TCP_WORD_LEN will give the header length
   private short dscp;
   private short ecn;
-  private int length;
+  private int length;   // this is total length of header + data
   private int id;
   private short flags;
   private int fragmentOffset;
