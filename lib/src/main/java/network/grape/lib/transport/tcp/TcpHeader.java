@@ -197,4 +197,192 @@ public class TcpHeader implements TransportHeader {
       flags = flags + 0x1;
     }
   }
+
+  public void swapSourceDestination() {
+    int temp = sourcePort;
+    sourcePort = destinationPort;
+    destinationPort = temp;
+  }
+
+  /**
+   * Parse the options from the stream. Assumes the stream is pointed to the start of the options.
+   *
+   * Options have the following format:
+   * - option type (1 byte)
+   * - option length (1 byte) [ including the type & length fields)
+   * - option value (option-length bytes)
+   *
+   * @param stream the stream to parse
+   * @param optionsLength the length of the options (should be pre-parsed from TcpHeader
+   * @return an ArrayList of filled in Options.
+   *
+   */
+  // https://www.iana.org/assignments/tcp-parameters/tcp-parameters.xhtml
+  // https://tools.ietf.org/html/rfc793
+  // https://tools.ietf.org/html/rfc2018
+  protected static ArrayList<TcpOption> parseOptions(ByteBuffer stream, int optionsLength) {
+    ArrayList<TcpOption> options = new ArrayList<>();
+    int pos = 0;
+    while (pos < optionsLength) {
+      int optionNumber = stream.get();
+      if (optionNumber == TcpOption.END_OF_OPTION_LIST.type) {
+        options.add(TcpOption.END_OF_OPTION_LIST);
+        pos++;
+        break;
+      } else if(optionNumber == TcpOption.NOP.type) {
+        options.add(TcpOption.NOP);
+        pos++;
+        continue;
+      } else if (optionNumber == TcpOption.MSS.type) {
+        int optionLength = stream.get();
+        TcpOption option = TcpOption.MSS;
+        option.setSize(optionLength);
+        if (optionLength != 4) {
+          System.out.println("MSS SHOULD BE LEN 4");
+          option.setValue(0);
+        } else {
+          // get a short because we have 2 spare bytes
+          int value = stream.getShort();
+          option.setValue(value);
+        }
+        options.add(option);
+        pos += optionLength;
+      } else if (optionNumber == TcpOption.WINDOW_SCALE.type) {
+        int optionLength = stream.get();
+        TcpOption option = TcpOption.WINDOW_SCALE;
+        option.setSize(optionLength);
+        if (optionLength != 3) {
+          System.out.println("WINDOW_SCALE SHOULD BE LEN 3");
+          option.setValue(0);
+          int i = optionLength - 2;
+          while (i > 0) {
+            stream.get();
+            i--;
+          }
+        } else {
+          // get a byte because we have one spare byte
+          int value = stream.get();
+          option.setValue(value);
+        }
+        options.add(option);
+        pos += optionLength;
+      } else if (optionNumber == TcpOption.SACK_PERMITTED.type) {
+        int optionLength = stream.get();
+        TcpOption option = TcpOption.SACK_PERMITTED;
+        option.setSize(optionLength);
+        if (optionLength != 2) {
+          System.out.println("SACK_PERMITTED SHOULD BE LEN 2");
+          int i = optionLength - 2;
+          while (i > 0) {
+            stream.get();
+            i--;
+          }
+        } else {
+          // don't get any bytes because len is only 2
+          System.out.println("IGNORING SACK_PERMITTED");
+        }
+        options.add(option);
+        pos += optionLength;
+      } else if (optionNumber == TcpOption.SACK.type) {
+        int optionLength = stream.get();
+        TcpOption option = TcpOption.SACK;
+        option.setSize(optionLength);
+        if (optionLength != 2) {
+          // don't get any bytes because len is only 2
+          System.out.println("SACK SHOULD BE LEN 2");
+          int i = optionLength - 2;
+          while (i > 0) {
+            stream.get();
+            i--;
+          }
+        } else {
+          System.out.println("GOT SACK BUT SHOULDN'T HAVE BECAUSE WE DIDN'T SEND SACK_PERMITTED");
+        }
+        options.add(option);
+        pos += optionLength;
+      } else if (optionNumber == TcpOption.ECHO.type) {
+        int optionLength = stream.get();
+        TcpOption option = TcpOption.ECHO;
+        option.setSize(optionLength);
+        if (optionLength != 6) {
+          System.out.println("ECHO SHOULD BE LEN 6");
+          int i = optionLength - 2;
+          while (i > 0) {
+            stream.get();
+            i--;
+          }
+        } else {
+          // get an int because we have 4 spare bytes
+          int value = stream.getInt();
+          option.setValue(value);
+        }
+        options.add(option);
+        pos += optionLength;
+      } else if (optionNumber == TcpOption.ECHO_REPLY.type) {
+        int optionLength = stream.get();
+        TcpOption option = TcpOption.ECHO_REPLY;
+        option.setSize(optionLength);
+        if (optionLength != 6) {
+          System.out.println("ECHO REPLY SHOULD BE LEN 6");
+          int i = optionLength - 2;
+          while (i > 0) {
+            stream.get();
+            i--;
+          }
+        } else {
+          // get an int because we have 4 spare bytes
+          int value = stream.getInt();
+          option.setValue(value);
+        }
+        options.add(option);
+        pos += optionLength;
+      } else if (optionNumber == TcpOption.TIMESTAMPS.type) {
+        // https://tools.ietf.org/html/rfc7323#page-12
+        // https://tools.ietf.org/id/draft-scheffenegger-tcpm-timestamp-negotiation-05.html#:~:text=A%20TCP%20may%20send%20the,%3E%20segment%20for%20the%20connection.%22
+        int optionLength = stream.get();
+        TcpOption option = TcpOption.TIMESTAMPS;
+        option.setSize(optionLength);
+        if (optionLength != 10) {
+          System.out.println("TIMESTAMP SHOULD BE LEN 10");
+          int i = optionLength - 2;
+          while (i > 0) {
+            stream.get();
+            i--;
+          }
+        } else {
+          // get two ints = 8 + type + len
+          int tsval = stream.getInt();
+          int tsecr = stream.getInt();
+          System.out.println("GOT TIMESTAMP: " + tsval + " " + tsecr);
+
+          // todo add the timestamp values to the option somehow
+        }
+        options.add(option);
+        pos += optionLength;
+      }
+    }
+    return options;
+  }
+
+  protected void putOptions(ByteBuffer buffer) {
+    for (TcpOption option : options) {
+      BufferUtil.putUnsignedByte(buffer, option.type);
+      if (option.type == TcpOption.END_OF_OPTION_LIST.type || option.type == TcpOption.NOP.type) {
+        continue;
+      }
+      BufferUtil.putUnsignedByte(buffer, option.size);
+
+      if (option.size == 3) {
+        BufferUtil.putUnsignedByte(buffer, option.value);
+      } else if (option.size == 4) {
+        BufferUtil.putUnsignedShort(buffer, option.value);
+      } else if (option.size == 6) {
+        BufferUtil.putUnsignedInt(buffer, option.value);
+      } else if (option.size == 10) {
+        // todo update this with byte array
+        BufferUtil.putUnsignedInt(buffer, option.value);
+        BufferUtil.putUnsignedInt(buffer, option.value);
+      }
+    }
+  }
 }
