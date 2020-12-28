@@ -27,11 +27,9 @@ import org.slf4j.LoggerFactory;
 public class VpnWriter implements Runnable {
 
   private final Logger logger;
-  @Getter
-  private final Object syncSelector = new Object();
-  @Getter
-  private final Object syncSelector2 = new Object();
-  private final FileOutputStream outputStream;
+  @Getter private final Object syncSelector = new Object();
+  @Getter private final Object syncSelector2 = new Object();
+  @Getter private final FileOutputStream outputStream;
   private final SessionManager sessionManager;
   // create thread pool for reading/writing data to socket
   private final ThreadPoolExecutor workerPool;
