@@ -91,4 +91,9 @@ public class Ip6Header implements IpHeader {
 
     return buffer.array();
   }
+
+  @Override
+  public int getHeaderLength() {
+    return IpHeader.IP6HEADER_LEN;
+  }
 }

@@ -130,4 +130,9 @@ public class Ip4Header implements IpHeader {
 
     return buffer.array();
   }
+
+  @Override
+  public int getHeaderLength() {
+    return ihl * IpHeader.IP4_WORD_LEN;
+  }
 }

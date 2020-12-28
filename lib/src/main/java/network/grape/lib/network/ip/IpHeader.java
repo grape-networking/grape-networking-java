@@ -16,6 +16,8 @@ public interface IpHeader {
 
   byte[] toByteArray();
 
+  int getHeaderLength();
+
   short IP4_VERSION = 0x04;
   short IP6_VERSION = 0x06;
   int IP4HEADER_LEN = 20;
