@@ -2,6 +2,7 @@ package network.grape.lib.session;
 
 import static network.grape.lib.network.ip.IpHeader.IP4_VERSION;
 import static network.grape.lib.network.ip.IpHeader.IP6_VERSION;
+import static network.grape.lib.transport.tcp.TcpPacketFactory.createSynAckPacketData;
 
 
 import java.io.IOException;
@@ -74,15 +75,15 @@ public class SessionHandler {
       throw new PacketHeaderException("Got a packet which isn't Ip4 or Ip6: " + version);
     }
 
-//    if (!ipHeader.getDestinationAddress().equals(Inet4Address.getByName("192.168.1.20"))
-//        && (!ipHeader.getSourceAddress().equals(Inet4Address.getByName("192.168.1.20")))) {
-//      //logger.info(ipHeader.getDestinationAddress().toString() + " "
-//      // + ipHeader.getSourceAddress().toString());
-//      return;
-//    }
-//    logger.info("GOT TRAFFIC TO/FROM 192.168.1.20: " + ipHeader.getDestinationAddress().toString() + " "
-//        + ipHeader.getSourceAddress().toString());
-//    logger.info("PROTO: " + ipHeader.getProtocol());
+    if (!ipHeader.getDestinationAddress().equals(Inet4Address.getByName("192.168.1.20"))
+        && (!ipHeader.getSourceAddress().equals(Inet4Address.getByName("192.168.1.20")))) {
+      //logger.info(ipHeader.getDestinationAddress().toString() + " "
+      // + ipHeader.getSourceAddress().toString());
+      return;
+    }
+    logger.info("GOT TRAFFIC TO/FROM 192.168.1.20: " + ipHeader.getDestinationAddress().toString() + " "
+        + ipHeader.getSourceAddress().toString());
+    logger.info("PROTO: " + ipHeader.getProtocol());
 
     final TransportHeader transportHeader;
     if (ipHeader.getProtocol() == TransportHeader.UDP_PROTOCOL) {
@@ -98,12 +99,17 @@ public class SessionHandler {
   }
 
   protected void handleTcpPacket(ByteBuffer payload, IpHeader ipHeader, TcpHeader tcpHeader) {
+    byte[] buffer = new byte[ipHeader.getHeaderLength() + tcpHeader.getHeaderLength()];
+    System.arraycopy(ipHeader.toByteArray(), 0, buffer, 0, ipHeader.getHeaderLength());
+    System.arraycopy(tcpHeader.toByteArray(), 0, buffer, ipHeader.getHeaderLength(), tcpHeader.getHeaderLength());
+
     if (tcpHeader.isSYN()) {
       // 3-way handshake and create session
       // set window scale, set reply time in options
-      logger.info("SYN");
+      logger.info("SYN: \n" + BufferUtil.hexDump(buffer, 0, buffer.length, true, true));
+      replySynAck(ipHeader, tcpHeader);
     } else if (tcpHeader.isACK()) {
-      logger.info("ACK");
+      logger.info("ACK: \n" + BufferUtil.hexDump(buffer, 0, buffer.length, true, true));
     } else if (tcpHeader.isFIN()) {
       logger.info("FIN");
     } else if (tcpHeader.isRST()) {
@@ -205,11 +211,25 @@ public class SessionHandler {
 
   /**
    * Initiate a new TCP connection with the start of a session and replying with SYN-ACK.
-   * @param ip4Header
+   *
+   * @param ipHeader
    * @param tcpHeader
    */
-  protected void replySynAck(Ip4Header ip4Header, TcpHeader tcpHeader) {
-    ip4Header.setId(0);
+  protected void replySynAck(IpHeader ipHeader, TcpHeader tcpHeader) {
+    // todo (jason): may need to set the ipv4 id here
+
+    byte[] synAck = createSynAckPacketData(ipHeader, tcpHeader);
+    logger.info("sending: SYN-ACK: \n" + BufferUtil.hexDump(synAck, 0, synAck.length, true, true));
+    Session session = new Session(ipHeader.getSourceAddress(), tcpHeader.getSourcePort(),
+        ipHeader.getDestinationAddress(), tcpHeader.getDestinationPort(),
+        TransportHeader.TCP_PROTOCOL);
+
+    // todo (jason): may need to set session values from tcp options here
+    try {
+      vpnWriter.getOutputStream().write(synAck);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
 
   }
 }
