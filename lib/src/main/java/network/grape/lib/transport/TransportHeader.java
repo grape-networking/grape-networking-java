@@ -10,6 +10,8 @@ public interface TransportHeader {
 
   byte[] toByteArray();
 
+  int getHeaderLength();
+
   byte UDP_PROTOCOL = 17;
   byte TCP_PROTOCOL = 6;
   int TCP_WORD_LEN = 4;

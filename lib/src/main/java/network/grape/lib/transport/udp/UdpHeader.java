@@ -51,4 +51,9 @@ public class UdpHeader implements TransportHeader {
     BufferUtil.putUnsignedShort(buffer, checksum);
     return buffer.array();
   }
+
+  @Override
+  public int getHeaderLength() {
+    return TransportHeader.UDP_HEADER_LEN;
+  }
 }
