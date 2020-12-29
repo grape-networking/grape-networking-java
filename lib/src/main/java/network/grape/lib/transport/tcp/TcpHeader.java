@@ -7,6 +7,7 @@ import lombok.Data;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.util.BufferUtil;
+import network.grape.lib.util.PacketUtil;
 
 /**
  * Attempts to process a buffer of bytes into a TCP header, or throws exceptions if its not
@@ -26,7 +27,8 @@ public class TcpHeader implements TransportHeader {
   private int windowSize;
   private int checksum;
   private int urgentPointer;
-  private ArrayList<TcpOption> options;
+  //private ArrayList<TcpOption> options;
+  private byte[] options;
 
   /**
    * Parses a stream for a TcpHeader.
@@ -57,11 +59,21 @@ public class TcpHeader implements TransportHeader {
         + " but there is only " + stream.remaining() + " bytes left");
     }
 
-    ArrayList<TcpOption> options = parseOptions(stream, optionsLength);
+    //ArrayList<TcpOption> options = parseOptions(stream, optionsLength);
+    byte[] options = new byte[optionsLength];
+    for (int i = 0; i < optionsLength; i++) {
+      stream.get();
+    }
+    //stream.get(options);
 
     return new TcpHeader(sourcePort, destinationPort, sequenceNumber, ackNumber, offset, flags,
         windowSize, checksum, urgentPointer, options);
   }
+
+//  public void clearOptions() {
+//    options = new ArrayList<>();
+//    offset = TCP_HEADER_LEN_NO_OPTIONS / TCP_WORD_LEN;
+//  }
 
   @Override
   public byte[] toByteArray() {
@@ -82,7 +94,8 @@ public class TcpHeader implements TransportHeader {
     BufferUtil.putUnsignedShort(buffer, urgentPointer);
 
     // todo: output options
-    putOptions(buffer);
+    //putOptions(buffer);
+    buffer.put(options);
 
     return buffer.array();
   }
@@ -368,11 +381,12 @@ public class TcpHeader implements TransportHeader {
           int tsval = stream.getInt();
           int tsecr = stream.getInt();
           System.out.println("GOT TIMESTAMP: " + tsval + " " + tsecr);
+          tsecr = (int)(System.currentTimeMillis() / 1000L);
+          System.out.println("Updated: " + tsval + " " + tsecr + " options: " + option.size);
           option.value = ByteBuffer.allocate(8);
-          option.value.putInt(tsval);
+          // swap the order to tsval and tsecr (we want tsval to be set with out own timestamp
           option.value.putInt(tsecr);
-
-          // todo add the timestamp values to the option somehow
+          option.value.putInt(tsval);
         }
         options.add(option);
         pos += optionLength;
@@ -381,17 +395,20 @@ public class TcpHeader implements TransportHeader {
     return options;
   }
 
-  protected void putOptions(ByteBuffer buffer) {
-    for (TcpOption option : options) {
-      BufferUtil.putUnsignedByte(buffer, option.type);
-      if (option.type == TcpOption.END_OF_OPTION_LIST.type || option.type == TcpOption.NOP.type) {
-        continue;
-      }
-      BufferUtil.putUnsignedByte(buffer, option.size);
-
-      if (option.size > 2) {
-        buffer.put(option.value);
-      }
-    }
-  }
+//  protected void putOptions(ByteBuffer buffer) {
+//    for (TcpOption option : options) {
+//      BufferUtil.putUnsignedByte(buffer, 0);
+//      if (option.type == TcpOption.END_OF_OPTION_LIST.type || option.type == TcpOption.NOP.type) {
+//        continue;
+//      }
+//      BufferUtil.putUnsignedByte(buffer, 0);
+//
+//      if (option.size > 2) {
+//        option.value.rewind();
+//        for(int i = 0; i < option.size; i++) {
+//          BufferUtil.putUnsignedByte(buffer, 0);
+//        }
+//      }
+//    }
+//  }
 }
