@@ -67,6 +67,16 @@ public class SessionManager {
   }
 
   /**
+   * Re-adds the session to the table to prevent garbage collector from claiming it (I guess its
+   * based on last usage?)
+   * @param session
+   */
+  public void keepAlive(Session session) {
+    if (session != null) {
+      table.put(session.getKey(), session);
+    }
+  }
+  /**
    * Stores a session in the map by key.
    * @param key the key to store the session in the map with
    * @param session the session to store

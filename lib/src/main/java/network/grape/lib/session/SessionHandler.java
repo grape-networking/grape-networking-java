@@ -252,8 +252,30 @@ public class SessionHandler {
         }
       }
 
+      if (tcpHeader.isPSH()) {
+        pushDataToDestination(session, tcpHeader);
+      } else if (tcpHeader.isFIN()) {
+        logger.info("FIN from VPN, will ack it");
+        ackFinAck(ipHeader, tcpHeader, session);
+      } else if (tcpHeader.isRST()) {
+        session.setAbortingConnection(true);
+      }
+
+      if (!session.isClientWindowFull() && !session.isAbortingConnection()) {
+        sessionManager.keepAlive(session);
+      }
+
     } else if (tcpHeader.isFIN()) {
       logger.info("FIN");
+      Session session =
+          sessionManager.getSession(ipHeader.getSourceAddress(), tcpHeader.getSourcePort(),
+              ipHeader.getDestinationAddress(), tcpHeader.getDestinationPort(),
+              TransportHeader.TCP_PROTOCOL);
+      if (session == null) {
+        ackFinAck(ipHeader, tcpHeader, session);
+      } else {
+        sessionManager.keepAlive(session);
+      }
     } else if (tcpHeader.isRST()) {
       logger.info("RST");
     } else {
@@ -353,9 +375,11 @@ public class SessionHandler {
     boolean isCorrupted = PacketUtil.isPacketCorrupted(tcpHeader);
     session.setPacketCorrupted(isCorrupted);
     if (isCorrupted) {
-      logger.error("Previous packet was corrupted, last ack# "  + tcpHeader.getAckNumber() + " for session: " + session.getKey());
+      logger.error("Previous packet was corrupted, last ack# " + tcpHeader.getAckNumber() +
+          " for session: " + session.getKey());
     }
-    if (tcpHeader.getAckNumber() > session.getSendUnack() || tcpHeader.getAckNumber() == session.getSendNext()) {
+    if (tcpHeader.getAckNumber() > session.getSendUnack() ||
+        tcpHeader.getAckNumber() == session.getSendNext()) {
       session.setAcked(true);
 
       if (tcpHeader.getWindowSize() > 0) {
@@ -364,12 +388,20 @@ public class SessionHandler {
       session.setSendUnack(tcpHeader.getAckNumber());
       session.setRecSequence(tcpHeader.getSequenceNumber());
       session.setTimestampReplyTo(tcpHeader.getTimestampSender());
-      session.setTimestampSender((int)System.currentTimeMillis());
+      session.setTimestampSender((int) System.currentTimeMillis());
     } else {
-      logger.debug("Not accepting ack# " + tcpHeader.getAckNumber() + ", it should be: " + session.getSendNext());
+      logger.debug("Not accepting ack# " + tcpHeader.getAckNumber() + ", it should be: " +
+          session.getSendNext());
       logger.debug("Previous sendUnack: " + session.getSendUnack());
       session.setAcked(false);
     }
+  }
+
+  protected void pushDataToDestination(Session session, TcpHeader tcpHeader) {
+    session.setDataForSendingReady(true);
+    session.setTimestampReplyTo(tcpHeader.getTimestampSender());
+    session.setTimestampSender((int)System.currentTimeMillis());
+    logger.info("set data ready for sending data to dest, bg will do it. data size: " + session.getSendingDataSize());
   }
 
   protected void sendFinAck(IpHeader ipHeader, TcpHeader tcpHeader, Session session) {
@@ -380,10 +412,31 @@ public class SessionHandler {
       vpnWriter.getOutputStream().write(data);
       logger.info("Wrote FIN-ACK for session: " + session.getKey());
     } catch (IOException e) {
-      logger.error("Failed to send FIN-ACK packet for session: " + session.getKey() + ":" + e.toString());
+      logger.error(
+          "Failed to send FIN-ACK packet for session: " + session.getKey() + ":" + e.toString());
     }
-    session.setSendNext(seq+1);
+    session.setSendNext(seq + 1);
     //avoid re-sending it, from here client should take care the rest
     session.setClosingConnection(false);
+  }
+
+  protected void ackFinAck(IpHeader ipHeader, TcpHeader tcpHeader, Session session) {
+    long ack = tcpHeader.getSequenceNumber() + 1;
+    long seq = tcpHeader.getAckNumber();
+    byte[] data = createFinAckData(ipHeader, tcpHeader, ack, seq, true, true);
+    try {
+      vpnWriter.getOutputStream().write(data);
+      if (session != null) {
+        session.getSelectionKey().cancel();
+        sessionManager.closeSession(session);
+        logger.info("ACK to client's FIN and close session: " + session.getKey());
+      }
+    } catch (IOException ex) {
+      if (session != null) {
+        logger.error("Failed to send FIN-ACK for session: " + session.getKey());
+      } else {
+        logger.error("Failed to send FIN-ACK for session: null");
+      }
+    }
   }
 }

@@ -61,6 +61,9 @@ public class Session {
   @Getter @Setter private int timestampSender = 0;
   @Getter @Setter private int timestampReplyTo = 0;
 
+  //track how many byte of data has been sent since last ACK from client
+  private volatile int sendAmountSinceLastAck = 0;
+
   private ByteArrayOutputStream sendingStream;
 
   /**
@@ -109,6 +112,14 @@ public class Session {
   }
 
   /**
+   * Returns the size of the data in the outgoing buffer to be sent.
+   * @return the size of the sending buffer.
+   */
+  public int getSendingDataSize(){
+    return sendingStream.size();
+  }
+
+  /**
    * Dequeue data for sending to server.
    * @return byte[] a byte array of data to be sent
    */
@@ -128,5 +139,14 @@ public class Session {
     this.sendWindowSize = sendWindowSize;
     this.sendWindowScale = sendWindowScale;
     this.sendWindow = sendWindowSize * sendWindowScale;
+  }
+
+  /**
+   * determine if client's receiving window is full or not.
+   * @return boolean
+   */
+  public boolean isClientWindowFull(){
+    return (sendWindow > 0 && sendAmountSinceLastAck >= sendWindow) ||
+        (sendWindow == 0 && sendAmountSinceLastAck > 65535);
   }
 }
