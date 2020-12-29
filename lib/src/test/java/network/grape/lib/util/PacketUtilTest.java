@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.network.ip.Ip4Header;
+import network.grape.lib.transport.tcp.TcpHeader;
 import network.grape.lib.transport.udp.UdpHeader;
 import network.grape.lib.transport.udp.UdpPacketFactory;
 import org.junit.jupiter.api.Test;
@@ -55,8 +56,8 @@ public class PacketUtilTest extends PacketUtil {
   }
 
   @Test
-  public void ipCheckSumTest() throws IOException, PacketHeaderException {
-    InputStream is = getClass().getClassLoader().getResourceAsStream("ip.txt");
+  public void ip4_udp_CheckSumTest() throws IOException, PacketHeaderException {
+    InputStream is = getClass().getClassLoader().getResourceAsStream("ip4_udp.txt");
     assertNotNull(is);
 
     // parse the raw packet data into IP and Transport packets
@@ -97,5 +98,35 @@ public class PacketUtilTest extends PacketUtil {
     assertEquals(ipResponse.getChecksum(), ip4Header.getChecksum());
 
     assertEquals(0xa15d, udpResponse.getChecksum());
+  }
+
+  @Test
+  public void ipv4_tcp_ChecksumTest() throws IOException, PacketHeaderException {
+    InputStream is = getClass().getClassLoader().getResourceAsStream("ip4_tcp.txt");
+    assertNotNull(is);
+
+    // parse the raw packet data into IP and Transport packets
+    byte[] rawbuffer = BufferUtil.fromInputStreamToByteArray(is, true);
+    ByteBuffer fullBuffer = ByteBuffer.allocate(rawbuffer.length);
+    fullBuffer.put(rawbuffer);
+    fullBuffer.rewind();
+
+    // assume there is no IP options, isolate the IP buffer so we can output it later
+    byte[] ipbuff = new byte[IP4HEADER_LEN];
+    System.arraycopy(rawbuffer, 0, ipbuff, 0, IP4HEADER_LEN);
+
+    // parse out the IP, TCP headers and payload
+    Ip4Header ip4Header = Ip4Header.parseBuffer(fullBuffer);
+    System.out.println("IPv4 Header: " + ip4Header.toString());
+    TcpHeader tcpHeader = TcpHeader.parseBuffer(fullBuffer);
+    System.out.println("TCP Header: " + tcpHeader.toString());
+    byte[] payload = new byte[fullBuffer.remaining()];
+    fullBuffer.get(payload);
+
+    // ensure the parsed IP buffer is the same as the original
+    byte[] parsedIpBuffer = ip4Header.toByteArray();
+    assertArrayEquals(ipbuff, parsedIpBuffer);
+    System.out.println(BufferUtil.hexDump(parsedIpBuffer, 0, parsedIpBuffer.length, false, false));
+
   }
 }
