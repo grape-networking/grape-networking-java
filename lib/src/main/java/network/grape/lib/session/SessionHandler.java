@@ -6,18 +6,21 @@ import static network.grape.lib.transport.tcp.TcpPacketFactory.createFinAckData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createResponseAckData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createRstData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createSynAckPacketData;
+import static network.grape.lib.util.Constants.MAX_RECEIVE_BUFFER_SIZE;
 
 
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.Ip6Header;
@@ -303,14 +306,83 @@ public class SessionHandler {
 
     // todo (jason): may need to set session values from tcp options here
 
-    if (!sessionManager.putSession(session)) {
-      // just in case we fail to add it (we should hopefully never get here)
-      logger.error("Unable to create a new session in the session manager for " + session);
+    if (sessionManager.getSessionByKey(session.getKey()) != null) {
+      logger.warn("Already have a connection active for session: " + session.getKey());
       return;
+    }
+
+    SocketChannel channel;
+    try {
+      channel = SocketChannel.open();
+      channel.socket().setKeepAlive(true);
+      channel.socket().setTcpNoDelay(true);
+      channel.socket().setSoTimeout(0);
+      channel.socket().setReceiveBufferSize(MAX_RECEIVE_BUFFER_SIZE);
+      channel.configureBlocking(false);
+    } catch(SocketException ex) {
+      logger.error("Error creating outgoing TCP session for: " + session.getKey() + " :" + ex.toString());
+      return;
+    } catch(IOException ex) {
+      logger.error("Failed to create socket channel: " + session.getKey() + " :" + ex.toString());
+      return;
+    }
+    logger.info("Created outgoing socketchannel for: " + session.getKey());
+    protector.protect(channel.socket());
+
+    // apparently making a proper connection lowers latency with UDP - might want to verify this
+    SocketAddress socketAddress =
+        new InetSocketAddress(ipHeader.getDestinationAddress(), tcpHeader.getDestinationPort());
+    try {
+      channel.connect(socketAddress);
+      session.setConnected(channel.isConnected());
+    } catch (IOException ex) {
+      logger.error("Error connection on TCP channel " + session + ":" + ex.toString());
+      ex.printStackTrace();
+      return;
+    }
+
+    // register for non-blocking operation
+    try {
+      Object selectionLock = vpnWriter.getSyncSelector2();
+      synchronized(selectionLock){
+        selector.wakeup();
+        Object readWriteLock = vpnWriter.getSyncSelector();
+        synchronized(readWriteLock){
+          SelectionKey selectionKey = channel.register(selector,
+              SelectionKey.OP_CONNECT | SelectionKey.OP_READ |
+                  SelectionKey.OP_WRITE);
+          session.setSelectionKey(selectionKey);
+          logger.info("Registered tcp selector successfully");
+        }
+      }
+    } catch (ClosedChannelException e) {
+      e.printStackTrace();
+      logger.error("failed to register tcp channel with selector: " + e.getMessage());
+      return;
+    }
+
+    session.setChannel(channel);
+
+    if (sessionManager.getSessionByKey(session.getKey()) != null) {
+      try {
+        channel.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      return;
+    } else {
+      if (!sessionManager.putSession(session)) {
+        // just in case we fail to add it (we should hopefully never get here)
+        logger.error("Unable to create a new session in the session manager for " + session);
+        return;
+      } else {
+        logger.info("Added TCP session: " + session.getKey());
+      }
     }
 
     try {
       vpnWriter.getOutputStream().write(synAck);
+      logger.info("Wrote SYN-ACK for session: " + session.getKey());
     } catch (IOException e) {
       e.printStackTrace();
     }

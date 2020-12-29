@@ -45,7 +45,7 @@ public class TcpPacketFactory {
     pseudoHeader.put((byte)0x00);
     pseudoHeader.put(TCP_PROTOCOL);
     pseudoHeader.putShort((short)tcpBuffer.length);
-    pseudoHeader.put(ipBuffer);
+    pseudoHeader.put(tcpBuffer);
     byte[] pseudoheader_buffer = pseudoHeader.array();
     byte[] tcpChecksum = PacketUtil.calculateChecksum(pseudoheader_buffer, 0, pseudoheader_buffer.length);
     System.arraycopy(tcpChecksum, 0, tcpBuffer, 16, 2);
@@ -53,6 +53,10 @@ public class TcpPacketFactory {
     // copy the IP and TcpHeader into the buffer
     System.arraycopy(ipBuffer, 0, buffer, 0, ipBuffer.length);
     System.arraycopy(tcpBuffer, 0, buffer, ipBuffer.length, tcpBuffer.length);
+
+    if (data != null) {
+      System.arraycopy(data, 0, buffer, ipBuffer.length + tcpBuffer.length, data.length);
+    }
 
     return buffer;
   }
