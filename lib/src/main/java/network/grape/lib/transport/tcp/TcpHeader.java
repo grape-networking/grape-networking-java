@@ -1,7 +1,5 @@
 package network.grape.lib.transport.tcp;
 
-import com.sun.org.apache.bcel.internal.generic.NOP;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import lombok.AllArgsConstructor;
@@ -9,8 +7,6 @@ import lombok.Data;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.util.BufferUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Attempts to process a buffer of bytes into a TCP header, or throws exceptions if its not
@@ -62,9 +58,6 @@ public class TcpHeader implements TransportHeader {
     }
 
     ArrayList<TcpOption> options = parseOptions(stream, optionsLength);
-//    for (int i = 0; i < optionsLength; i++) {
-//      stream.get();
-//    }
 
     return new TcpHeader(sourcePort, destinationPort, sequenceNumber, ackNumber, offset, flags,
         windowSize, checksum, urgentPointer, options);
