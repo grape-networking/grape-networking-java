@@ -117,7 +117,7 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
 
     logger.info("startVpnService => create builder");
     // Configure a builder while parsing the parameters.
-    builder.addAddress("10.101.0.1", 32);
+    builder.addAddress("10.0.0.2", 24);
     builder.addRoute("0.0.0.0", 0);
     builder.setSession("GrapeVpn");
     vpnInterface = builder.establish();
