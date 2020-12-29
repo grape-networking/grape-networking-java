@@ -1,5 +1,6 @@
 package network.grape.lib.transport.tcp;
 
+import java.nio.ByteBuffer;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -37,7 +38,7 @@ public enum TcpOption {
 
   public final int type;
   @Getter @Setter public int size;
-  @Getter @Setter public int value; // todo make this a byte array
+  @Getter @Setter public ByteBuffer value;
 
   private TcpOption(int type) {
     this.type = type;

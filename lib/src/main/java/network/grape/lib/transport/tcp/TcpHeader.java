@@ -232,11 +232,18 @@ public class TcpHeader implements TransportHeader {
         option.setSize(optionLength);
         if (optionLength != 4) {
           System.out.println("MSS SHOULD BE LEN 4");
-          option.setValue(0);
+          int i = optionLength - 2;
+          option.value = ByteBuffer.allocate(i);
+          while (i > 0) {
+            byte value = stream.get();
+            option.value.put(value);
+            i--;
+          }
         } else {
           // get a short because we have 2 spare bytes
-          int value = stream.getShort();
-          option.setValue(value);
+          short value = stream.getShort();
+          option.value = ByteBuffer.allocate(2);
+          option.value.putShort(value);
         }
         options.add(option);
         pos += optionLength;
@@ -246,16 +253,18 @@ public class TcpHeader implements TransportHeader {
         option.setSize(optionLength);
         if (optionLength != 3) {
           System.out.println("WINDOW_SCALE SHOULD BE LEN 3");
-          option.setValue(0);
           int i = optionLength - 2;
+          option.value = ByteBuffer.allocate(i);
           while (i > 0) {
-            stream.get();
+            byte value = stream.get();
+            option.value.put(value);
             i--;
           }
         } else {
           // get a byte because we have one spare byte
-          int value = stream.get();
-          option.setValue(value);
+          byte value = stream.get();
+          option.value = ByteBuffer.allocate(1);
+          option.value.put(value);
         }
         options.add(option);
         pos += optionLength;
@@ -266,8 +275,10 @@ public class TcpHeader implements TransportHeader {
         if (optionLength != 2) {
           System.out.println("SACK_PERMITTED SHOULD BE LEN 2");
           int i = optionLength - 2;
+          option.value = ByteBuffer.allocate(i);
           while (i > 0) {
-            stream.get();
+            byte value = stream.get();
+            option.value.put(value);
             i--;
           }
         } else {
@@ -284,8 +295,10 @@ public class TcpHeader implements TransportHeader {
           // don't get any bytes because len is only 2
           System.out.println("SACK SHOULD BE LEN 2");
           int i = optionLength - 2;
+          option.value = ByteBuffer.allocate(i);
           while (i > 0) {
-            stream.get();
+            byte value = stream.get();
+            option.value.put(value);
             i--;
           }
         } else {
@@ -300,14 +313,17 @@ public class TcpHeader implements TransportHeader {
         if (optionLength != 6) {
           System.out.println("ECHO SHOULD BE LEN 6");
           int i = optionLength - 2;
+          option.value = ByteBuffer.allocate(i);
           while (i > 0) {
-            stream.get();
+            byte value = stream.get();
+            option.value.put(value);
             i--;
           }
         } else {
           // get an int because we have 4 spare bytes
           int value = stream.getInt();
-          option.setValue(value);
+          option.value = ByteBuffer.allocate(4);
+          option.value.putInt(value);
         }
         options.add(option);
         pos += optionLength;
@@ -318,14 +334,17 @@ public class TcpHeader implements TransportHeader {
         if (optionLength != 6) {
           System.out.println("ECHO REPLY SHOULD BE LEN 6");
           int i = optionLength - 2;
+          option.value = ByteBuffer.allocate(i);
           while (i > 0) {
-            stream.get();
+            byte value = stream.get();
+            option.value.put(value);
             i--;
           }
         } else {
           // get an int because we have 4 spare bytes
           int value = stream.getInt();
-          option.setValue(value);
+          option.value = ByteBuffer.allocate(4);
+          option.value.putInt(value);
         }
         options.add(option);
         pos += optionLength;
@@ -338,8 +357,10 @@ public class TcpHeader implements TransportHeader {
         if (optionLength != 10) {
           System.out.println("TIMESTAMP SHOULD BE LEN 10");
           int i = optionLength - 2;
+          option.value = ByteBuffer.allocate(i);
           while (i > 0) {
-            stream.get();
+            byte value = stream.get();
+            option.value.put(value);
             i--;
           }
         } else {
@@ -347,6 +368,9 @@ public class TcpHeader implements TransportHeader {
           int tsval = stream.getInt();
           int tsecr = stream.getInt();
           System.out.println("GOT TIMESTAMP: " + tsval + " " + tsecr);
+          option.value = ByteBuffer.allocate(8);
+          option.value.putInt(tsval);
+          option.value.putInt(tsecr);
 
           // todo add the timestamp values to the option somehow
         }
@@ -365,16 +389,8 @@ public class TcpHeader implements TransportHeader {
       }
       BufferUtil.putUnsignedByte(buffer, option.size);
 
-      if (option.size == 3) {
-        BufferUtil.putUnsignedByte(buffer, option.value);
-      } else if (option.size == 4) {
-        BufferUtil.putUnsignedShort(buffer, option.value);
-      } else if (option.size == 6) {
-        BufferUtil.putUnsignedInt(buffer, option.value);
-      } else if (option.size == 10) {
-        // todo update this with byte array
-        BufferUtil.putUnsignedInt(buffer, option.value);
-        BufferUtil.putUnsignedInt(buffer, option.value);
+      if (option.size > 2) {
+        buffer.put(option.value);
       }
     }
   }
