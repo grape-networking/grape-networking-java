@@ -110,10 +110,10 @@ public class SessionHandler {
     if (tcpHeader.isSYN()) {
       // 3-way handshake and create session
       // set window scale, set reply time in options
-      logger.info("SYN: \n" + BufferUtil.hexDump(buffer, 0, buffer.length, true, true));
+      logger.info("SYN:"); // \n" + BufferUtil.hexDump(buffer, 0, buffer.length, true, true));
       replySynAck(ipHeader, tcpHeader);
     } else if (tcpHeader.isACK()) {
-      logger.info("ACK: \n" + BufferUtil.hexDump(buffer, 0, buffer.length, true, true));
+      logger.info("ACK!!!!!!!!!!!!!!!:"); // \n" + BufferUtil.hexDump(buffer, 0, buffer.length, true, true));
     } else if (tcpHeader.isFIN()) {
       logger.info("FIN");
     } else if (tcpHeader.isRST()) {
@@ -223,6 +223,7 @@ public class SessionHandler {
     // todo (jason): may need to set the ipv4 id here
 
     byte[] synAck = createSynAckPacketData(ipHeader, tcpHeader);
+
     logger.info("sending: SYN-ACK: \n" + BufferUtil.hexDump(synAck, 0, synAck.length, true, true));
     Session session = new Session(ipHeader.getSourceAddress(), tcpHeader.getSourcePort(),
         ipHeader.getDestinationAddress(), tcpHeader.getDestinationPort(),
