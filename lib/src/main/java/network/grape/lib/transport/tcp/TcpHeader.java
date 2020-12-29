@@ -4,6 +4,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.util.BufferUtil;
@@ -16,7 +18,6 @@ import network.grape.lib.util.PacketUtil;
  * https://en.wikipedia.org/wiki/Transmission_Control_Protocol
  */
 @Data
-@AllArgsConstructor
 public class TcpHeader implements TransportHeader {
   private int sourcePort;
   private int destinationPort;
@@ -30,8 +31,41 @@ public class TcpHeader implements TransportHeader {
   //private ArrayList<TcpOption> options;
   private byte[] options;
 
+  // need to use setter when copying these fields
+  private int timestampSender = 0;
+  private int timestampReplyTo = 0;
+
+  /**
+   * Constructs a new TcpHeader with the given parametes.
+   *
+   * @param sourcePort      the port of origin on the sender
+   * @param destinationPort the destination port of the receiver
+   * @param sequenceNumber  the sequence number of the packet
+   * @param ackNumber       the ack number of the previous packet
+   * @param offset          multiplied by TCP_LONG to determine the number of bytes in data begins
+   * @param flags           things like ACK, SYN, etc.
+   * @param windowSize      how many bytes can be outstanding at once
+   * @param checksum        checksum for the parameters
+   * @param urgentPointer   urgent? (not really implemented yet)
+   * @param options         tcp options
+   */
+  public TcpHeader(int sourcePort, int destinationPort, long sequenceNumber, long ackNumber,
+                   short offset, int flags, int windowSize, int checksum, int urgentPointer,
+                   byte[] options) {
+    this.sourcePort = sourcePort;
+    this.destinationPort = destinationPort;
+    this.sequenceNumber = sequenceNumber;
+    this.ackNumber = ackNumber;
+    this.offset = offset;
+    this.flags = flags;
+    this.windowSize = windowSize;
+    this.urgentPointer = urgentPointer;
+    this.options = options;
+  }
+
   /**
    * Parses a stream for a TcpHeader.
+   *
    * @param stream the stream to process
    * @return a filled in TcpHeader
    * @throws PacketHeaderException if the header is not valid in the stream
@@ -56,7 +90,7 @@ public class TcpHeader implements TransportHeader {
     int optionsLength = (offset * TCP_WORD_LEN) - TCP_HEADER_LEN_NO_OPTIONS;
     if (stream.remaining() < optionsLength) {
       throw new PacketHeaderException("There should be " + optionsLength + " bytes left for options"
-        + " but there is only " + stream.remaining() + " bytes left");
+          + " but there is only " + stream.remaining() + " bytes left");
     }
 
     //ArrayList<TcpOption> options = parseOptions(stream, optionsLength);
@@ -212,16 +246,15 @@ public class TcpHeader implements TransportHeader {
 
   /**
    * Parse the options from the stream. Assumes the stream is pointed to the start of the options.
-   *
+   * <p>
    * Options have the following format:
    * - option type (1 byte)
    * - option length (1 byte) [ including the type & length fields)
    * - option value (option-length bytes)
    *
-   * @param stream the stream to parse
+   * @param stream        the stream to parse
    * @param optionsLength the length of the options (should be pre-parsed from TcpHeader
    * @return an ArrayList of filled in Options.
-   *
    */
   // https://www.iana.org/assignments/tcp-parameters/tcp-parameters.xhtml
   // https://tools.ietf.org/html/rfc793
@@ -235,7 +268,7 @@ public class TcpHeader implements TransportHeader {
         options.add(TcpOption.END_OF_OPTION_LIST);
         pos++;
         break;
-      } else if(optionNumber == TcpOption.NOP.type) {
+      } else if (optionNumber == TcpOption.NOP.type) {
         options.add(TcpOption.NOP);
         pos++;
         continue;
@@ -381,7 +414,7 @@ public class TcpHeader implements TransportHeader {
           int tsval = stream.getInt();
           int tsecr = stream.getInt();
           System.out.println("GOT TIMESTAMP: " + tsval + " " + tsecr);
-          tsecr = (int)(System.currentTimeMillis() / 1000L);
+          tsecr = (int) (System.currentTimeMillis() / 1000L);
           System.out.println("Updated: " + tsval + " " + tsecr + " options: " + option.size);
           option.value = ByteBuffer.allocate(8);
           // swap the order to tsval and tsecr (we want tsval to be set with out own timestamp

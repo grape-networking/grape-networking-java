@@ -1,10 +1,15 @@
 package network.grape.lib.util;
 
+import network.grape.lib.transport.tcp.TcpHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Helper class for Packets.
  */
 public class PacketUtil {
 
+  private static final Logger logger = LoggerFactory.getLogger(PacketUtil.class);
   private static volatile int packetId = 0;
 
   public static synchronized int getPacketId() {
@@ -84,5 +89,38 @@ public class PacketUtil {
     checksum[1] = (byte) sum;
 
     return checksum;
+  }
+
+  /**
+   * detect packet corruption flag in tcp options sent from client ACK
+   * @param tcpHeader TCPHeader
+   * @return boolean
+   */
+  public static boolean isPacketCorrupted(TcpHeader tcpHeader){
+    final byte[] options = tcpHeader.getOptions();
+
+    if (options != null) {
+      for (int i = 0; i < options.length; i++) {
+        final byte kind = options[i];
+        if (kind == 0 || kind == 1) {
+          // skip these (END / NOP)
+        } else if (kind == 2) {
+          i += 3;
+        } else if (kind == 3 || kind == 14) {
+          i += 2;
+        } else if (kind == 4) {
+          i++;
+        } else if (kind == 5 || kind == 15) {
+          i = i + options[++i] - 2;
+        } else if (kind == 8) {
+          i += 9;
+        } else if (kind == 23) {
+          return true;
+        } else {
+          logger.error("unknown option: " + kind);
+        }
+      }
+    }
+    return false;
   }
 }

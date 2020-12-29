@@ -14,6 +14,11 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Everything related to an outgoing TCP session from the phone to the destination.
+ *
+ * Probably can split into:
+ * - Generalized session with common stuff
+ * - UDP session (with very little)
+ * - TCP session (with a bunch of tcp related stuff).
  */
 public class Session {
   private final Logger logger = LoggerFactory.getLogger(Session.class);
@@ -29,16 +34,32 @@ public class Session {
   @Setter @Getter private SelectionKey selectionKey;
   @Setter @Getter private AbstractSelectableChannel channel;
 
-  @Getter @Setter private boolean isConnected = false;
+  @Getter @Setter private boolean connected = false;
   //closing session and aborting connection, will be done by background task
   @Getter @Setter private volatile boolean abortingConnection = false;
   //indicate that this session is currently being worked on by some SocketDataWorker already
-  @Getter @Setter private volatile boolean isBusyRead = false;
-  @Getter @Setter private volatile boolean isBusyWrite = false;
+  @Getter @Setter private volatile boolean busyRead = false;
+  @Getter @Setter private volatile boolean busyWrite = false;
   //indicate data from client is ready for sending to destination
-  @Getter @Setter private boolean isDataForSendingReady = false;
+  @Getter @Setter private boolean dataForSendingReady = false;
 
   @Getter @Setter private long connectionStartTime = 0;
+
+  // tcp stuff
+  @Getter @Setter private long recSequence = 0;
+  @Getter @Setter private boolean closingConnection = false;
+  @Getter @Setter private boolean ackedToFin = false;
+  //in ACK packet from client, if the previous packet was corrupted, client will send flag in options field
+  @Getter @Setter private boolean packetCorrupted = false;
+  //track ack we sent to client and waiting for ack back from client
+  @Getter @Setter private long sendUnack = 0;
+  @Getter @Setter private boolean acked = false; //last packet was acked yet?
+  @Getter @Setter private long sendNext = 0; // the next ack to send to the VPN
+  @Getter @Setter private int sendWindow = 0; //window = windowsize x windowscale
+  @Getter @Setter private int sendWindowSize = 0;
+  @Getter @Setter private int sendWindowScale = 0;
+  @Getter @Setter private int timestampSender = 0;
+  @Getter @Setter private int timestampReplyTo = 0;
 
   private ByteArrayOutputStream sendingStream;
 
@@ -100,5 +121,12 @@ public class Session {
   @Override
   public String toString() {
     return "Session (" + getKey() + ")";
+  }
+
+  ///// tcp only stuff:
+  void setSendWindowSizeAndScale(int sendWindowSize, int sendWindowScale) {
+    this.sendWindowSize = sendWindowSize;
+    this.sendWindowScale = sendWindowScale;
+    this.sendWindow = sendWindowSize * sendWindowScale;
   }
 }

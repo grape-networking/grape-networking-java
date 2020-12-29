@@ -72,4 +72,16 @@ public class TcpPacketFactory {
 
     return buffer;
   }
+
+  public static byte[] createResponseAckData(IpHeader ipHeader, TcpHeader tcpHeader, long ackToClient) {
+    return new byte[0];
+  }
+
+  public static byte[] createRstData(IpHeader ipHeader, TcpHeader tcpHeader, int dataLength) {
+    return new byte[0];
+  }
+
+  public static byte[] createFinAckData(IpHeader ipHeader, TcpHeader tcpHeader, long ackToClient, long seqToClient, boolean isFin, boolean isAck) {
+    return new byte[0];
+  }
 }
