@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.util.BufferUtil;
+import network.grape.lib.util.PacketUtil;
 
 /**
  * The header for an Internet Protocol Version 4 packet.
@@ -128,11 +129,22 @@ public class Ip4Header implements IpHeader {
     buffer.put(sourceAddress.getAddress());
     buffer.put(destinationAddress.getAddress());
 
-    return buffer.array();
+    byte[] ipData = buffer.array();
+    byte[] zero = {0x00, 0x00};
+    System.arraycopy(zero, 0, ipData, 10, 2);
+    byte[] ipChecksum = PacketUtil.calculateChecksum(ipData, 0, ipData.length);
+    System.arraycopy(ipChecksum, 0, ipData, 10, 2);
+
+    return ipData;
   }
 
   @Override
   public int getHeaderLength() {
     return ihl * IpHeader.IP4_WORD_LEN;
+  }
+
+  @Override
+  public void setPayloadLength(int l) {
+    this.length = ihl * IpHeader.IP4_WORD_LEN + l;
   }
 }

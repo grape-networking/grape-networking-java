@@ -66,6 +66,9 @@ public class SessionHandler {
     }
     byte version = (byte) (stream.get() >> 4);
     stream.rewind();
+
+    byte[] debugbuffer = stream.array();
+
     final IpHeader ipHeader;
     if (version == IP4_VERSION) {
       ipHeader = Ip4Header.parseBuffer(stream);
@@ -90,6 +93,7 @@ public class SessionHandler {
       //transportHeader = UdpHeader.parseBuffer(stream);
       //handleUdpPacket(stream, ipHeader, (UdpHeader) transportHeader);
     } else if (ipHeader.getProtocol() == TransportHeader.TCP_PROTOCOL) {
+      logger.warn("PACKET: \n" + BufferUtil.hexDump(debugbuffer, 0, stream.limit(), true, true));
       transportHeader = TcpHeader.parseBuffer(stream);
       handleTcpPacket(stream, ipHeader, (TcpHeader) transportHeader);
     } else {

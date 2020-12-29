@@ -17,6 +17,7 @@ public interface IpHeader {
   byte[] toByteArray();
 
   int getHeaderLength();
+  void setPayloadLength(int length);
 
   short IP4_VERSION = 0x04;
   short IP6_VERSION = 0x06;
