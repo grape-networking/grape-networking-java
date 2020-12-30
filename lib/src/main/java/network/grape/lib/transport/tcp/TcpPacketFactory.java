@@ -11,6 +11,7 @@ import java.util.Random;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.network.ip.IpPacketFactory;
+import network.grape.lib.util.BufferUtil;
 import network.grape.lib.util.PacketUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,15 +45,19 @@ public class TcpPacketFactory {
     pseudoHeader.put(ip.getDestinationAddress().getAddress());
     pseudoHeader.put((byte) 0x00);
     pseudoHeader.put(TCP_PROTOCOL);
-    pseudoHeader.putShort((short) tcpBuffer.length);
+    pseudoHeader.putShort((short) (tcpBuffer.length + dataLength));
     pseudoHeader.put(tcpBuffer);
     if (data != null) {
       pseudoHeader.put(data);
     }
     byte[] pseudoheader_buffer = pseudoHeader.array();
+//    logger.info("TCP BEFORE: " + BufferUtil.hexDump(tcpBuffer, 0, tcpBuffer.length,false,false));
+//    logger.info("PSEUDOHEADER BEFORE: " + BufferUtil.hexDump(pseudoheader_buffer, 0, pseudoheader_buffer.length, false, false));
     byte[] tcpChecksum =
         PacketUtil.calculateChecksum(pseudoheader_buffer, 0, pseudoheader_buffer.length);
     System.arraycopy(tcpChecksum, 0, tcpBuffer, 16, 2);
+//    logger.info("PSEUDOHEADER AFTER: " + BufferUtil.hexDump(pseudoheader_buffer, 0, pseudoheader_buffer.length, false, false));
+//    logger.info("TCP AFTER: " + BufferUtil.hexDump(tcpBuffer, 0, tcpBuffer.length,false,false));
 
     // copy the IP and TcpHeader into the buffer
     System.arraycopy(ipBuffer, 0, buffer, 0, ipBuffer.length);
@@ -85,6 +90,7 @@ public class TcpPacketFactory {
     if (seqNumber < 0) {
       seqNumber = seqNumber * -1;
     }
+    logger.info("Initial seq #" + seqNumber);
     tcpHeader.setSequenceNumber(seqNumber);
     tcpHeader.setAckNumber(ackNumber);
     tcpHeader.setSYN(true);

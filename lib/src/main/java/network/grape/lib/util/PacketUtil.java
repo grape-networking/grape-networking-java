@@ -1,5 +1,6 @@
 package network.grape.lib.util;
 
+import java.nio.Buffer;
 import network.grape.lib.transport.tcp.TcpHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,6 +88,8 @@ public class PacketUtil {
     byte[] checksum = new byte[2];
     checksum[0] = (byte) (sum >> 8);
     checksum[1] = (byte) sum;
+
+    //logger.info("CS: " + BufferUtil.hexDump(checksum, 0, 2, false, false));
 
     return checksum;
   }
