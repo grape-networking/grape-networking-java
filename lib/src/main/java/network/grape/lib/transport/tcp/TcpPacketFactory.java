@@ -26,9 +26,9 @@ public class TcpPacketFactory {
         tcpHeader.getUrgentPointer(), tcpHeader.getOptions());
   }
 
-  private static byte[] createPacketData(IpHeader ip, TcpHeader tcp, byte[] data){
+  private static byte[] createPacketData(IpHeader ip, TcpHeader tcp, byte[] data) {
     int dataLength = 0;
-    if(data != null){
+    if (data != null) {
       dataLength = data.length;
     }
 
@@ -39,15 +39,19 @@ public class TcpPacketFactory {
 
     System.arraycopy(zero, 0, tcpBuffer, 16, 2);
 
-    ByteBuffer pseudoHeader = ByteBuffer.allocate(12 + tcpBuffer.length);
+    ByteBuffer pseudoHeader = ByteBuffer.allocate(12 + tcpBuffer.length + dataLength);
     pseudoHeader.put(ip.getSourceAddress().getAddress());
     pseudoHeader.put(ip.getDestinationAddress().getAddress());
-    pseudoHeader.put((byte)0x00);
+    pseudoHeader.put((byte) 0x00);
     pseudoHeader.put(TCP_PROTOCOL);
-    pseudoHeader.putShort((short)tcpBuffer.length);
+    pseudoHeader.putShort((short) tcpBuffer.length);
     pseudoHeader.put(tcpBuffer);
+    if (data != null) {
+      pseudoHeader.put(data);
+    }
     byte[] pseudoheader_buffer = pseudoHeader.array();
-    byte[] tcpChecksum = PacketUtil.calculateChecksum(pseudoheader_buffer, 0, pseudoheader_buffer.length);
+    byte[] tcpChecksum =
+        PacketUtil.calculateChecksum(pseudoheader_buffer, 0, pseudoheader_buffer.length);
     System.arraycopy(tcpChecksum, 0, tcpBuffer, 16, 2);
 
     // copy the IP and TcpHeader into the buffer
@@ -64,7 +68,7 @@ public class TcpPacketFactory {
   /**
    * Creates a SYN-ACK packet given the previous IP and TCP headers (and optional data)
    *
-   * @param ip the IP header from the SYN packet
+   * @param ip  the IP header from the SYN packet
    * @param tcp the TCP SYN packet
    * @return a byte array filled in with IP, TCP SYN-ACK
    */
@@ -78,7 +82,7 @@ public class TcpPacketFactory {
     Random random = new Random();
     long ackNumber = tcpHeader.getSequenceNumber() + 1;
     long seqNumber = random.nextInt();
-    if (seqNumber < 0){
+    if (seqNumber < 0) {
       seqNumber = seqNumber * -1;
     }
     tcpHeader.setSequenceNumber(seqNumber);
@@ -101,7 +105,7 @@ public class TcpPacketFactory {
     tcpHeader.setSequenceNumber(seqNumber);
 
     if (ipHeader instanceof Ip4Header) {
-      Ip4Header ip4Header = (Ip4Header)ipHeader;
+      Ip4Header ip4Header = (Ip4Header) ipHeader;
       ip4Header.setId(PacketUtil.getPacketId());
     } else {
       // todo (jason): better handle ipv6 id's / flow labels here
@@ -116,12 +120,49 @@ public class TcpPacketFactory {
     // set response timestamps in options fields
     tcpHeader.setTimestampReplyTo(tcp.getTimestampSender());
     Date currentdate = new Date();
-    int sendertimestamp = (int)currentdate.getTime();
+    int sendertimestamp = (int) currentdate.getTime();
     tcpHeader.setTimestampSender(sendertimestamp);
 
     ipHeader.setPayloadLength(tcpHeader.getHeaderLength());
 
     return createPacketData(ipHeader, tcpHeader, null);
+  }
+
+  public static byte[] createResponsePacketData(IpHeader ip, TcpHeader tcp, byte[] packetData,
+                                                boolean isPsh, long ackNumber, long seqNumber,
+                                                int timeSender, int timeReplyTo) {
+    IpHeader ipHeader = copyIpHeader(ip);
+    TcpHeader tcpHeader = copyTcpHeader(tcp);
+
+    ipHeader.swapAddresses();
+    tcpHeader.swapSourceDestination();
+
+    tcpHeader.setAckNumber(ackNumber);
+    tcpHeader.setSequenceNumber(seqNumber);
+
+    if (ipHeader instanceof Ip4Header) {
+      Ip4Header ip4Header = (Ip4Header) ipHeader;
+      ip4Header.setId(PacketUtil.getPacketId());
+    } else {
+      // todo (jason): better handle ipv6 id's / flow labels here
+      logger.warn("Need to figure out what to do with Ipv6 ids? flow labels?");
+    }
+
+    tcpHeader.setACK(true);
+    tcpHeader.setSYN(false);
+    tcpHeader.setPSH(isPsh);
+    tcpHeader.setFIN(false);
+
+    tcpHeader.setTimestampSender(timeSender);
+    tcpHeader.setTimestampReplyTo(timeReplyTo);
+
+    int length = tcpHeader.getHeaderLength();
+    if (packetData != null) {
+      length += packetData.length;
+    }
+    ipHeader.setPayloadLength(length);
+
+    return createPacketData(ipHeader, tcpHeader, packetData);
   }
 
   public static byte[] createRstData(IpHeader ip, TcpHeader tcp, int dataLength) {
@@ -169,7 +210,42 @@ public class TcpPacketFactory {
     return createPacketData(ipHeader, tcpHeader, null);
   }
 
-  public static byte[] createFinAckData(IpHeader ip, TcpHeader tcp, long ackToClient, long seqToClient, boolean isFin, boolean isAck) {
+  public static byte[] createFinData(IpHeader ip, TcpHeader tcp, long ackNumber, long seqNumber, int timeSender, int timeReplyTo) {
+    ip.swapAddresses();;
+    tcp.swapSourceDestination();
+    tcp.setAckNumber(ackNumber);
+    tcp.setSequenceNumber(seqNumber);
+    tcp.setTimestampReplyTo(timeReplyTo);
+    tcp.setTimestampSender(timeSender);
+
+    if (ip instanceof Ip4Header) {
+      Ip4Header ip4Header = (Ip4Header) ip;
+      ip4Header.setId(0);
+    } else {
+      // todo (jason): better handle ipv6 id's / flow labels here
+      logger.warn("Need to figure out what to do with Ipv6 ids? flow labels?");
+    }
+
+    tcp.setRST(false);
+    tcp.setACK(true);
+    tcp.setSYN(false);
+    tcp.setPSH(false);
+    tcp.setCWR(false);
+    tcp.setECE(false);
+    tcp.setFIN(true);
+    //tcp.setNS(false);
+    tcp.setURG(false);
+
+    tcp.setOptions(null);
+    tcp.setWindowSize(0);
+
+    ip.setPayloadLength(tcp.getHeaderLength());
+
+    return createPacketData(ip, tcp, null);
+  }
+
+  public static byte[] createFinAckData(IpHeader ip, TcpHeader tcp, long ackToClient,
+                                        long seqToClient, boolean isFin, boolean isAck) {
     IpHeader ipHeader = copyIpHeader(ip);
     TcpHeader tcpHeader = copyTcpHeader(tcp);
 
@@ -180,7 +256,7 @@ public class TcpPacketFactory {
     tcpHeader.setSequenceNumber(seqToClient);
 
     if (ipHeader instanceof Ip4Header) {
-      Ip4Header ip4Header = (Ip4Header)ipHeader;
+      Ip4Header ip4Header = (Ip4Header) ipHeader;
       ip4Header.setId(PacketUtil.getPacketId());
     } else {
       // todo (jason): better handle ipv6 id's / flow labels here
@@ -195,7 +271,7 @@ public class TcpPacketFactory {
     // set response timestamps in options fields
     tcpHeader.setTimestampReplyTo(tcp.getTimestampSender());
     Date currentdate = new Date();
-    int sendertimestamp = (int)currentdate.getTime();
+    int sendertimestamp = (int) currentdate.getTime();
     tcpHeader.setTimestampSender(sendertimestamp);
 
     ipHeader.setPayloadLength(tcp.getHeaderLength());

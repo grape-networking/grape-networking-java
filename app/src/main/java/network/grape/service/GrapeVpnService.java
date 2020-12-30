@@ -151,7 +151,7 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
 
     // background thread for writing output to the vpn outputstream
     final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
-    ThreadPoolExecutor executor = new ThreadPoolExecutor(8, 100, 10, TimeUnit.SECONDS, taskQueue);
+    ThreadPoolExecutor executor = new ThreadPoolExecutor(10, 100, 10, TimeUnit.SECONDS, taskQueue);
 
     vpnWriter = new VpnWriter(clientWriter, sessionManager, executor);
     vpnWriterThread = new Thread(vpnWriter);
@@ -225,7 +225,11 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
 
   @Override
   public void protectSocket(Socket socket) {
-    this.protect(socket);
+    if (this.protect(socket)) {
+      logger.warn("PROTECT SOCKET GOOD");
+    } else {
+      logger.warn("PROTECT SOCKET BAD");
+    }
   }
 
   @Override

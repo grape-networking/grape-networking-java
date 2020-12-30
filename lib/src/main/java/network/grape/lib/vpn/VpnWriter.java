@@ -5,11 +5,14 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.UnresolvedAddressException;
+import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.Iterator;
 import java.util.concurrent.ThreadPoolExecutor;
 import lombok.Getter;
@@ -93,7 +96,11 @@ public class VpnWriter implements Runnable {
           SelectionKey key = iterator.next();
           SelectableChannel selectableChannel = key.channel();
           if (selectableChannel instanceof SocketChannel) {
-            logger.info("TCP Channel ready");
+            try {
+              processTcpSelectionKey(key);
+            } catch(IOException ex) {
+              key.cancel();
+            }
           } else if (selectableChannel instanceof DatagramChannel) {
             processUdpSelectionKey(key);
           }
@@ -138,16 +145,59 @@ public class VpnWriter implements Runnable {
         session.setAbortingConnection(true);
       }
     }
-    /*
-    else {
-      if (session.isConnected()) {
-        logger.info("Session already connected.");
-      }
-      if (!key.isConnectable()) {
-        logger.info("Key is not connectable");
-      }
-    }*/
     if (channel.isConnected()) {
+      processSelector(key, session);
+    }
+  }
+
+  protected void processTcpSelectionKey(SelectionKey key) throws IOException {
+    if (!key.isValid()) {
+      logger.warn("Invalid selection key for TCP");
+      return;
+    }
+    SocketChannel channel = (SocketChannel)key.channel();
+    if (channel == null) {
+      logger.error("CHANNEL NULL");
+      return;
+    }
+    Session session = sessionManager.getSessionByChannel(channel);
+
+    if (session == null) {
+      logger.error("Can't find session");
+      return;
+    }
+
+    if (!session.isConnected() && key.isConnectable()) {
+      InetAddress inetAddress = session.getDestinationIp();
+      int port = session.getDestinationPort();
+      SocketAddress address = new InetSocketAddress(inetAddress, port);
+      boolean connected = false;
+      if (!channel.isConnected() && !channel.isConnectionPending()) {
+        try {
+          connected = channel.connect(address);
+        } catch (ClosedChannelException | UnresolvedAddressException |
+            UnsupportedAddressTypeException | SecurityException e) {
+          logger.error("Error connecting to remote TCP: " + session.getKey());
+          session.setAbortingConnection(true);
+        } catch (IOException ex) {
+          logger.error("IO Error connecting to remote TCP: " + session.getKey());
+          session.setAbortingConnection(true);
+        }
+      }
+
+      if (connected) {
+        session.setConnected(connected);
+        logger.info("Connected immediately to remote tcp server: " + session.getKey());
+      } else {
+        logger.info("WAITING FOR CONNECTION TO FINISH");
+        if (channel.isConnectionPending()) {
+          connected = channel.finishConnect();
+          session.setConnected(connected);
+          logger.info("Connected to remote tcp server: " + session.getKey());
+        }
+      }
+    }
+    if(channel.isConnected()){
       processSelector(key, session);
     }
   }

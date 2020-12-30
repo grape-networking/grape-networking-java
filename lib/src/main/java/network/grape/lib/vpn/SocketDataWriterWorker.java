@@ -1,5 +1,8 @@
 package network.grape.lib.vpn;
 
+import static network.grape.lib.transport.tcp.TcpPacketFactory.createRstData;
+
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -10,6 +13,7 @@ import java.nio.channels.spi.AbstractSelectableChannel;
 import java.util.Date;
 import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionManager;
+import network.grape.lib.transport.tcp.TcpHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +40,7 @@ public class SocketDataWriterWorker extends SocketWorker implements Runnable {
     session.setBusyWrite(true);
     AbstractSelectableChannel channel = session.getChannel();
     if (channel instanceof SocketChannel) {
-      // writeTCP(session);
+      writeTcp(session);
     } else if (channel instanceof DatagramChannel) {
       writeUdp(session);
     } else {
@@ -47,6 +51,36 @@ public class SocketDataWriterWorker extends SocketWorker implements Runnable {
     // todo: find a way to factor this into common code with the reader
     if (session.isAbortingConnection()) {
       abortSession(session);
+    }
+  }
+
+  protected void writeTcp(Session session) {
+    SocketChannel channel = (SocketChannel) session.getChannel();
+
+    byte[] data = session.getSendingData();
+    ByteBuffer buffer = ByteBuffer.allocate(data.length);
+    buffer.put(data);
+    buffer.flip();
+
+    try {
+      logger.debug("writing TCP data to: " + sessionKey);
+      channel.write(buffer);
+    } catch (NotYetConnectedException ex) {
+      logger.error("writing to unconnected socket for key: " + sessionKey + " :" + ex.toString());
+      session.setAbortingConnection(true);
+    } catch (IOException ex) {
+      logger.error("Error writing to TCP server, will abort connection: " + sessionKey + ":"
+          + ex.toString());
+
+      byte[] rstData = createRstData(session.getLastIpHeader(), (TcpHeader) session.getLastTransportHeader(), 0);
+      try {
+        outputStream.write(rstData);
+      } catch (IOException e) {
+        logger.error("Error writing to VPN to reset the connection");
+      }
+      // remove session
+      logger.error("Failed to write to remove socket, aborting connection");
+      session.setAbortingConnection(true);
     }
   }
 

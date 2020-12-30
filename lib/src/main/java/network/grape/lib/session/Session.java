@@ -1,6 +1,7 @@
 package network.grape.lib.session;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -61,10 +62,19 @@ public class Session {
   @Getter @Setter private int timestampSender = 0;
   @Getter @Setter private int timestampReplyTo = 0;
 
+  //sent by client during SYN inside tcp options
+  @Getter @Setter private int maxSegmentSize = 0;
+
   //track how many byte of data has been sent since last ACK from client
   private volatile int sendAmountSinceLastAck = 0;
 
   private ByteArrayOutputStream sendingStream;
+  private ByteArrayOutputStream receivingStream;
+  @Getter @Setter private boolean hasReceivedLastSegment = false;
+  @Getter @Setter private byte[] unackData = null;
+
+  //track how many time a packet has been retransmitted => avoid loop
+  @Getter @Setter private int resendPacketCounter = 0;
 
   /**
    * Construct a session with the given identifying properties which are used to form the key in the
@@ -87,6 +97,7 @@ public class Session {
     this.protocol = protocol;
 
     sendingStream = new ByteArrayOutputStream();
+    receivingStream = new ByteArrayOutputStream();
   }
 
   public String getKey() {
@@ -148,5 +159,42 @@ public class Session {
   public boolean isClientWindowFull(){
     return (sendWindow > 0 && sendAmountSinceLastAck >= sendWindow) ||
         (sendWindow == 0 && sendAmountSinceLastAck > 65535);
+  }
+
+  /**
+   * buffer has more data for vpn client
+   * @return boolean
+   */
+  public boolean hasReceivedData(){
+    return receivingStream.size() > 0;
+  }
+
+  /**
+   * append more data
+   * @param data Data
+   */
+  public synchronized void addReceivedData(byte[] data){
+    try {
+      receivingStream.write(data);
+    } catch (IOException e) {
+      logger.error("Error writing to the receiving stream: " + e.toString());
+    }
+  }
+
+  /**
+   * get all data received in the buffer and empty it.
+   * @return byte[]
+   */
+  public synchronized byte[] getReceivedData(int maxSize){
+    byte[] data = receivingStream.toByteArray();
+    receivingStream.reset();
+    if(data.length > maxSize){
+      byte[] small = new byte[maxSize];
+      System.arraycopy(data, 0, small, 0, maxSize);
+      int len = data.length - maxSize;
+      receivingStream.write(data, maxSize, len);
+      data = small;
+    }
+    return data;
   }
 }

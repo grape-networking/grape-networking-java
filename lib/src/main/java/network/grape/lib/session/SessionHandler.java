@@ -15,6 +15,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.DatagramChannel;
@@ -86,14 +87,14 @@ public class SessionHandler {
       throw new PacketHeaderException("Got a packet which isn't Ip4 or Ip6: " + version);
     }
 
-    if (!ipHeader.getDestinationAddress().equals(Inet4Address.getByName("192.168.1.20"))
-        && (!ipHeader.getSourceAddress().equals(Inet4Address.getByName("192.168.1.20")))) {
+    if (!ipHeader.getDestinationAddress().equals(Inet4Address.getByName("192.168.1.10"))
+        && (!ipHeader.getSourceAddress().equals(Inet4Address.getByName("192.168.1.10")))) {
       //logger.info(ipHeader.getDestinationAddress().toString() + " "
       // + ipHeader.getSourceAddress().toString());
       return;
     }
     logger.info(
-        "GOT TRAFFIC TO/FROM 192.168.1.20: " + ipHeader.getDestinationAddress().toString() + " "
+        "GOT TRAFFIC TO/FROM: " + ipHeader.getDestinationAddress().toString() + " "
             + ipHeader.getSourceAddress().toString());
     logger.info("PROTO: " + ipHeader.getProtocol());
 
@@ -329,12 +330,12 @@ public class SessionHandler {
     logger.info("Created outgoing socketchannel for: " + session.getKey());
     protector.protect(channel.socket());
 
-    // apparently making a proper connection lowers latency with UDP - might want to verify this
     SocketAddress socketAddress =
         new InetSocketAddress(ipHeader.getDestinationAddress(), tcpHeader.getDestinationPort());
     try {
       channel.connect(socketAddress);
       session.setConnected(channel.isConnected());
+      logger.info("Connected? " + channel.isConnected() + " " + socketAddress.toString());
     } catch (IOException ex) {
       logger.error("Error connection on TCP channel " + session + ":" + ex.toString());
       ex.printStackTrace();
@@ -343,11 +344,13 @@ public class SessionHandler {
 
     // register for non-blocking operation
     try {
+      // we sync on this so that we don't add to the selection set while its been used
       Object selectionLock = vpnWriter.getSyncSelector2();
-      synchronized(selectionLock){
+      synchronized (selectionLock) {
         selector.wakeup();
+        // we sync on this so that the other thread doesn't call select() while we are doing this
         Object readWriteLock = vpnWriter.getSyncSelector();
-        synchronized(readWriteLock){
+        synchronized (readWriteLock) {
           SelectionKey selectionKey = channel.register(selector,
               SelectionKey.OP_CONNECT | SelectionKey.OP_READ |
                   SelectionKey.OP_WRITE);
@@ -431,10 +434,10 @@ public class SessionHandler {
   protected void sendAckForDisorder(IpHeader ipHeader, TcpHeader tcpHeader,
                                     int acceptedDataLength, Session session) {
     long ackNumber = tcpHeader.getSequenceNumber() + acceptedDataLength;
+    byte[] data = createResponseAckData(ipHeader, tcpHeader, ackNumber);
     logger.info(
         "sending: ACK# " + tcpHeader.getSequenceNumber() + " + " + acceptedDataLength + " = " +
-            ackNumber);
-    byte[] data = createResponseAckData(ipHeader, tcpHeader, ackNumber);
+            ackNumber + "\n" + BufferUtil.hexDump(data, 0, data.length, true, true));
     try {
       vpnWriter.getOutputStream().write(data);
     } catch (IOException e) {
