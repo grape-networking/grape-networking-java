@@ -129,7 +129,9 @@ public class TcpHeader implements TransportHeader {
 
     // todo: output options
     //putOptions(buffer);
-    buffer.put(options);
+    if (options != null) {
+      buffer.put(options);
+    }
 
     return buffer.array();
   }

@@ -87,12 +87,12 @@ public class SessionHandler {
       throw new PacketHeaderException("Got a packet which isn't Ip4 or Ip6: " + version);
     }
 
-    if (!ipHeader.getDestinationAddress().equals(Inet4Address.getByName("192.168.1.10"))
-        && (!ipHeader.getSourceAddress().equals(Inet4Address.getByName("192.168.1.10")))) {
-      //logger.info(ipHeader.getDestinationAddress().toString() + " "
-      // + ipHeader.getSourceAddress().toString());
-      return;
-    }
+//    if (!ipHeader.getDestinationAddress().equals(Inet4Address.getByName("192.168.1.10"))
+//        && (!ipHeader.getSourceAddress().equals(Inet4Address.getByName("192.168.1.10")))) {
+//      //logger.info(ipHeader.getDestinationAddress().toString() + " "
+//      // + ipHeader.getSourceAddress().toString());
+//      return;
+//    }
     logger.info(
         "GOT TRAFFIC TO/FROM: " + ipHeader.getDestinationAddress().toString() + " "
             + ipHeader.getSourceAddress().toString());
@@ -421,7 +421,9 @@ public class SessionHandler {
     byte[] data = createResponseAckData(ipHeader, tcpHeader, tcpHeader.getSequenceNumber() + 1);
     try {
       vpnWriter.getOutputStream().write(data);
-      logger.info("Sent last ACK packet to session: " + session.getKey());
+      logger.info("Sent last ACK packet to session: " + ipHeader.getSourceAddress().toString() + ":"
+          + tcpHeader.getSourcePort() + ":" + ipHeader.getDestinationAddress().toString()
+          + ":" + tcpHeader.getDestinationPort() + TransportHeader.TCP_PROTOCOL);
     } catch (IOException e) {
       logger
           .error("Failed to send last ACK packet for session: " + session.getKey() + ":" +
@@ -434,7 +436,9 @@ public class SessionHandler {
     byte[] data = createRstData(ipHeader, tcpHeader, dataLength);
     try {
       vpnWriter.getOutputStream().write(data);
-      logger.info("Sent RST packet to session: " + session.getKey());
+      logger.info("Sent RST packet to session: " + ipHeader.getSourceAddress().toString() + ":"
+          + tcpHeader.getSourcePort() + ":" + ipHeader.getDestinationAddress().toString()
+          + ":" + tcpHeader.getDestinationPort() + TransportHeader.TCP_PROTOCOL);
     } catch (IOException e) {
       logger
           .error("Failed to send last RST packet for session: " + session.getKey() + ":" +

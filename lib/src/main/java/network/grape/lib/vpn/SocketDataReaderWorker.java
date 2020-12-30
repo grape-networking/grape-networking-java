@@ -240,6 +240,10 @@ public class SocketDataReaderWorker extends SocketWorker implements Runnable {
     final IpHeader ipHeader = session.getLastIpHeader();
     final TcpHeader tcpHeader = (TcpHeader) session.getLastTransportHeader();
 
+    if (ipHeader == null || tcpHeader == null) {
+      logger.error("Couldn't find last ip or tcp header, can't send FIN: " + sessionKey);
+    }
+
     final byte[] data =
         createFinData(ipHeader, tcpHeader, session.getSendNext(), session.getRecSequence(),
             session.getTimestampSender(), session.getTimestampReplyTo());
