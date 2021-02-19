@@ -113,7 +113,7 @@ dependencies {
     androidTestImplementation "com.google.dagger:hilt-android-testing:${hiltVersion}"
     androidTestImplementation 'com.android.support.test:rules:1.0.2'
     androidTestImplementation 'com.android.volley:volley:1.1.1'
-    androidTestImplementation "de.mannodermaus.junit5:android-test-core:1.2.0"
+    androidTestImplementation "de.mannodermaus.junit5:android-test-core:1.2.1"
     androidTestImplementation "org.mockito:mockito-core:3.7.7"
     androidTestRuntimeOnly "de.mannodermaus.junit5:android-test-runner:1.2.0"
     androidTestAnnotationProcessor "com.google.dagger:hilt-android-compiler:${hiltVersion}"
