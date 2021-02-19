@@ -4,10 +4,13 @@ import static network.grape.lib.network.ip.IpTestCommon.testIp4Header;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.UnknownHostException;
+
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class BufferUtilTest extends BufferUtil {
 
+  @Disabled
   @Test
   public void hexDumpTest() throws UnknownHostException {
     // empty buffer
