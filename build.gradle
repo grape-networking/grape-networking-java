@@ -3,9 +3,8 @@ buildscript {
         google()
         jcenter()
         mavenCentral()
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
+        maven { url "https://plugins.gradle.org/m2/"}
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     }
     dependencies {
 
@@ -17,9 +16,8 @@ allprojects {
         google()
         jcenter()
         mavenCentral()
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
+        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
     }
     configurations.all {
         resolutionStrategy.force 'org.objenesis:objenesis:3.1'
