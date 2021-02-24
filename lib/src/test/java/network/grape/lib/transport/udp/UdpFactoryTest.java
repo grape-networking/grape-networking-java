@@ -8,6 +8,8 @@ import network.grape.lib.PacketHeaderException;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.Ip6Header;
 import network.grape.lib.network.ip.IpTestCommon;
+
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class UdpFactoryTest extends UdpPacketFactory {
@@ -29,6 +31,7 @@ public class UdpFactoryTest extends UdpPacketFactory {
     assertEquals(ip4Header.getDestinationAddress(), ip4Header1.getSourceAddress());
   }
 
+  @Disabled
   @Test
   public void responsePacketIp6() throws UnknownHostException, PacketHeaderException {
     Ip6Header ip6Header = IpTestCommon.testIp6Header();
@@ -47,6 +50,7 @@ public class UdpFactoryTest extends UdpPacketFactory {
     assertEquals(ip6Header.getDestinationAddress(), ip6Header1.getSourceAddress());
   }
 
+  @Disabled
   @Test
   public void noData() throws UnknownHostException, PacketHeaderException {
     Ip6Header ip6Header = IpTestCommon.testIp6Header();
