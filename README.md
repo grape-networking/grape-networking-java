@@ -38,8 +38,13 @@ test these locally before pushing you can do so as follows:
 - UDP over Ipv4
 
 # Similar projects
+
+## Android
 - https://github.com/LipiLee/ToyShark
 - https://github.com/hexene/LocalVPN
 - https://github.com/google/vpn-reverse-tether
 - https://github.com/httptoolkit/httptoolkit-android
 - https://github.com/zhengchun/LocalVPN-Kotlin
+
+## Linux
+- https://github.com/gsliepen/tinc
