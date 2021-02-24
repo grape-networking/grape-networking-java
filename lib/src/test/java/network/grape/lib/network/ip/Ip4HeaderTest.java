@@ -10,6 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import network.grape.lib.PacketHeaderException;
+
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.Test;
  */
 public class Ip4HeaderTest {
 
+  @Disabled
   @Test
   public void serialDeserialize() throws UnknownHostException, PacketHeaderException {
     Ip4Header ip4Header = copyIp4Header(testIp4Header());

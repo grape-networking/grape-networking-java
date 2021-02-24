@@ -15,6 +15,8 @@ import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.transport.tcp.TcpHeader;
 import network.grape.lib.transport.udp.UdpHeader;
 import network.grape.lib.transport.udp.UdpPacketFactory;
+
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class PacketUtilTest extends PacketUtil {
@@ -55,6 +57,7 @@ public class PacketUtilTest extends PacketUtil {
     assertArrayEquals(actualCheckSum2, checksum);
   }
 
+  @Disabled
   @Test
   public void ip4_udp_CheckSumTest() throws IOException, PacketHeaderException {
     InputStream is = getClass().getClassLoader().getResourceAsStream("ip4_udp.txt");

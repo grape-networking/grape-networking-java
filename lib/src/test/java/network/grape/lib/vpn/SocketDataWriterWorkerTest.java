@@ -17,6 +17,7 @@ import java.nio.channels.SocketChannel;
 import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionManager;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class SocketDataWriterWorkerTest {
@@ -35,6 +36,7 @@ public class SocketDataWriterWorkerTest {
         spy(new SocketDataWriterWorker(fileOutputStream, sessionKey, sessionManager));
   }
 
+  @Disabled
   @Test
   public void runTest() {
     // null session
