@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import androidx.test.core.app.ApplicationProvider;
+import androidx.test.filters.RequiresDevice;
 import androidx.test.rule.GrantPermissionRule;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject;
@@ -43,6 +44,7 @@ public class VpnInstrumentedTest {
 
   //un-disable this test once the VPN accepts traffic correctly
   @Disabled
+  @RequiresDevice
   @Test
   public void testVpnConnection()
       throws InterruptedException, ExecutionException, TimeoutException {
@@ -67,6 +69,7 @@ public class VpnInstrumentedTest {
     context.stopService(serviceIntent);
   }
 
+  @RequiresDevice
   @Test
   void startFromActivityTest() throws InterruptedException {
     Context context = getInstrumentation().getTargetContext();
