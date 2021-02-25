@@ -31,6 +31,7 @@ public class UdpFactoryTest extends UdpPacketFactory {
     assertEquals(ip4Header.getDestinationAddress(), ip4Header1.getSourceAddress());
   }
 
+  // disabled until the UDP packet factory can handle IPv6 responses
   @Disabled
   @Test
   public void responsePacketIp6() throws UnknownHostException, PacketHeaderException {
@@ -50,6 +51,7 @@ public class UdpFactoryTest extends UdpPacketFactory {
     assertEquals(ip6Header.getDestinationAddress(), ip6Header1.getSourceAddress());
   }
 
+  // disabled until the UDP packet factory can handle IPv6 responses
   @Disabled
   @Test
   public void noData() throws UnknownHostException, PacketHeaderException {

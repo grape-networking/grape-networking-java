@@ -60,7 +60,6 @@ public class SessionHandlerTest {
     when(sessionManager.getSelector()).thenReturn(selector);
   }
 
-  @Disabled
   @Test
   public void handlePacketTest() throws PacketHeaderException, UnknownHostException {
     SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter));

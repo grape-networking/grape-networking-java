@@ -57,6 +57,7 @@ public class UdpPacketFactory {
       byte[] ipChecksum = PacketUtil.calculateChecksum(ipData, 0, ipData.length);
       System.arraycopy(ipChecksum, 0, ipData, 10, 2);
     } else {
+      // todo (jason) properly implement this
       logger.warn("NO IP4");
       ipData = ipHeader.toByteArray();
       totalLength = IP6HEADER_LEN + UDP_HEADER_LEN;
@@ -82,13 +83,22 @@ public class UdpPacketFactory {
     byte[] zero = {0x00, 0x00};
     System.arraycopy(zero, 0, udpData, 6, 2);
 
-    ByteBuffer pseudoHeader = ByteBuffer.allocate(12 + udpData.length);
-    pseudoHeader.put(ipHeader.getSourceAddress().getAddress());
-    pseudoHeader.put(ipHeader.getDestinationAddress().getAddress());
-    pseudoHeader.put((byte)0x00);
-    pseudoHeader.put(UDP_PROTOCOL);
-    pseudoHeader.putShort((short)udpData.length);
-    pseudoHeader.put(udpData);
+    ByteBuffer pseudoHeader;
+    if (ipHeader instanceof Ip4Header) {
+      pseudoHeader = ByteBuffer.allocate(12 + udpData.length);
+      pseudoHeader.put(ipHeader.getSourceAddress().getAddress());
+      pseudoHeader.put(ipHeader.getDestinationAddress().getAddress());
+      pseudoHeader.put((byte) 0x00);
+      pseudoHeader.put(UDP_PROTOCOL);
+      pseudoHeader.putShort((short) udpData.length);
+      pseudoHeader.put(udpData);
+    } else {
+      pseudoHeader = ByteBuffer.allocate(40 + udpData.length);
+      pseudoHeader.put(ipHeader.getSourceAddress().getAddress());
+      pseudoHeader.put(ipHeader.getDestinationAddress().getAddress());
+      pseudoHeader.putInt(udpData.length);
+      pseudoHeader.putInt(UDP_PROTOCOL);
+    }
     byte[] pseudoheader_buffer = pseudoHeader.array();
 
     byte[] udpChecksum = PacketUtil.calculateChecksum(pseudoheader_buffer, 0, pseudoheader_buffer.length);

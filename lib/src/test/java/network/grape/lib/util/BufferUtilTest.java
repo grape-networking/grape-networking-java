@@ -5,12 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.UnknownHostException;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class BufferUtilTest extends BufferUtil {
 
-  @Disabled
   @Test
   public void hexDumpTest() throws UnknownHostException {
     // empty buffer
@@ -31,10 +29,10 @@ public class BufferUtilTest extends BufferUtil {
 
     byte[] buf = testIp4Header().toByteArray();
     output = hexDump(buf, 0, buf.length, false, false);
-    assertEquals("45 00 00 0A 00 1B 80 00 40 11 00 19 0A 00 00 02\n08 08 08 08", output);
+    assertEquals("45 00 00 0A 00 1B 80 00 40 11 E0 B6 0A 00 00 02\n08 08 08 08", output);
 
     output = hexDump(buf, 0, buf.length, true, false);
-    assertEquals("0000 45 00 00 0A 00 1B 80 00 40 11 00 19 0A 00 00 02\n"
+    assertEquals("0000 45 00 00 0A 00 1B 80 00 40 11 E0 B6 0A 00 00 02\n"
         + "0010 08 08 08 08", output);
   }
 }

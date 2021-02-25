@@ -100,8 +100,8 @@ public class SessionHandler {
 
     final TransportHeader transportHeader;
     if (ipHeader.getProtocol() == TransportHeader.UDP_PROTOCOL) {
-      //transportHeader = UdpHeader.parseBuffer(stream);
-      //handleUdpPacket(stream, ipHeader, (UdpHeader) transportHeader);
+      transportHeader = UdpHeader.parseBuffer(stream);
+      handleUdpPacket(stream, ipHeader, (UdpHeader) transportHeader);
     } else if (ipHeader.getProtocol() == TransportHeader.TCP_PROTOCOL) {
       logger.warn("PACKET: \n" + BufferUtil.hexDump(debugbuffer, 0, stream.limit(), true, true));
       transportHeader = TcpHeader.parseBuffer(stream);

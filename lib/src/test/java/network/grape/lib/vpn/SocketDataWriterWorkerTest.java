@@ -7,7 +7,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -17,15 +16,15 @@ import java.nio.channels.SocketChannel;
 import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionManager;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.mockito.Spy;
 
 public class SocketDataWriterWorkerTest {
 
   FileOutputStream fileOutputStream;
   String sessionKey;
   SessionManager sessionManager;
-  SocketDataWriterWorker socketDataWriterWorker;
+  @Spy SocketDataWriterWorker socketDataWriterWorker;
 
   @BeforeEach
   public void init() {
@@ -36,7 +35,6 @@ public class SocketDataWriterWorkerTest {
         spy(new SocketDataWriterWorker(fileOutputStream, sessionKey, sessionManager));
   }
 
-  @Disabled
   @Test
   public void runTest() {
     // null session
@@ -50,11 +48,13 @@ public class SocketDataWriterWorkerTest {
     // found session, SocketChannel
     SocketChannel socketChannel = mock(SocketChannel.class);
     doReturn(socketChannel).when(session).getChannel();
+    doNothing().when(socketDataWriterWorker).writeTcp(any());
     socketDataWriterWorker.run();
 
     // found session, DatagramChannel
     DatagramChannel datagramChannel = mock(DatagramChannel.class);
     doReturn(datagramChannel).when(session).getChannel();
+    doNothing().when(socketDataWriterWorker).writeUdp(any());
     socketDataWriterWorker.run();
 
     // found session, Aborting

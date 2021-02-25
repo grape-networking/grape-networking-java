@@ -21,7 +21,7 @@ public class IpTestCommon extends IpPacketFactory {
    */
   public static Ip4Header testIp4Header() throws UnknownHostException {
     return new Ip4Header((short) 4, (short) 5, (short) 0, (short) 0, 10,
-        27, (short) 4, 0, (short) 64, (short) 17, 25,
+        27, (short) 4, 0, (short) 64, (short) 17, 57526,
         (Inet4Address) Inet4Address.getByName("10.0.0.2"),
         (Inet4Address) Inet4Address.getByName("8.8.8.8"), new ArrayList<>());
   }
