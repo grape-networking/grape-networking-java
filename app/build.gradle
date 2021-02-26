@@ -76,12 +76,6 @@ android {
     }
 }
 
-sourceSets {
-    main {
-        java.srcDirs = ['src/main/java']
-    }
-}
-
 dependencies {
     implementation project(path: ':lib')
     implementation 'com.google.android.material:material:1.3.0'
@@ -116,10 +110,10 @@ dependencies {
     androidTestAnnotationProcessor "com.google.dagger:hilt-android-compiler:${hiltVersion}"
 }
 
-//apply from: '../checkstyle.gradle' //disabled because of some weird java 8 problem
+apply from: '../checkstyle.gradle' //disabled because of some weird java 8 problem
 apply from: 'dependencies.gradle'
 
-//// disable the logback logging because it will fail unit tests where it can't access android storage
+// disable the logback logging because it will fail unit tests where it can't access android storage
 configurations.all { config ->
     if (config.name.startsWith('test') && config.name.endsWith('Compile')) {
         println "Replacing module in configuration " + config.name
