@@ -6,13 +6,9 @@ import static network.grape.lib.transport.TransportHeader.TCP_WORD_LEN;
 import static network.grape.lib.transport.TransportHeader.UDP_HEADER_LEN;
 import static network.grape.lib.transport.TransportHeader.UDP_PROTOCOL;
 
-
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import network.grape.lib.network.ip.Ip4Header;
-import network.grape.lib.network.ip.Ip6Header;
 import network.grape.lib.network.ip.IpHeader;
-import network.grape.lib.util.BufferUtil;
 import network.grape.lib.util.PacketUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +32,7 @@ public class UdpPacketFactory {
 
     IpHeader ipHeader = copyIpHeader(ip);
     ipHeader.swapAddresses();
-    int totalLength = 0;
+    int totalLength;
     byte[] ipData;
 
     // this must be computed before ipheader processing so that the ipheader has the correct payload
@@ -68,7 +64,6 @@ public class UdpPacketFactory {
     System.arraycopy(ipData, 0, buffer, 0, ipData.length);
 
     // copy Udp header to buffer, swap the src and dest ports
-    int start = ipData.length;
     UdpHeader udpHeader =
         new UdpHeader(udp.getDestinationPort(), udp.getSourcePort(), udp.getLength(),
             udp.getChecksum());
@@ -98,10 +93,12 @@ public class UdpPacketFactory {
       pseudoHeader.putInt(udpData.length);
       pseudoHeader.putInt(UDP_PROTOCOL);
     }
-    byte[] pseudoheader_buffer = pseudoHeader.array();
+    byte[] pseudoheaderBuffer = pseudoHeader.array();
 
-    byte[] udpChecksum = PacketUtil.calculateChecksum(pseudoheader_buffer, 0, pseudoheader_buffer.length);
+    byte[] udpChecksum = PacketUtil.calculateChecksum(
+        pseudoheaderBuffer, 0, pseudoheaderBuffer.length);
     System.arraycopy(udpChecksum, 0, udpData, 6, 2);
+    int start = ipData.length;
     System.arraycopy(udpData, 0, buffer, start, udpData.length);
 
     return buffer;

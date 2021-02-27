@@ -8,14 +8,11 @@ import static network.grape.lib.transport.tcp.TcpPacketFactory.createRstData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createSynAckPacketData;
 import static network.grape.lib.util.Constants.MAX_RECEIVE_BUFFER_SIZE;
 
-
 import java.io.IOException;
-import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.DatagramChannel;
@@ -28,7 +25,6 @@ import network.grape.lib.network.ip.Ip6Header;
 import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.transport.tcp.TcpHeader;
-import network.grape.lib.transport.tcp.TcpOption;
 import network.grape.lib.transport.udp.UdpHeader;
 import network.grape.lib.util.BufferUtil;
 import network.grape.lib.util.PacketUtil;
@@ -87,12 +83,14 @@ public class SessionHandler {
       throw new PacketHeaderException("Got a packet which isn't Ip4 or Ip6: " + version);
     }
 
-//    if (!ipHeader.getDestinationAddress().equals(Inet4Address.getByName("192.168.1.10"))
-//        && (!ipHeader.getSourceAddress().equals(Inet4Address.getByName("192.168.1.10")))) {
-//      //logger.info(ipHeader.getDestinationAddress().toString() + " "
-//      // + ipHeader.getSourceAddress().toString());
-//      return;
-//    }
+    /*
+    if (!ipHeader.getDestinationAddress().equals(Inet4Address.getByName("192.168.1.10"))
+        && (!ipHeader.getSourceAddress().equals(Inet4Address.getByName("192.168.1.10")))) {
+      //logger.info(ipHeader.getDestinationAddress().toString() + " "
+      // + ipHeader.getSourceAddress().toString());
+      return;
+    } */
+
     logger.info(
         "GOT TRAFFIC TO/FROM: " + ipHeader.getDestinationAddress().toString() + " "
             + ipHeader.getSourceAddress().toString());
@@ -189,7 +187,7 @@ public class SessionHandler {
       logger.info("added UDP data for bg worker to send: " + payloadSize);
     }
 
-    //todo: keepalive?
+    // todo: keep-alive?
   }
 
   protected DatagramChannel prepareDatagramChannel() throws IOException {
@@ -206,12 +204,12 @@ public class SessionHandler {
     System.arraycopy(tcpHeader.toByteArray(), 0, buffer, ipHeader.getHeaderLength(),
         tcpHeader.getHeaderLength());
 
-    if (tcpHeader.isSYN()) {
+    if (tcpHeader.isSyn()) {
       // 3-way handshake and create session
       // set window scale, set reply time in options
       logger.info("SYN:"); // \n" + BufferUtil.hexDump(buffer, 0, buffer.length, true, true));
       replySynAck(ipHeader, tcpHeader);
-    } else if (tcpHeader.isACK()) {
+    } else if (tcpHeader.isAck()) {
       logger.info("ACK!"); // \n" + BufferUtil.hexDump(buffer, 0, buffer.length, true, true));
       Session session =
           sessionManager.getSession(ipHeader.getSourceAddress(), tcpHeader.getSourcePort(),
@@ -222,9 +220,9 @@ public class SessionHandler {
         logger.info("CAN'T FIND SESSION: " + ipHeader.getSourceAddress().toString() + ":"
             + tcpHeader.getSourcePort() + ":" + ipHeader.getDestinationAddress().toString()
             + ":" + tcpHeader.getDestinationPort() + TransportHeader.TCP_PROTOCOL);
-        if (tcpHeader.isFIN()) {
+        if (tcpHeader.isFin()) {
           sendLastAck(ipHeader, tcpHeader, session);
-        } else if (!tcpHeader.isRST()) {
+        } else if (!tcpHeader.isRst()) {
           sendRstPacket(ipHeader, tcpHeader, payload.remaining(), session);
         } else {
           logger.info("Session not found, can't handle packet");
@@ -237,8 +235,8 @@ public class SessionHandler {
 
       // is there data?
       if (payload.remaining() > 0) {
-        if (session.getRecSequence() == 0 ||
-            tcpHeader.getSequenceNumber() >= session.getRecSequence()) {
+        if (session.getRecSequence() == 0
+            || tcpHeader.getSequenceNumber() >= session.getRecSequence()) {
           int addedLength = session.appendOutboundData(payload);
           sendAck(ipHeader, tcpHeader, addedLength, session);
         } else {
@@ -249,19 +247,19 @@ public class SessionHandler {
 
         if (session.isClosingConnection()) {
           sendFinAck(ipHeader, tcpHeader, session);
-        } else if (session.isAckedToFin() && !tcpHeader.isFIN()) {
+        } else if (session.isAckedToFin() && !tcpHeader.isFin()) {
           // the last ACK from VPN after FIN-ACK flag was set
           sessionManager.closeSession(session);
           logger.info("Got last ACK after FIN, session is now closed");
         }
       }
 
-      if (tcpHeader.isPSH()) {
+      if (tcpHeader.isPsh()) {
         pushDataToDestination(session, tcpHeader);
-      } else if (tcpHeader.isFIN()) {
+      } else if (tcpHeader.isFin()) {
         logger.info("FIN from VPN, will ack it");
         ackFinAck(ipHeader, tcpHeader, session);
-      } else if (tcpHeader.isRST()) {
+      } else if (tcpHeader.isRst()) {
         session.setAbortingConnection(true);
       }
 
@@ -269,7 +267,7 @@ public class SessionHandler {
         sessionManager.keepAlive(session);
       }
 
-    } else if (tcpHeader.isFIN()) {
+    } else if (tcpHeader.isFin()) {
       logger.info("FIN");
       Session session =
           sessionManager.getSession(ipHeader.getSourceAddress(), tcpHeader.getSourcePort(),
@@ -280,20 +278,20 @@ public class SessionHandler {
       } else {
         sessionManager.keepAlive(session);
       }
-    } else if (tcpHeader.isRST()) {
+    } else if (tcpHeader.isRst()) {
       logger.info("RST");
     } else {
       byte[] tcpbuffer = tcpHeader.toByteArray();
-      logger.error("Unknown TCP header flag: " +
-          BufferUtil.hexDump(tcpbuffer, 0, tcpbuffer.length, false, false));
+      logger.error("Unknown TCP header flag: "
+          + BufferUtil.hexDump(tcpbuffer, 0, tcpbuffer.length, false, false));
     }
   }
 
   /**
    * Initiate a new TCP connection with the start of a session and replying with SYN-ACK.
    *
-   * @param ipHeader
-   * @param tcpHeader
+   * @param ipHeader the IpHeader of the source packet
+   * @param tcpHeader the TcpHeader of the source packet
    */
   protected void replySynAck(IpHeader ipHeader, TcpHeader tcpHeader) {
     // todo (jason): may need to set the ipv4 id here
@@ -338,10 +336,11 @@ public class SessionHandler {
       channel.socket().setSoTimeout(0);
       channel.socket().setReceiveBufferSize(MAX_RECEIVE_BUFFER_SIZE);
       channel.configureBlocking(false);
-    } catch(SocketException ex) {
-      logger.error("Error creating outgoing TCP session for: " + session.getKey() + " :" + ex.toString());
+    } catch (SocketException ex) {
+      logger.error("Error creating outgoing TCP session for: "
+          + session.getKey() + " :" + ex.toString());
       return;
-    } catch(IOException ex) {
+    } catch (IOException ex) {
       logger.error("Failed to create socket channel: " + session.getKey() + " :" + ex.toString());
       return;
     }
@@ -370,8 +369,7 @@ public class SessionHandler {
         Object readWriteLock = vpnWriter.getSyncSelector();
         synchronized (readWriteLock) {
           SelectionKey selectionKey = channel.register(selector,
-              SelectionKey.OP_CONNECT | SelectionKey.OP_READ |
-                  SelectionKey.OP_WRITE);
+              SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE);
           session.setSelectionKey(selectionKey);
           logger.info("Registered tcp selector successfully");
         }
@@ -426,8 +424,8 @@ public class SessionHandler {
           + ":" + tcpHeader.getDestinationPort() + TransportHeader.TCP_PROTOCOL);
     } catch (IOException e) {
       logger
-          .error("Failed to send last ACK packet for session: " + session.getKey() + ":" +
-              e.toString());
+          .error("Failed to send last ACK packet for session: " + session.getKey() + ":"
+              + e.toString());
     }
   }
 
@@ -441,16 +439,16 @@ public class SessionHandler {
           + ":" + tcpHeader.getDestinationPort() + TransportHeader.TCP_PROTOCOL);
     } catch (IOException e) {
       logger
-          .error("Failed to send last RST packet for session: " + session.getKey() + ":" +
-              e.toString());
+          .error("Failed to send last RST packet for session: " + session.getKey() + ":"
+              + e.toString());
     }
   }
 
   protected void sendAck(IpHeader ipHeader, TcpHeader tcpHeader, int acceptedDataLength,
                          Session session) {
     long ackNumber = session.getRecSequence() + acceptedDataLength;
-    logger.info("sending: ACK# " + session.getRecSequence() + " + " + acceptedDataLength + " = " +
-        ackNumber);
+    logger.info("sending: ACK# " + session.getRecSequence() + " + " + acceptedDataLength
+        + " = " + ackNumber);
     session.setRecSequence(ackNumber);
     byte[] data = createResponseAckData(ipHeader, tcpHeader, ackNumber);
     try {
@@ -466,8 +464,8 @@ public class SessionHandler {
     long ackNumber = tcpHeader.getSequenceNumber() + acceptedDataLength;
     byte[] data = createResponseAckData(ipHeader, tcpHeader, ackNumber);
     logger.info(
-        "sending: ACK# " + tcpHeader.getSequenceNumber() + " + " + acceptedDataLength + " = " +
-            ackNumber + "\n" + BufferUtil.hexDump(data, 0, data.length, true, true));
+        "sending: ACK# " + tcpHeader.getSequenceNumber() + " + " + acceptedDataLength + " = "
+            + ackNumber + "\n" + BufferUtil.hexDump(data, 0, data.length, true, true));
     try {
       vpnWriter.getOutputStream().write(data);
     } catch (IOException e) {
@@ -480,11 +478,11 @@ public class SessionHandler {
     boolean isCorrupted = PacketUtil.isPacketCorrupted(tcpHeader);
     session.setPacketCorrupted(isCorrupted);
     if (isCorrupted) {
-      logger.error("Previous packet was corrupted, last ack# " + tcpHeader.getAckNumber() +
-          " for session: " + session.getKey());
+      logger.error("Previous packet was corrupted, last ack# " + tcpHeader.getAckNumber()
+          + " for session: " + session.getKey());
     }
-    if (tcpHeader.getAckNumber() > session.getSendUnack() ||
-        tcpHeader.getAckNumber() == session.getSendNext()) {
+    if (tcpHeader.getAckNumber() > session.getSendUnack()
+        || tcpHeader.getAckNumber() == session.getSendNext()) {
       session.setAcked(true);
 
       if (tcpHeader.getWindowSize() > 0) {
@@ -495,8 +493,8 @@ public class SessionHandler {
       session.setTimestampReplyTo(tcpHeader.getTimestampSender());
       session.setTimestampSender((int) System.currentTimeMillis());
     } else {
-      logger.debug("Not accepting ack# " + tcpHeader.getAckNumber() + ", it should be: " +
-          session.getSendNext());
+      logger.debug("Not accepting ack# " + tcpHeader.getAckNumber() + ", it should be: "
+          + session.getSendNext());
       logger.debug("Previous sendUnack: " + session.getSendUnack());
       session.setAcked(false);
     }
@@ -505,8 +503,9 @@ public class SessionHandler {
   protected void pushDataToDestination(Session session, TcpHeader tcpHeader) {
     session.setDataForSendingReady(true);
     session.setTimestampReplyTo(tcpHeader.getTimestampSender());
-    session.setTimestampSender((int)System.currentTimeMillis());
-    logger.info("set data ready for sending data to dest, bg will do it. data size: " + session.getSendingDataSize());
+    session.setTimestampSender((int) System.currentTimeMillis());
+    logger.info("set data ready for sending data to dest, bg will do it. data size: "
+        + session.getSendingDataSize());
   }
 
   protected void sendFinAck(IpHeader ipHeader, TcpHeader tcpHeader, Session session) {

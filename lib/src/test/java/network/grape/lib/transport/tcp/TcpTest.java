@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import network.grape.lib.PacketHeaderException;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Tests for the TCPHeader class.
+ */
 public class TcpTest {
   public static TcpHeader testTcpHeader() {
     return new TcpHeader(34645, 443, 1, 0,

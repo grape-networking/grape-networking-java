@@ -95,11 +95,12 @@ public class PacketUtil {
   }
 
   /**
-   * detect packet corruption flag in tcp options sent from client ACK
-   * @param tcpHeader TCPHeader
-   * @return boolean
+   * Detect packet corruption flag in tcp options sent from client ACK.
+   *
+   * @param tcpHeader TCPHeader to check for corruption in
+   * @return boolean true if the packet is corrupt, false otherwise
    */
-  public static boolean isPacketCorrupted(TcpHeader tcpHeader){
+  public static boolean isPacketCorrupted(TcpHeader tcpHeader) {
     final byte[] options = tcpHeader.getOptions();
 
     if (options != null) {

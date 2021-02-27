@@ -22,6 +22,13 @@ public class VpnReader implements Runnable {
   private final SessionHandler handler;
   private final ByteBuffer packet;
 
+  /**
+   * Construt a VPN reader to handle traffic coming from the apps connected to the VPN.
+   *
+   * @param inputStream the inputstream of all traffic from the VPN
+   * @param handler a session handler which should have been instantiates outside of this class
+   * @param packet the bytebuffer that inputstream data should be read into for parsing
+   */
   public VpnReader(FileInputStream inputStream, SessionHandler handler, ByteBuffer packet) {
     logger = LoggerFactory.getLogger(VpnReader.class);
     this.fileInputStream = inputStream;

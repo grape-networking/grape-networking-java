@@ -1,10 +1,8 @@
 package network.grape.lib.vpn;
 
-import static network.grape.lib.transport.tcp.TcpPacketFactory.createFinAckData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createFinData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createResponsePacketData;
 import static network.grape.lib.util.Constants.MAX_RECEIVE_BUFFER_SIZE;
-
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -25,8 +23,6 @@ import network.grape.lib.transport.tcp.TcpHeader;
 import network.grape.lib.transport.udp.UdpHeader;
 import network.grape.lib.transport.udp.UdpPacketFactory;
 import network.grape.lib.util.BufferUtil;
-import network.grape.lib.util.Constants;
-import network.grape.lib.util.PacketUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -170,8 +166,8 @@ public class SocketDataReaderWorker extends SocketWorker implements Runnable {
       logger.error("Socket not yet connected for sesion: " + sessionKey + " " + e.toString());
     } catch (ClosedByInterruptException e) {
       logger.error(
-          "ClosedByInterruptedException reading SocketChannel for session: " + sessionKey + " " +
-              e.toString());
+          "ClosedByInterruptedException reading SocketChannel for session: " + sessionKey + " "
+              + e.toString());
     } catch (IOException e) {
       logger.error(
           "Error reading data from SocketChannel for session " + sessionKey + " " + e.toString());
@@ -228,7 +224,8 @@ public class SocketDataReaderWorker extends SocketWorker implements Runnable {
 
       try {
         outputStream.write(data);
-        logger.info("Wrote " + data.length + " to VPN \n " + BufferUtil.hexDump(data, 0, data.length, true, true));
+        logger.info("Wrote " + data.length + " to VPN \n "
+            + BufferUtil.hexDump(data, 0, data.length, true, true));
       } catch (IOException ex) {
         logger.error(
             "Failed to send ACK + Data packet for session " + sessionKey + " " + ex.toString());

@@ -139,9 +139,6 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
    */
   public void startTrafficHandler() throws IOException {
     logger.info("startTrafficHandler() :traffic handling starting");
-    // Packets to be sent are queued in this input stream.
-    FileInputStream clientReader = new FileInputStream(vpnInterface.getFileDescriptor());
-
     // Packets received need to be written to this output stream.
     FileOutputStream clientWriter = new FileOutputStream(vpnInterface.getFileDescriptor());
 
@@ -163,6 +160,9 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
 
     // Allocate the buffer for a single packet.
     ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_LEN);
+
+    // Packets to be sent are queued in this input stream.
+    FileInputStream clientReader = new FileInputStream(vpnInterface.getFileDescriptor());
     vpnReader = new VpnReader(clientReader, handler, packet);
     vpnReaderThread = new Thread(vpnReader);
     vpnReaderThread.start();

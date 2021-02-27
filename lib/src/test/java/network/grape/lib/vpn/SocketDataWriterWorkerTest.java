@@ -19,6 +19,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Spy;
 
+/**
+ * Test the Writer Worker class.
+ */
 public class SocketDataWriterWorkerTest {
 
   FileOutputStream fileOutputStream;
@@ -26,6 +29,9 @@ public class SocketDataWriterWorkerTest {
   SessionManager sessionManager;
   @Spy SocketDataWriterWorker socketDataWriterWorker;
 
+  /**
+   * Initialize the mocks and spys for the tests.
+   */
   @BeforeEach
   public void init() {
     fileOutputStream = mock(FileOutputStream.class);
@@ -78,11 +84,11 @@ public class SocketDataWriterWorkerTest {
     socketDataWriterWorker.writeUdp(session);
 
     // data to write, not yet connected on write
-    doThrow(NotYetConnectedException.class).when(datagramChannel).write((ByteBuffer)any());
+    doThrow(NotYetConnectedException.class).when(datagramChannel).write((ByteBuffer) any());
     socketDataWriterWorker.writeUdp(session);
 
     // data to write, IO exception on write
-    doThrow(IOException.class).when(datagramChannel).write((ByteBuffer)any());
+    doThrow(IOException.class).when(datagramChannel).write((ByteBuffer) any());
     socketDataWriterWorker.writeUdp(session);
   }
 }

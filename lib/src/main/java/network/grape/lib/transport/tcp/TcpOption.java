@@ -4,6 +4,9 @@ import java.nio.ByteBuffer;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * All of the TCP options that we handle or may handle in the future.
+ */
 public enum TcpOption {
   END_OF_OPTION_LIST(0),
   NOP(1),

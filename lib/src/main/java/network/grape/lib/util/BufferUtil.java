@@ -90,9 +90,9 @@ public class BufferUtil {
   }
 
   /**
-   * Puts an unsigned short into the buffer in a specific position.
+   * Puts an unsigned short into the byte buffer in a specific position.
    *
-   * @param bb the buffer to put the value into
+   * @param bb the byte buffer to put the value into
    * @param position the position to place the short
    * @param value the value to place
    */
@@ -100,11 +100,18 @@ public class BufferUtil {
     bb.putShort(position, (short) (value & 0xffff));
   }
 
+  /**
+   * Puts an unsigned short into the buffer in the specific position.
+   *
+   * @param buffer the buffer to put the value into
+   * @param position the position to place the short
+   * @param value the value to place
+   */
   public static void putUnsignedShort(byte[] buffer, int position, int value) {
     byte highbyte = (byte) (value & 0xFF00 >> 8);
     byte lowbyte = (byte) (value & 0x00FF);
     buffer[position] = highbyte;
-    buffer[position+1] = lowbyte;
+    buffer[position + 1] = lowbyte;
   }
 
   // ---------------------------------------------------------------
@@ -207,16 +214,17 @@ public class BufferUtil {
 
   /**
    * Useful for reading back in a packet dump for testing.
+   *
    * @param is inputstream of the file to read in (in UTF-8 encoding)
    * @return a byte array of binary data
-   * @throws IOException
+   * @throws IOException if something goes wrong with the inputstream
    */
   public static byte[] fromInputStreamToByteArray(InputStream is, boolean stripDummyEthHeader)
       throws IOException {
     BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
     int pos = 0;
-    int max_bytes = is.available();
-    byte[] buffer = new byte[max_bytes];
+    int maxBytes = is.available();
+    byte[] buffer = new byte[maxBytes];
 
     String line = br.readLine();
     while (line != null) {
@@ -228,10 +236,10 @@ public class BufferUtil {
           linepos++;
           continue;
         }
-        if (validHexChar(line.charAt(linepos+1))) {
+        if (validHexChar(line.charAt(linepos + 1))) {
           short highbyte = (short) (Character.digit(line.charAt(linepos), 16) << 4);
           short lowbyte = (short) Character.digit(line.charAt(linepos + 1), 16);
-          byte joinedbyte = (byte)(highbyte + lowbyte);
+          byte joinedbyte = (byte) (highbyte + lowbyte);
           buffer[pos++] = joinedbyte;
           linepos += 2;
         }
@@ -242,7 +250,7 @@ public class BufferUtil {
     if (stripDummyEthHeader) {
       // make a new resized array which doesn't contain the extra space
       byte[] returnbuffer = new byte[pos - 14];
-      System.arraycopy(buffer, 14, returnbuffer, 0, pos-14);
+      System.arraycopy(buffer, 14, returnbuffer, 0, pos - 14);
       return returnbuffer;
     } else {
       // make a new resized array which doesn't contain the extra space

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.ByteBuffer;
 import network.grape.lib.PacketHeaderException;
+import network.grape.lib.transport.TransportHeader;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -35,5 +36,11 @@ public class UdpTest {
     assertThrows(PacketHeaderException.class, () -> {
       UdpHeader.parseBuffer(buf);
     });
+  }
+
+  @Test
+  public void headerLengthTest() {
+    UdpHeader udpHeader = testUdpHeader();
+    assertEquals(udpHeader.getHeaderLength(), TransportHeader.UDP_HEADER_LEN);
   }
 }

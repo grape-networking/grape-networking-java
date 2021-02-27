@@ -2,7 +2,6 @@ package network.grape.lib.vpn;
 
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createRstData;
 
-
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -72,7 +71,8 @@ public class SocketDataWriterWorker extends SocketWorker implements Runnable {
       logger.error("Error writing to TCP server, will abort connection: " + sessionKey + ":"
           + ex.toString());
 
-      byte[] rstData = createRstData(session.getLastIpHeader(), (TcpHeader) session.getLastTransportHeader(), 0);
+      byte[] rstData = createRstData(session.getLastIpHeader(),
+          (TcpHeader) session.getLastTransportHeader(), 0);
       try {
         outputStream.write(rstData);
       } catch (IOException e) {

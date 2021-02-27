@@ -7,7 +7,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -20,12 +19,19 @@ import network.grape.lib.transport.TransportHeader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Tests for the session manager to make sure adding, getting by channel and removing sessions
+ * works correctly.
+ */
 public class SessionManagerTest {
 
   private Map<String, Session> sessionMap;
   private Selector selector;
   private SessionManager sessionManager;
 
+  /**
+   * Initialize the mocks and spys.
+   */
   @BeforeEach
   public void initTests() {
     sessionMap = mock(Map.class);
@@ -42,10 +48,10 @@ public class SessionManagerTest {
 
     // map has Sessions, one matches, one doesn't
     Session session = mock(Session.class);
-    Session session1 = mock(Session.class);
     sessionMap = new ConcurrentHashMap<>();
     sessionManager = spy(new SessionManager(sessionMap, selector));
     sessionMap.put("somekey", session);
+    Session session1 = mock(Session.class);
     sessionMap.put("otherkey", session1);
     AbstractSelectableChannel channel1 = mock(AbstractSelectableChannel.class);
     doReturn(channel1).when(session).getChannel();

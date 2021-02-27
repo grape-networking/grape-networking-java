@@ -16,6 +16,7 @@ public class IpTestCommon extends IpPacketFactory {
 
   /**
    * Returns a test ip4 header.
+   *
    * @return an Ip4Header filled in with test data
    * @throws UnknownHostException fails if we fail to resolve IP addresses (shouldn't happen)
    */
@@ -28,6 +29,7 @@ public class IpTestCommon extends IpPacketFactory {
 
   /**
    * Returns a test ip6 header.
+   *
    * @return an Ip6Header filled in with test data
    * @throws UnknownHostException fails if we fail to resolve IP addresses (shouldn't happen)
    */

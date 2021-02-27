@@ -8,9 +8,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockitoSession;
 import static org.mockito.Mockito.spy;
-
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -25,6 +23,9 @@ import network.grape.lib.transport.udp.UdpHeader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Test the Reader Worker.
+ */
 public class SocketDataReaderWorkerTest {
 
   FileOutputStream fileOutputStream;
@@ -32,6 +33,9 @@ public class SocketDataReaderWorkerTest {
   SessionManager sessionManager;
   SocketDataReaderWorker socketDataReaderWorker;
 
+  /**
+   * Initialize the mocks and spys for each test.
+   */
   @BeforeEach
   public void init() {
     fileOutputStream = mock(FileOutputStream.class);
@@ -81,7 +85,7 @@ public class SocketDataReaderWorkerTest {
     doReturn(lastIpHeader).when(session).getLastIpHeader();
     UdpHeader lastUdpHeader = testUdpHeader();
     doReturn(lastUdpHeader).when(session).getLastTransportHeader();
-    doReturn(10).doReturn(0).when(channel).read((ByteBuffer)any());
+    doReturn(10).doReturn(0).when(channel).read((ByteBuffer) any());
     socketDataReaderWorker.readUdp(session);
 
     // read, but fail constructing new packet
@@ -89,16 +93,16 @@ public class SocketDataReaderWorkerTest {
     doReturn(lastIpHeader).when(session).getLastIpHeader();
     lastUdpHeader = testUdpHeader();
     doReturn(lastUdpHeader).when(session).getLastTransportHeader();
-    doReturn(10).doReturn(0).when(channel).read((ByteBuffer)any());
+    doReturn(10).doReturn(0).when(channel).read((ByteBuffer) any());
     doReturn(false).when(socketDataReaderWorker).verifyPacketData(any());
     socketDataReaderWorker.readUdp(session);
 
     // not yet connected exception on read
-    doThrow(NotYetConnectedException.class).when(channel).read((ByteBuffer)any());
+    doThrow(NotYetConnectedException.class).when(channel).read((ByteBuffer) any());
     socketDataReaderWorker.readUdp(session);
 
     //io exceptio on read
-    doThrow(IOException.class).when(channel).read((ByteBuffer)any());
+    doThrow(IOException.class).when(channel).read((ByteBuffer) any());
     socketDataReaderWorker.readUdp(session);
 
     // read while session is aborting

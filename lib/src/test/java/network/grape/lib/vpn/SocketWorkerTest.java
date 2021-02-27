@@ -7,7 +7,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.DatagramChannel;
@@ -17,6 +16,9 @@ import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionManager;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Test the Socket Worker class.
+ */
 public class SocketWorkerTest {
 
   FileOutputStream fileOutputStream;

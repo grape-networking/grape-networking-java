@@ -104,10 +104,11 @@ public class TcpHeader implements TransportHeader {
         windowSize, checksum, urgentPointer, options);
   }
 
-//  public void clearOptions() {
-//    options = new ArrayList<>();
-//    offset = TCP_HEADER_LEN_NO_OPTIONS / TCP_WORD_LEN;
-//  }
+  /*
+  public void clearOptions() {
+    options = new ArrayList<>();
+    offset = TCP_HEADER_LEN_NO_OPTIONS / TCP_WORD_LEN;
+  } */
 
   @Override
   public byte[] toByteArray() {
@@ -141,105 +142,160 @@ public class TcpHeader implements TransportHeader {
     return offset * TransportHeader.TCP_WORD_LEN;
   }
 
-  public boolean isECN() {
+  public boolean isEcn() {
     return ((flags & 0x100) >> 8) == 1;
   }
 
-  public boolean isCWR() {
+  public boolean isCwr() {
     return ((flags & 0x80) >> 7) == 1;
   }
 
-  public boolean isECE() {
+  public boolean isEce() {
     return ((flags & 0x40) >> 6) == 1;
   }
 
-  public boolean isURG() {
+  public boolean isUrg() {
     return ((flags & 0x20) >> 5) == 1;
   }
 
-  public boolean isACK() {
+  public boolean isAck() {
     return ((flags & 0x10) >> 4) == 1;
   }
 
-  public boolean isPSH() {
+  public boolean isPsh() {
     return ((flags & 0x8) >> 3) == 1;
   }
 
-  public boolean isRST() {
+  public boolean isRst() {
     return ((flags & 0x4) >> 2) == 1;
   }
 
-  public boolean isSYN() {
+  public boolean isSyn() {
     return ((flags & 0x2) >> 1) == 1;
   }
 
-  public boolean isFIN() {
+  public boolean isFin() {
     return (flags & 0x1) == 1;
   }
 
-  public void setECN(boolean ecn) {
+  /**
+   * Sets the explicit congestion notification flag.
+   * https://en.wikipedia.org/wiki/Explicit_Congestion_Notification
+   *
+   * @param ecn true / false indiciating whether the flag is set
+   */
+  public void setEcn(boolean ecn) {
     flags = (flags & 0xFF); // clear the ECN bit
     if (ecn) {
       flags = flags + 0x100;
     }
   }
 
-  public void setCWR(boolean cwr) {
+  /**
+   * Sets the congestion window reduced flag.
+   * https://en.wikipedia.org/wiki/Transmission_Control_Protocol#:~:text=CWR%20(1%20bit)%3A%20Congestion,value%20of%20the%20SYN%20flag.
+   *
+   * @param cwr true / false indiciating whether the flag is set
+   */
+  public void setCwr(boolean cwr) {
     flags = (flags & 0x17F); // clear the CWR bit
     if (cwr) {
       flags = flags + 0x80;
     }
   }
 
-  public void setECE(boolean ece) {
+  /**
+   * Sets the ECN-echo flag.
+   * https://en.wikipedia.org/wiki/Explicit_Congestion_Notification
+   *
+   * @param ece true / false indiciating whether the flag is set
+   */
+  public void setEce(boolean ece) {
     flags = (flags & 0x1BF); // clear the ECE bit
     if (ece) {
       flags = flags + 0x40;
     }
   }
 
-  public void setURG(boolean urg) {
+  /**
+   * Sets the Urgent flag.
+   * http://www.firewall.cx/networking-topics/protocols/tcp/137-tcp-window-size-checksum.html#:~:text=The%20urgent%20pointer%20flag%20in,exactly%20the%20urgent%20data%20ends.&text=You%20may%20also%20be%20interested,used%20when%20attacking%20remote%20hosts.
+   *
+   * @param urg true / false indiciating whether the flag is set
+   */
+  public void setUrg(boolean urg) {
     flags = (flags & 0x1DF); // clear the URG bit
     if (urg) {
       flags = flags + 0x20;
     }
   }
 
-  public void setACK(boolean ack) {
+  /**
+   * Sets the acknowledgement flag.
+   *
+   * @param ack true / false indiciating whether the flag is set
+   */
+  public void setAck(boolean ack) {
     flags = (flags & 0x1EF); // clear the ACK bit
     if (ack) {
       flags = flags + 0x10;
     }
   }
 
-  public void setPSH(boolean psh) {
+  /**
+   * Sets the push flag which causes data to be forwarded immediately instead of waiting for
+   * additional data at the buffer.
+   * https://packetlife.net/blog/2011/mar/2/tcp-flags-psh-and-urg/
+   *
+   * @param psh true / false indiciating whether the flag is set
+   */
+  public void setPsh(boolean psh) {
     flags = (flags & 0x1F7); // clear the PSH bit
     if (psh) {
       flags = flags + 0x8;
     }
   }
 
-  public void setRST(boolean rst) {
+  /**
+   * Sets the reset flag which resets the connection.
+   *
+   * @param rst true / false indiciating whether the flag is set
+   */
+  public void setRst(boolean rst) {
     flags = (flags & 0x1FB); // clear the RST bit
     if (rst) {
       flags = flags + 0x4;
     }
   }
 
-  public void setSYN(boolean syn) {
+  /**
+   * Sets the syn flag which is done at the start of a TCP conection during the three-way handshake.
+   *
+   * @param syn true / false indiciating whether the flag is set
+   */
+  public void setSyn(boolean syn) {
     flags = (flags & 0x1FD); // clear the SYN bit
     if (syn) {
       flags = flags + 0x2;
     }
   }
 
-  public void setFIN(boolean fin) {
+  /**
+   * Sets the finished flag to terminate the TCP connection.
+   *
+   * @param fin true / false indiciating whether the flag is set
+   */
+  public void setFin(boolean fin) {
     flags = (flags & 0x1FE); // clear the FIN bit
     if (fin) {
       flags = flags + 0x1;
     }
   }
 
+  /**
+   * Helper function for swapping source and destination ports. Useful for when a TCP packet is
+   * received at the VPN, and we want to deliver it to the correct application.
+   */
   public void swapSourceDestination() {
     int temp = sourcePort;
     sourcePort = destinationPort;
@@ -248,11 +304,11 @@ public class TcpHeader implements TransportHeader {
 
   /**
    * Parse the options from the stream. Assumes the stream is pointed to the start of the options.
-   * <p>
-   * Options have the following format:
+
+   * <p>Options have the following format:
    * - option type (1 byte)
    * - option length (1 byte) [ including the type & length fields)
-   * - option value (option-length bytes)
+   * - option value (option-length bytes)</p>
    *
    * @param stream        the stream to parse
    * @param optionsLength the length of the options (should be pre-parsed from TcpHeader
@@ -430,20 +486,21 @@ public class TcpHeader implements TransportHeader {
     return options;
   }
 
-//  protected void putOptions(ByteBuffer buffer) {
-//    for (TcpOption option : options) {
-//      BufferUtil.putUnsignedByte(buffer, 0);
-//      if (option.type == TcpOption.END_OF_OPTION_LIST.type || option.type == TcpOption.NOP.type) {
-//        continue;
-//      }
-//      BufferUtil.putUnsignedByte(buffer, 0);
-//
-//      if (option.size > 2) {
-//        option.value.rewind();
-//        for(int i = 0; i < option.size; i++) {
-//          BufferUtil.putUnsignedByte(buffer, 0);
-//        }
-//      }
-//    }
-//  }
+  /*
+  protected void putOptions(ByteBuffer buffer) {
+    for (TcpOption option : options) {
+      BufferUtil.putUnsignedByte(buffer, 0);
+      if (option.type == TcpOption.END_OF_OPTION_LIST.type || option.type == TcpOption.NOP.type) {
+        continue;
+      }
+      BufferUtil.putUnsignedByte(buffer, 0);
+
+      if (option.size > 2) {
+        option.value.rewind();
+        for(int i = 0; i < option.size; i++) {
+          BufferUtil.putUnsignedByte(buffer, 0);
+        }
+      }
+    }
+  }*/
 }

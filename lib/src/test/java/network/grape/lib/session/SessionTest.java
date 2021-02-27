@@ -6,14 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.transport.TransportHeader;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Tests for the Session class.
+ */
 public class SessionTest {
   @Test
   public void appendDataGetDataTest() throws UnknownHostException {

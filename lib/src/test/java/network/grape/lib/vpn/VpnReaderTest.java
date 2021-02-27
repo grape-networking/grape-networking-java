@@ -9,7 +9,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -17,6 +16,9 @@ import network.grape.lib.PacketHeaderException;
 import network.grape.lib.session.SessionHandler;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Test the VPN reader class.
+ */
 public class VpnReaderTest {
 
   @Test public void runTest() throws IOException, PacketHeaderException {

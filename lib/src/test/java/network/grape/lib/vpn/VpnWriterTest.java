@@ -29,6 +29,9 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+/**
+ * Test the VPN Writer class.
+ */
 public class VpnWriterTest {
 
   FileOutputStream fileOutputStream;

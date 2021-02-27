@@ -9,7 +9,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
-
 import android.content.Intent;
 import android.net.VpnService;
 import android.os.ParcelFileDescriptor;
@@ -18,6 +17,9 @@ import java.io.IOException;
 import network.grape.service.GrapeVpnService;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Test the Grape VPN Service.
+ */
 public class GrapeVpnServiceTest {
 
   @Test
@@ -90,11 +92,11 @@ public class GrapeVpnServiceTest {
     // capture thread != null, isalive true
     // can't cover this because we can't mock the final method isAlive without PowerMockito, but
     // it's not available to use with Junit5.
-//    doNothing().when(vpnInterface).close();
-//    captureThread = mock(Thread.class);
-//    doReturn(true).doReturn(false).when(captureThread).isAlive();
-//    grapeVpnService.setCaptureThread(captureThread);
-//    grapeVpnService.onDestroy();
+    // doNothing().when(vpnInterface).close();
+    // captureThread = mock(Thread.class);
+    // doReturn(true).doReturn(false).when(captureThread).isAlive();
+    // grapeVpnService.setCaptureThread(captureThread);
+    // grapeVpnService.onDestroy();
   }
 
   @Test public void onStartCommandTest() {

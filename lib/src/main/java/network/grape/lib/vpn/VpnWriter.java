@@ -98,7 +98,7 @@ public class VpnWriter implements Runnable {
           if (selectableChannel instanceof SocketChannel) {
             try {
               processTcpSelectionKey(key);
-            } catch(IOException ex) {
+            } catch (IOException ex) {
               key.cancel();
             }
           } else if (selectableChannel instanceof DatagramChannel) {
@@ -155,7 +155,7 @@ public class VpnWriter implements Runnable {
       logger.warn("Invalid selection key for TCP");
       return;
     }
-    SocketChannel channel = (SocketChannel)key.channel();
+    SocketChannel channel = (SocketChannel) key.channel();
     if (channel == null) {
       logger.error("CHANNEL NULL");
       return;
@@ -175,8 +175,8 @@ public class VpnWriter implements Runnable {
       if (!channel.isConnected() && !channel.isConnectionPending()) {
         try {
           connected = channel.connect(address);
-        } catch (ClosedChannelException | UnresolvedAddressException |
-            UnsupportedAddressTypeException | SecurityException e) {
+        } catch (ClosedChannelException | UnresolvedAddressException
+            | UnsupportedAddressTypeException | SecurityException e) {
           logger.error("Error connecting to remote TCP: " + session.getKey());
           session.setAbortingConnection(true);
         } catch (IOException ex) {
@@ -197,7 +197,7 @@ public class VpnWriter implements Runnable {
         }
       }
     }
-    if(channel.isConnected()){
+    if (channel.isConnected()) {
       processSelector(key, session);
     }
   }

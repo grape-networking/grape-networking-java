@@ -2,24 +2,29 @@ package network.grape.lib.transport.tcp;
 
 import static network.grape.lib.network.ip.IpPacketFactory.copyIpHeader;
 import static network.grape.lib.transport.TransportHeader.TCP_PROTOCOL;
-import static network.grape.lib.transport.TransportHeader.UDP_PROTOCOL;
-
 
 import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.Random;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.IpHeader;
-import network.grape.lib.network.ip.IpPacketFactory;
-import network.grape.lib.util.BufferUtil;
 import network.grape.lib.util.PacketUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Used to easily create packets from other packets and responses for requests.
+ */
 public class TcpPacketFactory {
 
   public static Logger logger = LoggerFactory.getLogger(TcpPacketFactory.class);
 
+  /**
+   * Creates a new instance of a TcpHeader so that the original one is unmodified.
+   *
+   * @param tcpHeader the TcpHeader to make a copy of
+   * @return a new instance of the TcpHeader copied from the original
+   */
   public static TcpHeader copyTcpHeader(TcpHeader tcpHeader) {
     return new TcpHeader(tcpHeader.getSourcePort(), tcpHeader.getDestinationPort(),
         tcpHeader.getSequenceNumber(), tcpHeader.getAckNumber(), tcpHeader.getOffset(),
@@ -33,13 +38,13 @@ public class TcpPacketFactory {
       dataLength = data.length;
     }
 
-    byte[] buffer = new byte[ip.getHeaderLength() + tcp.getHeaderLength() + dataLength];
-    byte[] ipBuffer = ip.toByteArray();
     byte[] tcpBuffer = tcp.toByteArray();
     byte[] zero = {0x00, 0x00};
 
     System.arraycopy(zero, 0, tcpBuffer, 16, 2);
 
+    // todo (jason): update this to support IPv6 - because I'm sure this has the same problem that
+    // the UDP packets had.
     ByteBuffer pseudoHeader = ByteBuffer.allocate(12 + tcpBuffer.length + dataLength);
     pseudoHeader.put(ip.getSourceAddress().getAddress());
     pseudoHeader.put(ip.getDestinationAddress().getAddress());
@@ -50,16 +55,20 @@ public class TcpPacketFactory {
     if (data != null) {
       pseudoHeader.put(data);
     }
-    byte[] pseudoheader_buffer = pseudoHeader.array();
-//    logger.info("TCP BEFORE: " + BufferUtil.hexDump(tcpBuffer, 0, tcpBuffer.length,false,false));
-//    logger.info("PSEUDOHEADER BEFORE: " + BufferUtil.hexDump(pseudoheader_buffer, 0, pseudoheader_buffer.length, false, false));
+    byte[] pseudoheaderBuffer = pseudoHeader.array();
+    // logger.info("TCP BEFORE: " + BufferUtil.hexDump(tcpBuffer, 0, tcpBuffer.length,false,false));
+    // logger.info("PSEUDOHEADER BEFORE: "
+    //    + BufferUtil.hexDump(pseudoheaderBuffer, 0, pseudoheaderBuffer.length, false, false));
     byte[] tcpChecksum =
-        PacketUtil.calculateChecksum(pseudoheader_buffer, 0, pseudoheader_buffer.length);
+        PacketUtil.calculateChecksum(pseudoheaderBuffer, 0, pseudoheaderBuffer.length);
     System.arraycopy(tcpChecksum, 0, tcpBuffer, 16, 2);
-//    logger.info("PSEUDOHEADER AFTER: " + BufferUtil.hexDump(pseudoheader_buffer, 0, pseudoheader_buffer.length, false, false));
-//    logger.info("TCP AFTER: " + BufferUtil.hexDump(tcpBuffer, 0, tcpBuffer.length,false,false));
+    // logger.info("PSEUDOHEADER AFTER: "
+    //    + BufferUtil.hexDump(pseudoheaderBuffer, 0, pseudoheaderBuffer.length, false, false));
+    // logger.info("TCP AFTER: " + BufferUtil.hexDump(tcpBuffer, 0, tcpBuffer.length,false,false));
 
     // copy the IP and TcpHeader into the buffer
+    byte[] buffer = new byte[ip.getHeaderLength() + tcp.getHeaderLength() + dataLength];
+    byte[] ipBuffer = ip.toByteArray();
     System.arraycopy(ipBuffer, 0, buffer, 0, ipBuffer.length);
     System.arraycopy(tcpBuffer, 0, buffer, ipBuffer.length, tcpBuffer.length);
 
@@ -71,7 +80,7 @@ public class TcpPacketFactory {
   }
 
   /**
-   * Creates a SYN-ACK packet given the previous IP and TCP headers (and optional data)
+   * Creates a SYN-ACK packet given the previous IP and TCP headers (and optional data).
    *
    * @param ip  the IP header from the SYN packet
    * @param tcp the TCP SYN packet
@@ -85,20 +94,28 @@ public class TcpPacketFactory {
     tcpHeader.swapSourceDestination();
 
     Random random = new Random();
-    long ackNumber = tcpHeader.getSequenceNumber() + 1;
     long seqNumber = random.nextInt();
     if (seqNumber < 0) {
       seqNumber = seqNumber * -1;
     }
     logger.info("Initial seq #" + seqNumber);
     tcpHeader.setSequenceNumber(seqNumber);
+    long ackNumber = tcpHeader.getSequenceNumber() + 1;
     tcpHeader.setAckNumber(ackNumber);
-    tcpHeader.setSYN(true);
-    tcpHeader.setACK(true);
+    tcpHeader.setSyn(true);
+    tcpHeader.setAck(true);
 
     return createPacketData(ipHeader, tcpHeader, null);
   }
 
+  /**
+   * Prepare an ACK packet given the original ip and tcp header (and the ACK # that should be sent).
+   *
+   * @param ip the original IP header of the data packet
+   * @param tcp the original TCP header of the data packet
+   * @param ackToClient the ACK# to send.
+   * @return a byte buffer with both the IP and TCP header filled in for an ACK packet.
+   */
   public static byte[] createResponseAckData(IpHeader ip, TcpHeader tcp, long ackToClient) {
     IpHeader ipHeader = copyIpHeader(ip);
     TcpHeader tcpHeader = copyTcpHeader(tcp);
@@ -118,10 +135,10 @@ public class TcpPacketFactory {
       logger.warn("Need to figure out what to do with Ipv6 ids? flow labels?");
     }
 
-    tcpHeader.setACK(true);
-    tcpHeader.setSYN(false);
-    tcpHeader.setPSH(false);
-    tcpHeader.setFIN(false);
+    tcpHeader.setAck(true);
+    tcpHeader.setSyn(false);
+    tcpHeader.setPsh(false);
+    tcpHeader.setFin(false);
 
     // set response timestamps in options fields
     tcpHeader.setTimestampReplyTo(tcp.getTimestampSender());
@@ -134,6 +151,20 @@ public class TcpPacketFactory {
     return createPacketData(ipHeader, tcpHeader, null);
   }
 
+  /**
+   * Takes the data packet received from the destination outside of the VPN and converts it to a
+   * data packet for the recipient inside the VPN.
+   *
+   * @param ip the IP header received at the edge of the VPN from the Internet host
+   * @param tcp the TPC header received at the edge of the VPN from the Internet host
+   * @param packetData the packet data received
+   * @param isPsh true if the packet should be a PSH packet
+   * @param ackNumber the acknowledgement number to attach to the packet
+   * @param seqNumber the sequence number to attach to the packet
+   * @param timeSender the timestamp of the sender (need to understand better)
+   * @param timeReplyTo the timestamp of the replying side (need to understand better)
+   * @return a buffer filled with the IP and TCP header + data payload for the internal recipient
+   */
   public static byte[] createResponsePacketData(IpHeader ip, TcpHeader tcp, byte[] packetData,
                                                 boolean isPsh, long ackNumber, long seqNumber,
                                                 int timeSender, int timeReplyTo) {
@@ -154,10 +185,10 @@ public class TcpPacketFactory {
       logger.warn("Need to figure out what to do with Ipv6 ids? flow labels?");
     }
 
-    tcpHeader.setACK(true);
-    tcpHeader.setSYN(false);
-    tcpHeader.setPSH(isPsh);
-    tcpHeader.setFIN(false);
+    tcpHeader.setAck(true);
+    tcpHeader.setSyn(false);
+    tcpHeader.setPsh(isPsh);
+    tcpHeader.setFin(false);
 
     tcpHeader.setTimestampSender(timeSender);
     tcpHeader.setTimestampReplyTo(timeReplyTo);
@@ -171,6 +202,15 @@ public class TcpPacketFactory {
     return createPacketData(ipHeader, tcpHeader, packetData);
   }
 
+  /**
+   * Creates a reset packet given an IP and TCP header (plus sends an ACK for any outstanding
+   * received packets).
+   *
+   * @param ip IP header (I believe from outside the VPN)
+   * @param tcp TCP header (I believe from outside the VPN)
+   * @param dataLength the unack'd data length
+   * @return a buffer filled with IP, TCP reset packet, along with ACK for any unacked received data
+   */
   public static byte[] createRstData(IpHeader ip, TcpHeader tcp, int dataLength) {
     IpHeader ipHeader = copyIpHeader(ip);
     TcpHeader tcpHeader = copyTcpHeader(tcp);
@@ -198,15 +238,15 @@ public class TcpPacketFactory {
       logger.warn("Need to figure out what to do with Ipv6 ids? flow labels?");
     }
 
-    tcp.setRST(true);
-    tcp.setACK(false);
-    tcp.setSYN(false);
-    tcp.setPSH(false);
-    tcp.setCWR(false);
-    tcp.setECE(false);
-    tcp.setFIN(false);
+    tcp.setRst(true);
+    tcp.setAck(false);
+    tcp.setSyn(false);
+    tcp.setPsh(false);
+    tcp.setCwr(false);
+    tcp.setEce(false);
+    tcp.setFin(false);
     //tcp.setNS(false);
-    tcp.setURG(false);
+    tcp.setUrg(false);
 
     tcp.setOptions(null);
     tcp.setWindowSize(0);
@@ -216,7 +256,19 @@ public class TcpPacketFactory {
     return createPacketData(ipHeader, tcpHeader, null);
   }
 
-  public static byte[] createFinData(IpHeader ip, TcpHeader tcp, long ackNumber, long seqNumber, int timeSender, int timeReplyTo) {
+  /**
+   * Creates a FIN packet to terminate the session.
+   *
+   * @param ip the IP header from outside the VPN
+   * @param tcp the TCP header from outside the VPN
+   * @param ackNumber the ACK# of any unacked data
+   * @param seqNumber sequence number to attack to packet
+   * @param timeSender the sender timestamp (need to understand better)
+   * @param timeReplyTo the reply side timestamp (need to understand better)
+   * @return a buffer filled with the IP, TCP header to finish the session
+   */
+  public static byte[] createFinData(IpHeader ip, TcpHeader tcp, long ackNumber, long seqNumber,
+                                     int timeSender, int timeReplyTo) {
     ip.swapAddresses();;
     tcp.swapSourceDestination();
     tcp.setAckNumber(ackNumber);
@@ -232,15 +284,15 @@ public class TcpPacketFactory {
       logger.warn("Need to figure out what to do with Ipv6 ids? flow labels?");
     }
 
-    tcp.setRST(false);
-    tcp.setACK(true);
-    tcp.setSYN(false);
-    tcp.setPSH(false);
-    tcp.setCWR(false);
-    tcp.setECE(false);
-    tcp.setFIN(true);
+    tcp.setRst(false);
+    tcp.setAck(true);
+    tcp.setSyn(false);
+    tcp.setPsh(false);
+    tcp.setCwr(false);
+    tcp.setEce(false);
+    tcp.setFin(true);
     //tcp.setNS(false);
-    tcp.setURG(false);
+    tcp.setUrg(false);
 
     tcp.setOptions(null);
     tcp.setWindowSize(0);
@@ -250,6 +302,17 @@ public class TcpPacketFactory {
     return createPacketData(ip, tcp, null);
   }
 
+  /**
+   * Create an acknowledgement for a FIN packet.
+   *
+   * @param ip the IP header of the FIN packet
+   * @param tcp the TCP header of the FIN packet
+   * @param ackToClient the ack number to assign to the FIN-ACK packet
+   * @param seqToClient the sequence number to assign to the FIN-ACK packet
+   * @param isFin true / false indiciating whether the flag is set
+   * @param isAck true / false indiciating whether the flag is set
+   * @return a filled in buffer with an IP header and TCP FIN-ACK packet
+   */
   public static byte[] createFinAckData(IpHeader ip, TcpHeader tcp, long ackToClient,
                                         long seqToClient, boolean isFin, boolean isAck) {
     IpHeader ipHeader = copyIpHeader(ip);
@@ -269,10 +332,10 @@ public class TcpPacketFactory {
       logger.warn("Need to figure out what to do with Ipv6 ids? flow labels?");
     }
 
-    tcpHeader.setACK(isAck);
-    tcpHeader.setSYN(false);
-    tcpHeader.setPSH(false);
-    tcpHeader.setFIN(isFin);
+    tcpHeader.setAck(isAck);
+    tcpHeader.setSyn(false);
+    tcpHeader.setPsh(false);
+    tcpHeader.setFin(isFin);
 
     // set response timestamps in options fields
     tcpHeader.setTimestampReplyTo(tcp.getTimestampSender());

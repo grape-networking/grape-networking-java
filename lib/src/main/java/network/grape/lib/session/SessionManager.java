@@ -49,6 +49,7 @@ public class SessionManager {
 
   /**
    * Attempts to lookup a session by the channel.
+   *
    * @param channel the channel to look for
    * @return the session, or null if not found
    */
@@ -68,16 +69,19 @@ public class SessionManager {
 
   /**
    * Re-adds the session to the table to prevent garbage collector from claiming it (I guess its
-   * based on last usage?)
-   * @param session
+   * based on last usage?).
+   *
+   * @param session the session to keep-alive
    */
   public void keepAlive(Session session) {
     if (session != null) {
       table.put(session.getKey(), session);
     }
   }
+
   /**
    * Stores a session in the map by key.
+   *
    * @param key the key to store the session in the map with
    * @param session the session to store
    * @return true if the session was added, false if key exists.
@@ -92,6 +96,7 @@ public class SessionManager {
 
   /**
    * Removes the session from the map and closes the session channel if its open.
+   *
    * @param session the session to remove.
    */
   public void closeSession(Session session) {

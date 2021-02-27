@@ -5,7 +5,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-
 import android.os.Build;
 import java.net.SocketException;
 import org.junit.Test;
@@ -15,6 +14,9 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 
+/**
+ * Test the MainActivity.
+ */
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = {Build.VERSION_CODES.JELLY_BEAN_MR2})
 public class MainActivityTest {

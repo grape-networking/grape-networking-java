@@ -106,6 +106,7 @@ public class Ip4Header implements IpHeader {
 
   /**
    * Serializes the header into a byte array.
+   *
    * @return the byte array representation of the header
    */
   public byte[] toByteArray() {

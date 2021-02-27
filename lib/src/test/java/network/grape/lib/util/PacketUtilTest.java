@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -15,9 +14,11 @@ import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.transport.tcp.TcpHeader;
 import network.grape.lib.transport.udp.UdpHeader;
 import network.grape.lib.transport.udp.UdpPacketFactory;
-
 import org.junit.jupiter.api.Test;
 
+/**
+ * Tests for Packet Utilities.
+ */
 public class PacketUtilTest extends PacketUtil {
 
   @Test
@@ -96,7 +97,10 @@ public class PacketUtilTest extends PacketUtil {
     UdpHeader udpResponse = UdpHeader.parseBuffer(fullResponseBuffer);
     System.out.println("IPv4 Response Header: " + ipResponse.toString());
     System.out.println("UDP Respose Header: " + udpResponse.toString());
-    assertEquals(ipResponse.getChecksum(), ip4Header.getChecksum());
+
+    // this asset doesn't make sense - the response won't necessarily have the same checksum as the
+    // reqeuest
+    // assertEquals(ipResponse.getChecksum(), ip4Header.getChecksum());
 
     assertEquals(0xa15d, udpResponse.getChecksum());
   }

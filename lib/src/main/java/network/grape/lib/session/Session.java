@@ -10,16 +10,18 @@ import lombok.Getter;
 import lombok.Setter;
 import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.transport.TransportHeader;
+import network.grape.lib.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Everything related to an outgoing TCP session from the phone to the destination.
- *
+ * <p>
  * Probably can split into:
  * - Generalized session with common stuff
  * - UDP session (with very little)
  * - TCP session (with a bunch of tcp related stuff).
+ * </p>
  */
 public class Session {
   private final Logger logger = LoggerFactory.getLogger(Session.class);
@@ -50,7 +52,8 @@ public class Session {
   @Getter @Setter private long recSequence = 0;
   @Getter @Setter private boolean closingConnection = false;
   @Getter @Setter private boolean ackedToFin = false;
-  //in ACK packet from client, if the previous packet was corrupted, client will send flag in options field
+  // in ACK packet from client, if the previous packet was corrupted,
+  // client will send flag in options field
   @Getter @Setter private boolean packetCorrupted = false;
   //track ack we sent to client and waiting for ack back from client
   @Getter @Setter private long sendUnack = 0;
@@ -116,6 +119,7 @@ public class Session {
 
   /**
    * Buffer contains data for sending to destination server.
+   *
    * @return boolean true if there is data to be sent, false otherwise.
    */
   public boolean hasDataToSend() {
@@ -124,14 +128,16 @@ public class Session {
 
   /**
    * Returns the size of the data in the outgoing buffer to be sent.
+   *
    * @return the size of the sending buffer.
    */
-  public int getSendingDataSize(){
+  public int getSendingDataSize() {
     return sendingStream.size();
   }
 
   /**
    * Dequeue data for sending to server.
+   *
    * @return byte[] a byte array of data to be sent
    */
   public synchronized byte[] getSendingData() {
@@ -153,27 +159,30 @@ public class Session {
   }
 
   /**
-   * determine if client's receiving window is full or not.
+   * Determine if client's receiving window is full or not.
+   *
    * @return boolean
    */
-  public boolean isClientWindowFull(){
-    return (sendWindow > 0 && sendAmountSinceLastAck >= sendWindow) ||
-        (sendWindow == 0 && sendAmountSinceLastAck > 65535);
+  public boolean isClientWindowFull() {
+    return (sendWindow > 0 && sendAmountSinceLastAck >= sendWindow)
+        || (sendWindow == 0 && sendAmountSinceLastAck > Constants.MAX_RECEIVE_BUFFER_SIZE);
   }
 
   /**
-   * buffer has more data for vpn client
+   * Buffer has more data for vpn client.
+   *
    * @return boolean
    */
-  public boolean hasReceivedData(){
+  public boolean hasReceivedData() {
     return receivingStream.size() > 0;
   }
 
   /**
-   * append more data
+   * Append more data.
+   *
    * @param data Data
    */
-  public synchronized void addReceivedData(byte[] data){
+  public synchronized void addReceivedData(byte[] data) {
     try {
       receivingStream.write(data);
     } catch (IOException e) {
@@ -182,13 +191,14 @@ public class Session {
   }
 
   /**
-   * get all data received in the buffer and empty it.
+   * Get all data received in the buffer and empty it.
+   *
    * @return byte[]
    */
-  public synchronized byte[] getReceivedData(int maxSize){
+  public synchronized byte[] getReceivedData(int maxSize) {
     byte[] data = receivingStream.toByteArray();
     receivingStream.reset();
-    if(data.length > maxSize){
+    if (data.length > maxSize) {
       byte[] small = new byte[maxSize];
       System.arraycopy(data, 0, small, 0, maxSize);
       int len = data.length - maxSize;
