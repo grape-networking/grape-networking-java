@@ -10,6 +10,7 @@ import static network.grape.lib.transport.TransportHeader.UDP_PROTOCOL;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import network.grape.lib.network.ip.Ip4Header;
+import network.grape.lib.network.ip.Ip6Header;
 import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.util.BufferUtil;
 import network.grape.lib.util.PacketUtil;
@@ -57,10 +58,8 @@ public class UdpPacketFactory {
       byte[] ipChecksum = PacketUtil.calculateChecksum(ipData, 0, ipData.length);
       System.arraycopy(ipChecksum, 0, ipData, 10, 2);
     } else {
-      // todo (jason) properly implement this
-      logger.warn("NO IP4");
       ipData = ipHeader.toByteArray();
-      totalLength = IP6HEADER_LEN + UDP_HEADER_LEN;
+      totalLength = IP6HEADER_LEN + udpLen;
     }
 
     byte[] buffer = new byte[totalLength];
