@@ -96,4 +96,11 @@ public class SessionManagerTest {
     doThrow(IOException.class).when(channel).close();
     sessionManager.closeSession(session);
   }
+
+  @Test
+  public void keepAliveTest() {
+    sessionManager.keepAlive(null);
+    Session session = mock(Session.class);
+    sessionManager.keepAlive(session);
+  }
 }

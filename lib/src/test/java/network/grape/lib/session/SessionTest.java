@@ -10,6 +10,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import network.grape.lib.transport.TransportHeader;
+import network.grape.lib.util.Constants;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -27,10 +28,40 @@ public class SessionTest {
     buffer.put(rawdata);
     buffer.rewind();
 
+    assertEquals(0, session.getSendingDataSize());
     assertFalse(session.hasDataToSend());
     int len = session.appendOutboundData(buffer);
     assertEquals(len, rawdata.length);
     assertTrue(session.hasDataToSend());
     assertArrayEquals(rawdata, session.getSendingData());
+  }
+
+  @Test
+  public void recieveDataTest() throws UnknownHostException {
+    Session session = new Session(InetAddress.getLocalHost(), 9999,
+        InetAddress.getLocalHost(), 8888, TransportHeader.TCP_PROTOCOL);
+
+    session.setSendWindowSizeAndScale(1, 1);
+    assertFalse(session.isClientWindowFull());
+    assertFalse(session.hasReceivedData());
+
+    session.addReceivedData("test".getBytes());
+    assertTrue(session.hasReceivedData());
+
+
+    session.trackAmountSentSinceLastAck(10);
+    assertTrue(session.isClientWindowFull());
+    session.decreaseAmountSentSinceLastAck(1);
+    session.decreaseAmountSentSinceLastAck(10);
+    session.setSendWindowSizeAndScale(0, 1);
+    session.trackAmountSentSinceLastAck(Constants.MAX_RECEIVE_BUFFER_SIZE + 2);
+    assertTrue(session.isClientWindowFull());
+
+    byte[] recv = session.getReceivedData("test".getBytes().length);
+    assertArrayEquals("test".getBytes(), recv);
+
+    session.addReceivedData("blah".getBytes());
+    recv = session.getReceivedData(2);
+    assertArrayEquals("bl".getBytes(), recv);
   }
 }

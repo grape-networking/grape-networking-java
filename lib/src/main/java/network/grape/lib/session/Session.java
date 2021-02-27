@@ -69,6 +69,7 @@ public class Session {
   @Getter @Setter private int maxSegmentSize = 0;
 
   //track how many byte of data has been sent since last ACK from client
+  private final Object syncSendAmount = new Object();
   private volatile int sendAmountSinceLastAck = 0;
 
   private ByteArrayOutputStream sendingStream;
@@ -156,6 +157,31 @@ public class Session {
     this.sendWindowSize = sendWindowSize;
     this.sendWindowScale = sendWindowScale;
     this.sendWindow = sendWindowSize * sendWindowScale;
+  }
+
+  /**
+   * Increase the value of sendAmountSinceLastAck to keep track of when the client TCP window is
+   * becoming full.
+   *
+   * @param amount the amount to increase by
+   */
+  public void trackAmountSentSinceLastAck(int amount) {
+    synchronized (syncSendAmount) {
+      sendAmountSinceLastAck += amount;
+    }
+  }
+
+  /**
+   * Decrease value of sendAmountSinceLastAck so that client's window is not full.
+   *
+   * @param amount the amount to decrease by
+   */
+  synchronized void decreaseAmountSentSinceLastAck(long amount) {
+    sendAmountSinceLastAck -= amount;
+    if (sendAmountSinceLastAck < 0) {
+      logger.error("Amount data to be decreased is over than its window.");
+      sendAmountSinceLastAck = 0;
+    }
   }
 
   /**
