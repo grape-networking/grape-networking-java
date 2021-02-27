@@ -6,6 +6,7 @@ import static network.grape.lib.network.ip.IpTestCommon.testIp4Header;
 import static network.grape.lib.network.ip.IpTestCommon.testIp6Header;
 import static network.grape.lib.transport.tcp.TcpTest.testTcpHeader;
 import static network.grape.lib.transport.udp.UdpTest.testUdpHeader;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -119,7 +120,6 @@ public class SessionHandlerTest {
     verify(sessionHandler, times(1)).handleTcpPacket(any(), any(), any());
   }
 
-  // I think this is because constructing the key throws NPE.
   @Test
   public void handleUdpPacketTest() throws IOException {
     IpHeader ipHeader = mock(IpHeader.class);
@@ -199,5 +199,123 @@ public class SessionHandlerTest {
     // payload not empty
     buffer = ByteBuffer.allocate(10);
     sessionHandler.handleUdpPacket(buffer, ipHeader, udpHeader);
+  }
+
+  @Test
+  public void handleTcpPacketTest() throws UnknownHostException {
+    IpHeader ipHeader = mock(IpHeader.class);
+    TcpHeader tcpHeader = mock(TcpHeader.class);
+    ByteBuffer payload = mock(ByteBuffer.class);
+
+    when(ipHeader.getDestinationAddress()).thenReturn(Inet4Address.getLocalHost());
+    when(ipHeader.getSourceAddress()).thenReturn(Inet4Address.getLocalHost());
+    when(tcpHeader.getSourcePort()).thenReturn(0);
+    when(tcpHeader.getDestinationPort()).thenReturn(0);
+    when(ipHeader.getProtocol()).thenReturn((short) TransportHeader.TCP_PROTOCOL);
+    doReturn(0).when(ipHeader).getHeaderLength();
+    doReturn(new byte[0]).when(ipHeader).toByteArray();
+    doReturn(0).when(tcpHeader).getHeaderLength();
+    doReturn(new byte[0]).when(tcpHeader).toByteArray();
+
+    // not any of the types of packets
+    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter));
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+
+    // syn
+    when(tcpHeader.isSyn()).thenReturn(true);
+    doNothing().when(sessionHandler).replySynAck(ipHeader, tcpHeader);
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+    when(tcpHeader.isSyn()).thenReturn(false);
+
+    // ack, no session found, !RST
+    when(tcpHeader.isAck()).thenReturn(true);
+    when(sessionManager.getSession(ipHeader.getSourceAddress(), 0, ipHeader.getDestinationAddress(), 0, TransportHeader.TCP_PROTOCOL)).thenReturn(null);
+    doNothing().when(sessionHandler).sendRstPacket(ipHeader, tcpHeader, 0, null);
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+
+    // ack, no session found, FIN
+    doNothing().when(sessionHandler).sendLastAck(ipHeader, tcpHeader, null);
+    when(tcpHeader.isFin()).thenReturn(true);
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+    when(tcpHeader.isFin()).thenReturn(false);
+
+    // ack, no session found, RST
+    when(tcpHeader.isRst()).thenReturn(true);
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+    when(tcpHeader.isRst()).thenReturn(false);
+
+    // ack, session ! null
+    Session session = mock(Session.class);
+    when(sessionManager.getSession(ipHeader.getSourceAddress(), 0, ipHeader.getDestinationAddress(), 0, TransportHeader.TCP_PROTOCOL)).thenReturn(session);
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+
+    // ack, session != null, payload remaining
+    when(payload.remaining()).thenReturn(10);
+    doNothing().when(sessionHandler).sendAck(any(), any(), anyInt(), any());
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+
+    doReturn(5L).when(session).getRecSequence();
+    doReturn(10L).when(tcpHeader).getSequenceNumber();
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+
+    doNothing().when(sessionHandler).sendAckForDisorder(any(), any(), anyInt(), any());
+    doReturn(10L).when(session).getRecSequence();
+    doReturn(5L).when(tcpHeader).getSequenceNumber();
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+
+    // ack, session != null, payload ! remaining, closing conection
+    when(payload.remaining()).thenReturn(0);
+    doNothing().when(sessionHandler).sendFinAck(any(), any(), any());
+    doReturn(true).when(session).isClosingConnection();
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+    doReturn(false).when(session).isClosingConnection();
+
+    // ack, session != null, payload ! remaining, isAckedToFin
+    doNothing().when(sessionManager).closeSession(any());
+    doReturn(true).when(session).isAckedToFin();
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+
+    doNothing().when(sessionHandler).ackFinAck(any(), any(), any());
+    doReturn(true).when(tcpHeader).isFin();
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+    doReturn(false).when(tcpHeader).isFin();
+
+    //ack, session != null, isPsh
+    doNothing().when(sessionHandler).pushDataToDestination(any(), any());
+    doReturn(true).when(tcpHeader).isPsh();
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+    doReturn(false).when(tcpHeader).isPsh();
+
+    //ack, session != null, isRst
+    doReturn(true).when(tcpHeader).isRst();
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+    doReturn(false).when(tcpHeader).isRst();
+
+    //ack, session != null, clientWindowFull, !aborting
+    doReturn(true).when(session).isClientWindowFull();
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+
+    //ack, session != null, clientWindowFull, aborting
+    doReturn(true).when(session).isAbortingConnection();
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+
+    //ack, session != null, !clientWindowFull, aborting
+    doReturn(false).when(session).isClientWindowFull();
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+
+    //fin, session not found
+    when(tcpHeader.isAck()).thenReturn(false);
+    when(tcpHeader.isFin()).thenReturn(true);
+    when(sessionManager.getSession(ipHeader.getSourceAddress(), 0, ipHeader.getDestinationAddress(), 0, TransportHeader.TCP_PROTOCOL)).thenReturn(null);
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+
+    // fin, session
+    when(sessionManager.getSession(ipHeader.getSourceAddress(), 0, ipHeader.getDestinationAddress(), 0, TransportHeader.TCP_PROTOCOL)).thenReturn(session);
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+
+    //rst
+    when(tcpHeader.isFin()).thenReturn(false);
+    when(tcpHeader.isRst()).thenReturn(true);
+    sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
   }
 }

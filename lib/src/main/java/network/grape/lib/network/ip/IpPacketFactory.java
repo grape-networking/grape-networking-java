@@ -40,8 +40,10 @@ public class IpPacketFactory {
   public static IpHeader copyIpHeader(IpHeader ipHeader) {
     if (ipHeader instanceof Ip4Header) {
       return copyIp4Header((Ip4Header) ipHeader);
-    } else {
+    } else if (ipHeader instanceof Ip6Header) {
       return copyIp6Header((Ip6Header) ipHeader);
+    } else {
+      throw new IllegalArgumentException("Ip Header was not Ip4 or Ip6, don't know how to handle");
     }
   }
 }
