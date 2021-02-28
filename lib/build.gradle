@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        hiltVersion = "2.30.1-alpha"
+        hiltVersion = "2.33-beta"
         jUnitVersion = "5.7.1"
         espressoVersion = "3.4.0-alpha02"
         androidxVersion = "1.3.1-alpha02"
