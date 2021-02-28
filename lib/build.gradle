@@ -1,10 +1,6 @@
 buildscript {
     ext {
-        hiltVersion = "2.33-beta"
         jUnitVersion = "5.7.1"
-        espressoVersion = "3.4.0-alpha02"
-        androidxVersion = "1.3.1-alpha02"
-        roboelectricVersion = "4.5-alpha-1"
     }
     repositories {
         google()
@@ -24,6 +20,11 @@ apply plugin: 'com.android.lint'
 apply plugin: 'jacoco'
 apply plugin: 'maven-publish'
 
+compileJava   {
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
+}
+
 dependencies {
     // note: this gives a lint warning, but if we take it out, it doesn't find annotations
     // https://stackoverflow.com/a/64726112
@@ -39,10 +40,8 @@ dependencies {
     testRuntimeOnly "uk.org.lidalia:slf4j-test:1.2.0"
     testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter-params:${jUnitVersion}"
-    testImplementation "com.google.dagger:hilt-android-testing:${hiltVersion}"
     testImplementation "org.mockito:mockito-inline:3.8.0"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}"
-    testAnnotationProcessor "com.google.dagger:hilt-android-compiler:${hiltVersion}"
 }
 
 lintOptions {
