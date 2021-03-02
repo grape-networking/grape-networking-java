@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -21,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.net.Inet4Address;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
@@ -317,5 +319,27 @@ public class SessionHandlerTest {
     when(tcpHeader.isFin()).thenReturn(false);
     when(tcpHeader.isRst()).thenReturn(true);
     sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
+  }
+
+  @Test
+  public void testReplySynAck() throws UnknownHostException {
+
+    TcpHeader tcpHeader = testTcpHeader();
+    tcpHeader.setSyn(true);
+    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter));
+    doNothing().when(protector).protect((Socket) any());
+    doReturn(new Object()).when(vpnWriter).getSyncSelector();
+    doReturn(new Object()).when(vpnWriter).getSyncSelector2();
+    Session session = mock(Session.class);
+
+    //ipv4, session already exists
+    doReturn(session).when(sessionManager).getSessionByKey(anyString());
+    Ip4Header ip4Header = testIp4Header();
+    sessionHandler.replySynAck(ip4Header, tcpHeader);
+
+    //ipv6, session doesn't exist
+    Ip6Header ip6Header = testIp6Header();
+    doReturn(null).when(sessionManager).getSessionByKey(anyString());
+    sessionHandler.replySynAck(ip6Header, tcpHeader);
   }
 }

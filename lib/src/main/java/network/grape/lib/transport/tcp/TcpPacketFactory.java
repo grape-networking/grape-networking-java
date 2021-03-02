@@ -1,5 +1,6 @@
 package network.grape.lib.transport.tcp;
 
+import static network.grape.lib.network.ip.IpHeader.IP4_WORD_LEN;
 import static network.grape.lib.network.ip.IpPacketFactory.copyIpHeader;
 import static network.grape.lib.transport.TransportHeader.TCP_PROTOCOL;
 
@@ -7,7 +8,9 @@ import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.Random;
 import network.grape.lib.network.ip.Ip4Header;
+import network.grape.lib.network.ip.Ip6Header;
 import network.grape.lib.network.ip.IpHeader;
+import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.util.PacketUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,16 +44,28 @@ public class TcpPacketFactory {
     byte[] tcpBuffer = tcp.toByteArray();
     byte[] zero = {0x00, 0x00};
 
+    // zero out the checksum
     System.arraycopy(zero, 0, tcpBuffer, 16, 2);
 
-    // todo (jason): update this to support IPv6 - because I'm sure this has the same problem that
-    // the UDP packets had.
-    ByteBuffer pseudoHeader = ByteBuffer.allocate(12 + tcpBuffer.length + dataLength);
-    pseudoHeader.put(ip.getSourceAddress().getAddress());
-    pseudoHeader.put(ip.getDestinationAddress().getAddress());
-    pseudoHeader.put((byte) 0x00);
-    pseudoHeader.put(TCP_PROTOCOL);
-    pseudoHeader.putShort((short) (tcpBuffer.length + dataLength));
+    ByteBuffer pseudoHeader;
+    if (ip instanceof Ip4Header) {
+      pseudoHeader = ByteBuffer.allocate(12 + tcpBuffer.length + dataLength);
+      pseudoHeader.put(ip.getSourceAddress().getAddress());
+      pseudoHeader.put(ip.getDestinationAddress().getAddress());
+      pseudoHeader.put((byte) 0x00);
+      pseudoHeader.put(TCP_PROTOCOL);
+      pseudoHeader.putShort((short) (tcpBuffer.length + dataLength));
+    } else if (ip instanceof Ip6Header) {
+      pseudoHeader = ByteBuffer.allocate(40 + tcpBuffer.length + dataLength);
+      pseudoHeader.put(ip.getSourceAddress().getAddress());
+      pseudoHeader.put(ip.getDestinationAddress().getAddress());
+      pseudoHeader.putInt((tcpBuffer.length + dataLength));
+      pseudoHeader.putInt(TCP_PROTOCOL);
+    } else {
+      logger.error("Trying to create a packet with an IP header that isn't ip4 or ip6");
+      return new byte[0];
+    }
+
     pseudoHeader.put(tcpBuffer);
     if (data != null) {
       pseudoHeader.put(data);

@@ -1,5 +1,6 @@
 package network.grape.lib.transport.udp;
 
+import static network.grape.lib.network.ip.IpHeader.IP4_WORD_LEN;
 import static network.grape.lib.network.ip.IpHeader.IP6HEADER_LEN;
 import static network.grape.lib.network.ip.IpPacketFactory.copyIpHeader;
 import static network.grape.lib.transport.TransportHeader.TCP_WORD_LEN;
@@ -46,7 +47,7 @@ public class UdpPacketFactory {
       // todo: set may fragment to false
       Ip4Header ip4Header = (Ip4Header) ipHeader;
       ip4Header.setId(PacketUtil.getPacketId());
-      totalLength = (ip4Header.getIhl() * TCP_WORD_LEN) + udpLen;
+      totalLength = (ip4Header.getIhl() * IP4_WORD_LEN) + udpLen;
       ip4Header.setLength(totalLength);
       ipData = ipHeader.toByteArray();
       byte[] zero = {0x00, 0x00};

@@ -9,6 +9,7 @@ import static network.grape.lib.transport.tcp.TcpPacketFactory.createSynAckPacke
 import static network.grape.lib.util.Constants.MAX_RECEIVE_BUFFER_SIZE;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
@@ -288,6 +289,49 @@ public class SessionHandler {
   }
 
   /**
+   * Helper function to obtain and attempt to connect to a destination address and port (outside
+   * of the VPN).
+   *
+   * @param session the session to initiate the connection for
+   * @param destinationAddress the destination address to connect to
+   * @param destinationPort the destination port to connect to
+   * @return a connected socket or null if there was a problem
+   */
+  protected SocketChannel initAndConnectSocket(Session session, InetAddress destinationAddress, int destinationPort) {
+    SocketChannel channel;
+    try {
+      channel = SocketChannel.open();
+      channel.socket().setKeepAlive(true);
+      channel.socket().setTcpNoDelay(true);
+      channel.socket().setSoTimeout(0);
+      channel.socket().setReceiveBufferSize(MAX_RECEIVE_BUFFER_SIZE);
+      channel.configureBlocking(false);
+    } catch (SocketException ex) {
+      logger.error("Error creating outgoing TCP session for: " + session.getKey()
+          + " :" + ex.toString());
+      return null;
+    } catch (IOException ex) {
+      logger.error("Failed to create socket channel: " + session.getKey() + " :" + ex.toString());
+      return null;
+    }
+    logger.info("Created outgoing socketchannel for: " + session.getKey());
+    protector.protect(channel.socket());
+
+    SocketAddress socketAddress =
+        new InetSocketAddress(destinationAddress, destinationPort);
+    try {
+      channel.connect(socketAddress);
+      session.setConnected(channel.isConnected());
+      logger.info("Connected? " + channel.isConnected() + " " + socketAddress.toString());
+    } catch (IOException ex) {
+      logger.error("Error connection on TCP channel " + session + ":" + ex.toString());
+      ex.printStackTrace();
+      return null;
+    }
+    return channel;
+  }
+
+  /**
    * Initiate a new TCP connection with the start of a session and replying with SYN-ACK.
    *
    * @param ipHeader the IpHeader of the source packet
@@ -322,40 +366,16 @@ public class SessionHandler {
         TransportHeader.TCP_PROTOCOL);
 
     // todo (jason): may need to set session values from tcp options here
-
     if (sessionManager.getSessionByKey(session.getKey()) != null) {
       logger.warn("Already have a connection active for session: " + session.getKey());
       return;
     }
 
-    SocketChannel channel;
-    try {
-      channel = SocketChannel.open();
-      channel.socket().setKeepAlive(true);
-      channel.socket().setTcpNoDelay(true);
-      channel.socket().setSoTimeout(0);
-      channel.socket().setReceiveBufferSize(MAX_RECEIVE_BUFFER_SIZE);
-      channel.configureBlocking(false);
-    } catch (SocketException ex) {
-      logger.error("Error creating outgoing TCP session for: "
-          + session.getKey() + " :" + ex.toString());
-      return;
-    } catch (IOException ex) {
-      logger.error("Failed to create socket channel: " + session.getKey() + " :" + ex.toString());
-      return;
-    }
-    logger.info("Created outgoing socketchannel for: " + session.getKey());
-    protector.protect(channel.socket());
+    SocketChannel channel = initAndConnectSocket(session, ipHeader.getDestinationAddress(),
+        tcpHeader.getDestinationPort());
 
-    SocketAddress socketAddress =
-        new InetSocketAddress(ipHeader.getDestinationAddress(), tcpHeader.getDestinationPort());
-    try {
-      channel.connect(socketAddress);
-      session.setConnected(channel.isConnected());
-      logger.info("Connected? " + channel.isConnected() + " " + socketAddress.toString());
-    } catch (IOException ex) {
-      logger.error("Error connection on TCP channel " + session + ":" + ex.toString());
-      ex.printStackTrace();
+    if (channel == null) {
+      logger.warn("Problem connecting for " + ipHeader.getDestinationAddress() + ":" + tcpHeader.getDestinationPort());
       return;
     }
 
