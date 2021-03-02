@@ -101,6 +101,7 @@ public class PacketUtil {
    * @return boolean true if the packet is corrupt, false otherwise
    */
   public static boolean isPacketCorrupted(TcpHeader tcpHeader) {
+    /*
     final byte[] options = tcpHeader.getOptions();
 
     if (options != null) {
@@ -124,7 +125,7 @@ public class PacketUtil {
           logger.error("unknown option: " + kind);
         }
       }
-    }
+    } */
     return false;
   }
 }

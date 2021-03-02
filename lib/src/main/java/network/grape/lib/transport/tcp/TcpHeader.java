@@ -2,14 +2,10 @@ package network.grape.lib.transport.tcp;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.util.BufferUtil;
-import network.grape.lib.util.PacketUtil;
 
 /**
  * Attempts to process a buffer of bytes into a TCP header, or throws exceptions if its not
@@ -28,8 +24,8 @@ public class TcpHeader implements TransportHeader {
   private int windowSize;
   private int checksum;
   private int urgentPointer;
-  //private ArrayList<TcpOption> options;
-  private byte[] options;
+  private ArrayList<TcpOption> options;
+  //private byte[] options;
 
   // need to use setter when copying these fields
   private int timestampSender = 0;
@@ -51,7 +47,7 @@ public class TcpHeader implements TransportHeader {
    */
   public TcpHeader(int sourcePort, int destinationPort, long sequenceNumber, long ackNumber,
                    short offset, int flags, int windowSize, int checksum, int urgentPointer,
-                   byte[] options) {
+                   ArrayList<TcpOption> options) {
     this.sourcePort = sourcePort;
     this.destinationPort = destinationPort;
     this.sequenceNumber = sequenceNumber;
@@ -93,11 +89,11 @@ public class TcpHeader implements TransportHeader {
           + " but there is only " + stream.remaining() + " bytes left");
     }
 
-    //ArrayList<TcpOption> options = parseOptions(stream, optionsLength);
-    byte[] options = new byte[optionsLength];
-    for (int i = 0; i < optionsLength; i++) {
-      stream.get();
-    }
+    ArrayList<TcpOption> options = parseOptions(stream, optionsLength);
+//    byte[] options = new byte[optionsLength];
+//    for (int i = 0; i < optionsLength; i++) {
+//      stream.get();
+//    }
     //stream.get(options);
 
     return new TcpHeader(sourcePort, destinationPort, sequenceNumber, ackNumber, offset, flags,
@@ -109,6 +105,14 @@ public class TcpHeader implements TransportHeader {
     options = new ArrayList<>();
     offset = TCP_HEADER_LEN_NO_OPTIONS / TCP_WORD_LEN;
   } */
+
+  public void setOptions(ArrayList<TcpOption> options) {
+    this.options = options;
+    int len = optionLength();
+    len = (int)Math.round(len / 4.0) * 4;
+    offset = (short) ((TCP_HEADER_LEN_NO_OPTIONS + len) / 4);
+    System.out.println("OPTION LEN: " + len + " OFFSET: " + offset);
+  }
 
   @Override
   public byte[] toByteArray() {
@@ -128,11 +132,13 @@ public class TcpHeader implements TransportHeader {
     BufferUtil.putUnsignedShort(buffer, checksum);
     BufferUtil.putUnsignedShort(buffer, urgentPointer);
 
+    System.out.println("POSITION: " + buffer.position() + " LIMIT: " + buffer.limit());
+
     // todo: output options
-    //putOptions(buffer);
-    if (options != null) {
-      buffer.put(options);
-    }
+    putOptions(buffer);
+//    if (options != null) {
+//      buffer.put(options);
+//    }
 
     return buffer.array();
   }
@@ -335,7 +341,7 @@ public class TcpHeader implements TransportHeader {
         TcpOption option = TcpOption.MSS;
         option.setSize(optionLength);
         if (optionLength != 4) {
-          System.out.println("MSS SHOULD BE LEN 4");
+          System.out.println("MSS SHOULD BE LEN 4 but got " + optionLength);
           int i = optionLength - 2;
           option.value = ByteBuffer.allocate(i);
           while (i > 0) {
@@ -486,21 +492,34 @@ public class TcpHeader implements TransportHeader {
     return options;
   }
 
-  /*
   protected void putOptions(ByteBuffer buffer) {
     for (TcpOption option : options) {
-      BufferUtil.putUnsignedByte(buffer, 0);
+      System.out.println("Putting option: " + option + " POSITION: " + buffer.position());
+      BufferUtil.putUnsignedByte(buffer, option.type);
       if (option.type == TcpOption.END_OF_OPTION_LIST.type || option.type == TcpOption.NOP.type) {
         continue;
       }
-      BufferUtil.putUnsignedByte(buffer, 0);
+      BufferUtil.putUnsignedByte(buffer, option.size);
 
       if (option.size > 2) {
         option.value.rewind();
-        for(int i = 0; i < option.size; i++) {
-          BufferUtil.putUnsignedByte(buffer, 0);
-        }
+        buffer.put(option.value);
       }
     }
-  }*/
+  }
+
+  protected int optionLength() {
+    int length = 0;
+    for (TcpOption option : options) {
+      if (option == TcpOption.END_OF_OPTION_LIST || option == TcpOption.NOP) {
+        length++;
+        System.out.println("Adding option : " + option + " +1=" + length);
+      } else {
+        length += 2 + option.size;
+        System.out.println("Adding option : " + option + " +" + (2 + option.size) + " =" + length);
+      }
+    }
+    System.out.println("OPTION LEN: " + length);
+    return length;
+  }
 }
