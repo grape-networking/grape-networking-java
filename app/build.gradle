@@ -7,7 +7,7 @@ buildscript {
       roboelectricVersion = '4.5.1'
       // if we bump this version, we fail to find tests:
       // see: https://github.com/mannodermaus/android-junit5/issues/241
-      androidJUnit5Version = '1.2.0'
+      androidJUnit5Version = '1.2.2'
   }
   repositories {
       google()
