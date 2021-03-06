@@ -1,5 +1,6 @@
 package network.grape.lib.transport.tcp;
 
+import static network.grape.lib.transport.tcp.TcpPacketFactory.copyTcpHeader;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -9,6 +10,8 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import network.grape.lib.PacketHeaderException;
+import network.grape.lib.util.PacketUtil;
+
 import org.junit.jupiter.api.Test;
 
 /**
@@ -147,11 +150,34 @@ public class TcpTest {
   @Test
   public void optionTest() throws PacketHeaderException {
     ArrayList<TcpOption> options = new ArrayList<>();
-    TcpHeader tcpHeader = testTcpHeader();
+    TcpHeader tcpHeader = copyTcpHeader(testTcpHeader());
 
     TcpOption mss = TcpOption.MSS;
     mss.value.putShort((short) 1000);
+    System.out.println("MSS SIZE: " + mss.size);
     options.add(mss);
+
+    TcpOption windowScale = TcpOption.WINDOW_SCALE;
+    windowScale.value.put((byte) 10);
+    options.add(windowScale);
+
+    TcpOption sackPermitted = TcpOption.SACK_PERMITTED;
+    options.add(sackPermitted);
+
+    TcpOption sack = TcpOption.SACK;
+    sack.size = 4;
+    sack.value = ByteBuffer.allocate(sack.size - 2);
+    options.add(sack);
+
+    TcpOption echo = TcpOption.ECHO;
+    System.out.println("ECHO SIZE: " + echo.size);
+    options.add(echo);
+
+    TcpOption echoReply = TcpOption.ECHO_REPLY;
+    options.add(echoReply);
+
+//    TcpOption timestamps = TcpOption.TIMESTAMPS;
+//    options.add(timestamps);
 
     TcpOption nop = TcpOption.NOP;
     options.add(nop);
@@ -168,5 +194,49 @@ public class TcpTest {
     TcpHeader tcpHeader1 = TcpHeader.parseBuffer(buffer);
 
     assertEquals(tcpHeader, tcpHeader1);
+
+    // bad options, note - this has to happen after the good ones because otherwise setting the size
+    // and value will change the enum for the remaining tests. should probably find a better way
+    // to do this type of test because it is jaaannnkky
+    System.out.println("------------------------ BAD OPTIONS ---------------");
+    tcpHeader = copyTcpHeader(testTcpHeader());
+    options.clear();
+
+    mss = TcpOption.MSS;
+    mss.value = ByteBuffer.allocate(10);
+    mss.value.putShort((short) 1000);
+    mss.size = 12;
+    options.add(mss);
+
+    windowScale = TcpOption.WINDOW_SCALE;
+    windowScale.value = ByteBuffer.allocate(10);
+    windowScale.value.put((byte) 10);
+    windowScale.size = 12;
+    options.add(windowScale);
+
+    sackPermitted = TcpOption.SACK_PERMITTED;
+    sackPermitted.value = ByteBuffer.allocate(8);
+    sackPermitted.size = 10;
+    options.add(sackPermitted);
+
+//    TcpOption sack = TcpOption.SACK;
+//    sack.size = 2;
+//    sack.value = ByteBuffer.allocate(0);
+//    options.add(sack);
+
+    nop = TcpOption.NOP;
+    options.add(nop);
+
+    eol = TcpOption.END_OF_OPTION_LIST;
+    options.add(eol);
+
+    tcpHeader.setOptions(options);
+    System.out.println("OFFSETTTTTT: " + tcpHeader.getOffset());
+
+    buf = tcpHeader.toByteArray();
+    buffer = ByteBuffer.allocate(buf.length);
+    buffer.put(buf);
+    buffer.rewind();
+    tcpHeader1 = TcpHeader.parseBuffer(buffer);
   }
 }

@@ -1,6 +1,9 @@
 package network.grape.lib.transport.tcp;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Optional;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -42,6 +45,7 @@ public enum TcpOption {
   public final int type;
   @Getter @Setter public int size;
   @Getter @Setter public ByteBuffer value;
+  @Getter @Setter public boolean valid;
 
   private TcpOption(int type, int size) {
     this.type = type;
@@ -51,5 +55,15 @@ public enum TcpOption {
     } else {
       this.value = ByteBuffer.allocate(0);
     }
+    this.valid = true;
+  }
+
+  public static TcpOption getType(int type) {
+    for (TcpOption option : TcpOption.values()) {
+      if (option.type == type) {
+        return option;
+      }
+    }
+    throw new IllegalArgumentException("Couldn't find TcpOption: " + type);
   }
 }

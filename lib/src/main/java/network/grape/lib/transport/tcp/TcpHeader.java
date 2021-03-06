@@ -67,6 +67,9 @@ public class TcpHeader implements TransportHeader {
    * @throws PacketHeaderException if the header is not valid in the stream
    */
   public static TcpHeader parseBuffer(ByteBuffer stream) throws PacketHeaderException {
+    System.out.println("PARSING: " + stream.limit() + " bytes from pos: " + stream.position());
+    byte[] bytes = stream.array();
+    System.out.println(BufferUtil.hexDump(bytes, 0, stream.limit(), false, false));
     if (stream.remaining() < TCP_HEADER_LEN_NO_OPTIONS) {
       throw new PacketHeaderException("Minimum Tcp header length is " + TCP_HEADER_LEN_NO_OPTIONS
           + " bytes. There are only " + stream.remaining() + " bytes remaining");
@@ -76,6 +79,7 @@ public class TcpHeader implements TransportHeader {
     long sequenceNumber = BufferUtil.getUnsignedInt(stream);
     long ackNumber = BufferUtil.getUnsignedInt(stream);
     short offSetByte = BufferUtil.getUnsignedByte(stream);
+    System.out.println("OFFSET BYTE: " + offSetByte);
     short offset = (byte) ((offSetByte & 0xF0) >> 4);
     short flagsLowByte = BufferUtil.getUnsignedByte(stream);
     int flags = (short) (((offSetByte & 0x0f) << 8) + flagsLowByte);
@@ -83,6 +87,7 @@ public class TcpHeader implements TransportHeader {
     int checksum = BufferUtil.getUnsignedShort(stream);
     int urgentPointer = BufferUtil.getUnsignedShort(stream);
 
+    System.out.println("OFFSET: " + offset + " TOTAL LEN: " + (offset * TCP_WORD_LEN));
     int optionsLength = (offset * TCP_WORD_LEN) - TCP_HEADER_LEN_NO_OPTIONS;
     if (stream.remaining() < optionsLength) {
       throw new PacketHeaderException("There should be " + optionsLength + " bytes left for options"
@@ -122,7 +127,9 @@ public class TcpHeader implements TransportHeader {
     BufferUtil.putUnsignedInt(buffer, sequenceNumber);
     BufferUtil.putUnsignedInt(buffer, ackNumber);
 
+    System.out.println("WRITE OFFSET: " + offset);
     short offsetByte = (short) ((offset << 4) + (flags >> 8));
+    System.out.println("WRITE OFFSET BYTE: " + offsetByte);
     BufferUtil.putUnsignedByte(buffer, offsetByte);
 
     short flagsByte = (short) (flags & 0xFFFF);
@@ -308,6 +315,27 @@ public class TcpHeader implements TransportHeader {
     destinationPort = temp;
   }
 
+  private TcpOption parseOption(ByteBuffer stream) {
+    int optionType = stream.get();
+    TcpOption tcpOption = TcpOption.getType(optionType);
+    int optionSize = stream.get();
+    if (optionSize != tcpOption.size) {
+      tcpOption.valid = false;
+      System.out.println("Warning, invalid option size");
+    }
+    tcpOption.size = optionSize;
+    int bufferSize = tcpOption.size - 2;
+    if (bufferSize >= 0) {
+      tcpOption.value = ByteBuffer.allocate(bufferSize);
+      while (bufferSize > 0) {
+        byte value = stream.get();
+        tcpOption.value.put(value);
+        bufferSize--;
+      }
+    }
+    return tcpOption;
+  }
+
   /**
    * Parse the options from the stream. Assumes the stream is pointed to the start of the options.
 
@@ -324,19 +352,23 @@ public class TcpHeader implements TransportHeader {
   // https://tools.ietf.org/html/rfc793
   // https://tools.ietf.org/html/rfc2018
   protected static ArrayList<TcpOption> parseOptions(ByteBuffer stream, int optionsLength) {
+    System.out.println("PARSING LEN: " + optionsLength);
     ArrayList<TcpOption> options = new ArrayList<>();
     int pos = 0;
     while (pos < optionsLength) {
       int optionNumber = stream.get();
       if (optionNumber == TcpOption.END_OF_OPTION_LIST.type) {
+        System.out.println("EOL");
         options.add(TcpOption.END_OF_OPTION_LIST);
         pos++;
         break;
       } else if (optionNumber == TcpOption.NOP.type) {
+        System.out.println("NOP");
         options.add(TcpOption.NOP);
         pos++;
         continue;
       } else if (optionNumber == TcpOption.MSS.type) {
+        System.out.println("MSS");
         int optionLength = stream.get();
         TcpOption option = TcpOption.MSS;
         option.setSize(optionLength);
@@ -358,11 +390,12 @@ public class TcpHeader implements TransportHeader {
         options.add(option);
         pos += optionLength;
       } else if (optionNumber == TcpOption.WINDOW_SCALE.type) {
+        System.out.println("WINDOW SCALE");
         int optionLength = stream.get();
         TcpOption option = TcpOption.WINDOW_SCALE;
         option.setSize(optionLength);
         if (optionLength != 3) {
-          System.out.println("WINDOW_SCALE SHOULD BE LEN 3");
+          System.out.println("WINDOW_SCALE SHOULD BE LEN 3 but got " + optionLength);
           int i = optionLength - 2;
           option.value = ByteBuffer.allocate(i);
           while (i > 0) {
@@ -379,11 +412,12 @@ public class TcpHeader implements TransportHeader {
         options.add(option);
         pos += optionLength;
       } else if (optionNumber == TcpOption.SACK_PERMITTED.type) {
+        System.out.println("SACK PERMITTED");
         int optionLength = stream.get();
         TcpOption option = TcpOption.SACK_PERMITTED;
         option.setSize(optionLength);
         if (optionLength != 2) {
-          System.out.println("SACK_PERMITTED SHOULD BE LEN 2");
+          System.out.println("SACK_PERMITTED SHOULD BE LEN 2 byte got " + optionLength);
           int i = optionLength - 2;
           option.value = ByteBuffer.allocate(i);
           while (i > 0) {
@@ -397,31 +431,35 @@ public class TcpHeader implements TransportHeader {
         }
         options.add(option);
         pos += optionLength;
+        System.out.println("POS: " + pos + " OL: " + optionsLength);
       } else if (optionNumber == TcpOption.SACK.type) {
+        System.out.println("SACK");
         int optionLength = stream.get();
         TcpOption option = TcpOption.SACK;
         option.setSize(optionLength);
-        if (optionLength != 2) {
-          // don't get any bytes because len is only 2
-          System.out.println("SACK SHOULD BE LEN 2");
-          int i = optionLength - 2;
+        System.out.println("SACK len: " + optionLength);
+        int i = optionLength - 2;
+        if (i >= 0) {
           option.value = ByteBuffer.allocate(i);
           while (i > 0) {
+            System.out.println("i: " + i);
             byte value = stream.get();
             option.value.put(value);
             i--;
           }
+          options.add(option);
+          pos += optionLength;
+          System.out.println("POS: " + pos + " OL: " + optionsLength);
         } else {
-          System.out.println("GOT SACK BUT SHOULDN'T HAVE BECAUSE WE DIDN'T SEND SACK_PERMITTED");
+          System.out.println("SACK has negative size, can't continue");
         }
-        options.add(option);
-        pos += optionLength;
       } else if (optionNumber == TcpOption.ECHO.type) {
+        System.out.println("ECHO");
         int optionLength = stream.get();
         TcpOption option = TcpOption.ECHO;
         option.setSize(optionLength);
         if (optionLength != 6) {
-          System.out.println("ECHO SHOULD BE LEN 6");
+          System.out.println("ECHO SHOULD BE LEN 6 got " + optionLength);
           int i = optionLength - 2;
           option.value = ByteBuffer.allocate(i);
           while (i > 0) {
@@ -438,11 +476,12 @@ public class TcpHeader implements TransportHeader {
         options.add(option);
         pos += optionLength;
       } else if (optionNumber == TcpOption.ECHO_REPLY.type) {
+        System.out.println("ECHO REPLY");
         int optionLength = stream.get();
         TcpOption option = TcpOption.ECHO_REPLY;
         option.setSize(optionLength);
         if (optionLength != 6) {
-          System.out.println("ECHO REPLY SHOULD BE LEN 6");
+          System.out.println("ECHO REPLY SHOULD BE LEN 6 got " + optionLength);
           int i = optionLength - 2;
           option.value = ByteBuffer.allocate(i);
           while (i > 0) {
@@ -459,6 +498,7 @@ public class TcpHeader implements TransportHeader {
         options.add(option);
         pos += optionLength;
       } else if (optionNumber == TcpOption.TIMESTAMPS.type) {
+        System.out.println("TIMESTAMP");
         // https://tools.ietf.org/html/rfc7323#page-12
         // https://tools.ietf.org/id/draft-scheffenegger-tcpm-timestamp-negotiation-05.html#:~:text=A%20TCP%20may%20send%20the,%3E%20segment%20for%20the%20connection.%22
         int optionLength = stream.get();
@@ -487,6 +527,8 @@ public class TcpHeader implements TransportHeader {
         }
         options.add(option);
         pos += optionLength;
+      } else {
+        System.out.println("UNKNOWN OPTION: " + optionNumber);
       }
     }
     return options;
