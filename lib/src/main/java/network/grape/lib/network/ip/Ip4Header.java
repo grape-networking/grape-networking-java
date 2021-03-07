@@ -105,7 +105,7 @@ public class Ip4Header implements IpHeader {
   }
 
   /**
-   * Serializes the header into a byte array.
+   * Serializes the header into a byte array. (computes the checksum while doing it)
    *
    * @return the byte array representation of the header
    */

@@ -35,7 +35,16 @@ public class TcpPacketFactory {
         tcpHeader.getUrgentPointer(), tcpHeader.getOptions());
   }
 
-  private static byte[] createPacketData(IpHeader ip, TcpHeader tcp, byte[] data) {
+  /**
+   * Given the ip and tcp headers which are already filled out, and the data - compute the
+   * checksum and write the entire thing to a contiguous buffer and return it.
+   *
+   * @param ip the IpHeader already filled in (I believe with the checksum already computed as well)
+   * @param tcp the TcpHeader already filled in
+   * @param data the data payload of the tcp packet
+   * @return a checksummed tcp packet written with the ipheader and the payload into a buffer
+   */
+  protected static byte[] createPacketData(IpHeader ip, TcpHeader tcp, byte[] data) {
     int dataLength = 0;
     if (data != null) {
       dataLength = data.length;
@@ -49,6 +58,7 @@ public class TcpPacketFactory {
 
     ByteBuffer pseudoHeader;
     if (ip instanceof Ip4Header) {
+      System.out.println("IP4 header");
       pseudoHeader = ByteBuffer.allocate(12 + tcpBuffer.length + dataLength);
       pseudoHeader.put(ip.getSourceAddress().getAddress());
       pseudoHeader.put(ip.getDestinationAddress().getAddress());
@@ -56,6 +66,7 @@ public class TcpPacketFactory {
       pseudoHeader.put(TCP_PROTOCOL);
       pseudoHeader.putShort((short) (tcpBuffer.length + dataLength));
     } else if (ip instanceof Ip6Header) {
+      System.out.println("IP6 header");
       pseudoHeader = ByteBuffer.allocate(40 + tcpBuffer.length + dataLength);
       pseudoHeader.put(ip.getSourceAddress().getAddress());
       pseudoHeader.put(ip.getDestinationAddress().getAddress());
