@@ -6,10 +6,14 @@ import static network.grape.lib.network.ip.IpTestCommon.testIp4Header;
 import static network.grape.lib.network.ip.IpTestCommon.testIp6Header;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.copyTcpHeader;
 import static network.grape.lib.transport.tcp.TcpTest.testTcpHeader;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import network.grape.lib.PacketHeaderException;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.Ip6Header;
 import network.grape.lib.network.ip.IpHeader;
@@ -69,5 +73,23 @@ public class TcpFactoryTest {
 
     FakeIp4Header fakeIp4Header = new FakeIp4Header();
     TcpPacketFactory.createPacketData(fakeIp4Header, tcpHeader, data);
+  }
+
+  @Test public void createResponseAckData() throws UnknownHostException, PacketHeaderException {
+    Ip4Header ip4Header = copyIp4Header(testIp4Header());
+    TcpHeader tcpHeader = copyTcpHeader(testTcpHeader());
+    byte[] response = TcpPacketFactory.createResponseAckData(ip4Header, tcpHeader, tcpHeader.getAckNumber()+1);
+    ByteBuffer buffer = ByteBuffer.allocate(response.length);
+    buffer.put(response);
+    buffer.rewind();
+    Ip4Header ip4Header1 = Ip4Header.parseBuffer(buffer);
+    TcpHeader tcpHeader1 = TcpHeader.parseBuffer(buffer);
+    assertTrue(tcpHeader1.isAck());
+    assertEquals(tcpHeader1.getAckNumber(), tcpHeader.getAckNumber() + 1);
+    assertEquals(ip4Header.getSourceAddress(), ip4Header1.getDestinationAddress());
+    assertEquals(ip4Header.getDestinationAddress(), ip4Header1.getSourceAddress());
+
+    Ip6Header ip6Header = copyIp6Header(testIp6Header());
+    response = TcpPacketFactory.createResponseAckData(ip6Header, tcpHeader, tcpHeader.getAckNumber()+1);
   }
 }
