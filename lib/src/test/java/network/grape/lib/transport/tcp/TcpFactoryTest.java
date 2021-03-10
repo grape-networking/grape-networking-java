@@ -1,3 +1,4 @@
+
 package network.grape.lib.transport.tcp;
 
 import static network.grape.lib.network.ip.IpPacketFactory.copyIp4Header;
@@ -119,5 +120,22 @@ public class TcpFactoryTest {
     ip4Header1 = Ip4Header.parseBuffer(buffer);
     tcpHeader1 = TcpHeader.parseBuffer(buffer);
     assertEquals(tcpHeader1.getSequenceNumber(), tcpHeader.getAckNumber());
+  }
+
+  @Test public void createFinData() throws UnknownHostException, PacketHeaderException {
+    Ip4Header ip4Header = copyIp4Header(testIp4Header());
+    TcpHeader tcpHeader = copyTcpHeader(testTcpHeader());
+    byte[] response = TcpPacketFactory.createFinData(ip4Header, tcpHeader, 5, 3, 10000, 20000);
+    ByteBuffer buffer = ByteBuffer.allocate(response.length);
+    buffer.put(response);
+    buffer.rewind();
+    Ip4Header ip4Header1 = Ip4Header.parseBuffer(buffer);
+    TcpHeader tcpHeader1 = TcpHeader.parseBuffer(buffer);
+    assertTrue(tcpHeader1.isFin());
+    assertEquals(ip4Header.getSourceAddress(), ip4Header1.getDestinationAddress());
+    assertEquals(ip4Header.getDestinationAddress(), ip4Header1.getSourceAddress());
+
+    Ip6Header ip6Header = copyIp6Header(testIp6Header());
+    TcpPacketFactory.createFinData(ip6Header, tcpHeader, 5, 3, 10000, 20000);
   }
 }

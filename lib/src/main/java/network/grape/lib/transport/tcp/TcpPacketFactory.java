@@ -323,7 +323,7 @@ public class TcpPacketFactory {
     //tcpHeader.setNS(false);
     tcpHeader.setUrg(false);
 
-    tcpHeader.setOptions(null);
+    tcpHeader.setOptions(new ArrayList<>());
     tcpHeader.setWindowSize(0);
 
     ipHeader.setPayloadLength(tcpHeader.getHeaderLength());
