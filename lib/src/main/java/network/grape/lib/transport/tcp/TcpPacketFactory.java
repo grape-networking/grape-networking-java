@@ -5,6 +5,7 @@ import static network.grape.lib.network.ip.IpPacketFactory.copyIpHeader;
 import static network.grape.lib.transport.TransportHeader.TCP_PROTOCOL;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
 import network.grape.lib.network.ip.Ip4Header;
@@ -247,14 +248,14 @@ public class TcpPacketFactory {
     long ackNumber = 0;
     long seqNumber = 0;
 
-    if (tcp.getAckNumber() > 0) {
-      seqNumber = tcp.getAckNumber();
+    if (tcpHeader.getAckNumber() > 0) {
+      seqNumber = tcpHeader.getAckNumber();
     } else {
-      ackNumber = tcp.getSequenceNumber() + dataLength;
+      ackNumber = tcpHeader.getSequenceNumber() + dataLength;
     }
 
-    tcp.setAckNumber(ackNumber);
-    tcp.setSequenceNumber(seqNumber);
+    tcpHeader.setAckNumber(ackNumber);
+    tcpHeader.setSequenceNumber(seqNumber);
 
     if (ipHeader instanceof Ip4Header) {
       Ip4Header ip4Header = (Ip4Header) ipHeader;
@@ -264,20 +265,20 @@ public class TcpPacketFactory {
       logger.warn("Need to figure out what to do with Ipv6 ids? flow labels?");
     }
 
-    tcp.setRst(true);
-    tcp.setAck(false);
-    tcp.setSyn(false);
-    tcp.setPsh(false);
-    tcp.setCwr(false);
-    tcp.setEce(false);
-    tcp.setFin(false);
-    //tcp.setNS(false);
-    tcp.setUrg(false);
+    tcpHeader.setRst(true);
+    tcpHeader.setAck(false);
+    tcpHeader.setSyn(false);
+    tcpHeader.setPsh(false);
+    tcpHeader.setCwr(false);
+    tcpHeader.setEce(false);
+    tcpHeader.setFin(false);
+    //tcpHeader.setNS(false);
+    tcpHeader.setUrg(false);
 
-    tcp.setOptions(null);
-    tcp.setWindowSize(0);
+    tcpHeader.setOptions(new ArrayList<>());
+    tcpHeader.setWindowSize(0);
 
-    ip.setPayloadLength(tcp.getHeaderLength());
+    ipHeader.setPayloadLength(tcpHeader.getHeaderLength());
 
     return createPacketData(ipHeader, tcpHeader, null);
   }
@@ -295,37 +296,39 @@ public class TcpPacketFactory {
    */
   public static byte[] createFinData(IpHeader ip, TcpHeader tcp, long ackNumber, long seqNumber,
                                      int timeSender, int timeReplyTo) {
-    ip.swapAddresses();;
-    tcp.swapSourceDestination();
-    tcp.setAckNumber(ackNumber);
-    tcp.setSequenceNumber(seqNumber);
-    tcp.setTimestampReplyTo(timeReplyTo);
-    tcp.setTimestampSender(timeSender);
+    IpHeader ipHeader = copyIpHeader(ip);
+    TcpHeader tcpHeader = copyTcpHeader(tcp);
+    ipHeader.swapAddresses();;
+    tcpHeader.swapSourceDestination();
+    tcpHeader.setAckNumber(ackNumber);
+    tcpHeader.setSequenceNumber(seqNumber);
+    tcpHeader.setTimestampReplyTo(timeReplyTo);
+    tcpHeader.setTimestampSender(timeSender);
 
-    if (ip instanceof Ip4Header) {
-      Ip4Header ip4Header = (Ip4Header) ip;
+    if (ipHeader instanceof Ip4Header) {
+      Ip4Header ip4Header = (Ip4Header) ipHeader;
       ip4Header.setId(0);
     } else {
       // todo (jason): better handle ipv6 id's / flow labels here
       logger.warn("Need to figure out what to do with Ipv6 ids? flow labels?");
     }
 
-    tcp.setRst(false);
-    tcp.setAck(true);
-    tcp.setSyn(false);
-    tcp.setPsh(false);
-    tcp.setCwr(false);
-    tcp.setEce(false);
-    tcp.setFin(true);
-    //tcp.setNS(false);
-    tcp.setUrg(false);
+    tcpHeader.setRst(false);
+    tcpHeader.setAck(true);
+    tcpHeader.setSyn(false);
+    tcpHeader.setPsh(false);
+    tcpHeader.setCwr(false);
+    tcpHeader.setEce(false);
+    tcpHeader.setFin(true);
+    //tcpHeader.setNS(false);
+    tcpHeader.setUrg(false);
 
-    tcp.setOptions(null);
-    tcp.setWindowSize(0);
+    tcpHeader.setOptions(null);
+    tcpHeader.setWindowSize(0);
 
-    ip.setPayloadLength(tcp.getHeaderLength());
+    ipHeader.setPayloadLength(tcpHeader.getHeaderLength());
 
-    return createPacketData(ip, tcp, null);
+    return createPacketData(ipHeader, tcpHeader, null);
   }
 
   /**

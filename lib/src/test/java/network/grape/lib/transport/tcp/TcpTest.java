@@ -121,12 +121,25 @@ public class TcpTest {
   }
 
   @Test
-  public void rstTest() {
+  public void rstTest() throws PacketHeaderException {
     TcpHeader tcpHeader = testTcpHeader();
     tcpHeader.setRst(true);
-    assertTrue(tcpHeader.isRst());
+
+    // ensure that setting flags works across serialization
+    byte[] buf = tcpHeader.toByteArray();
+    ByteBuffer buffer = ByteBuffer.allocate(buf.length);
+    buffer.put(buf);
+    buffer.rewind();
+    TcpHeader tcpHeader1 = TcpHeader.parseBuffer(buffer);
+    assertTrue(tcpHeader1.isRst());
+
     tcpHeader.setRst(false);
-    assertFalse(tcpHeader.isRst());
+    buf = tcpHeader.toByteArray();
+    buffer = ByteBuffer.allocate(buf.length);
+    buffer.put(buf);
+    buffer.rewind();
+    tcpHeader1 = TcpHeader.parseBuffer(buffer);
+    assertFalse(tcpHeader1.isRst());
   }
 
   @Test

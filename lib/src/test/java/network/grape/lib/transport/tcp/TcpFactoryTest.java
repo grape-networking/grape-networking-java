@@ -92,4 +92,19 @@ public class TcpFactoryTest {
     Ip6Header ip6Header = copyIp6Header(testIp6Header());
     response = TcpPacketFactory.createResponseAckData(ip6Header, tcpHeader, tcpHeader.getAckNumber()+1);
   }
+
+  @Test public void createRstData() throws UnknownHostException, PacketHeaderException {
+    Ip4Header ip4Header = copyIp4Header(testIp4Header());
+    TcpHeader tcpHeader = copyTcpHeader(testTcpHeader());
+    byte[] response = TcpPacketFactory.createRstData(ip4Header, tcpHeader, 5);
+    ByteBuffer buffer = ByteBuffer.allocate(response.length);
+    buffer.put(response);
+    buffer.rewind();
+    Ip4Header ip4Header1 = Ip4Header.parseBuffer(buffer);
+    TcpHeader tcpHeader1 = TcpHeader.parseBuffer(buffer);
+    assertTrue(tcpHeader1.isRst());
+    assertEquals(tcpHeader1.getAckNumber(), tcpHeader.getSequenceNumber() + 5);
+    assertEquals(ip4Header.getSourceAddress(), ip4Header1.getDestinationAddress());
+    assertEquals(ip4Header.getDestinationAddress(), ip4Header1.getSourceAddress());
+  }
 }
