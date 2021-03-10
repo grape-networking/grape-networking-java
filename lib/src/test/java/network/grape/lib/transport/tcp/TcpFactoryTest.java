@@ -138,4 +138,22 @@ public class TcpFactoryTest {
     Ip6Header ip6Header = copyIp6Header(testIp6Header());
     TcpPacketFactory.createFinData(ip6Header, tcpHeader, 5, 3, 10000, 20000);
   }
+
+  @Test public void createFinAckData() throws UnknownHostException, PacketHeaderException {
+    Ip4Header ip4Header = copyIp4Header(testIp4Header());
+    TcpHeader tcpHeader = copyTcpHeader(testTcpHeader());
+    byte[] response = TcpPacketFactory.createFinAckData(ip4Header, tcpHeader, 5, 3, true, true);
+    ByteBuffer buffer = ByteBuffer.allocate(response.length);
+    buffer.put(response);
+    buffer.rewind();
+    Ip4Header ip4Header1 = Ip4Header.parseBuffer(buffer);
+    TcpHeader tcpHeader1 = TcpHeader.parseBuffer(buffer);
+    assertTrue(tcpHeader1.isFin());
+    assertTrue(tcpHeader1.isAck());
+    assertEquals(ip4Header.getSourceAddress(), ip4Header1.getDestinationAddress());
+    assertEquals(ip4Header.getDestinationAddress(), ip4Header1.getSourceAddress());
+
+    Ip6Header ip6Header = copyIp6Header(testIp6Header());
+    TcpPacketFactory.createFinAckData(ip6Header, tcpHeader, 5, 3, true, true);
+  }
 }
