@@ -106,5 +106,18 @@ public class TcpFactoryTest {
     assertEquals(tcpHeader1.getAckNumber(), tcpHeader.getSequenceNumber() + 5);
     assertEquals(ip4Header.getSourceAddress(), ip4Header1.getDestinationAddress());
     assertEquals(ip4Header.getDestinationAddress(), ip4Header1.getSourceAddress());
+
+    Ip6Header ip6Header = copyIp6Header(testIp6Header());
+    TcpPacketFactory.createRstData(ip6Header, tcpHeader, 5);
+
+    // test case where ack number > 0
+    tcpHeader.setAckNumber(5);
+    response = TcpPacketFactory.createRstData(ip4Header, tcpHeader, 5);
+    buffer = ByteBuffer.allocate(response.length);
+    buffer.put(response);
+    buffer.rewind();
+    ip4Header1 = Ip4Header.parseBuffer(buffer);
+    tcpHeader1 = TcpHeader.parseBuffer(buffer);
+    assertEquals(tcpHeader1.getSequenceNumber(), tcpHeader.getAckNumber());
   }
 }
