@@ -3,6 +3,7 @@ package network.grape.lib.vpn;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -14,11 +15,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.channels.UnresolvedAddressException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -76,6 +79,23 @@ public class VpnWriterTest {
   }
 
   @Test
+  public void invalidTcpSelector() throws IOException {
+    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    SelectionKey selectionKey = mock(SelectionKey.class);
+    when(selectionKey.isValid()).thenReturn(false);
+    vpnWriter.processTcpSelectionKey(selectionKey);
+  }
+
+  @Test
+  public void nullTcpChannel() throws IOException {
+    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    SelectionKey selectionKey = mock(SelectionKey.class);
+    when(selectionKey.isValid()).thenReturn(true);
+    when(selectionKey.channel()).thenReturn(null);
+    vpnWriter.processTcpSelectionKey(selectionKey);
+  }
+
+  @Test
   public void udpSessionNotFound() throws IOException {
     SelectionKey selectionKey = prepSelectionKey(false);
     VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
@@ -83,7 +103,63 @@ public class VpnWriterTest {
   }
 
   @Test
-  public void sessionNotConnectedKeyConnectable() throws IOException {
+  public void tcpSessionNotFound() throws IOException {
+    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    SelectionKey selectionKey = mock(SelectionKey.class);
+    when(selectionKey.isValid()).thenReturn(true);
+    SocketChannel channel = mock(SocketChannel.class);
+    when(selectionKey.channel()).thenReturn(channel);
+    when(sessionManager.getSessionByChannel(channel)).thenReturn(null);
+    vpnWriter.processTcpSelectionKey(selectionKey);
+  }
+
+  @Test
+  public void TcpSessionNotConnectedKeyConnectable() throws IOException {
+    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    SelectionKey selectionKey = mock(SelectionKey.class);
+    when(selectionKey.isValid()).thenReturn(true);
+    SocketChannel channel = mock(SocketChannel.class);
+    when(selectionKey.channel()).thenReturn(channel);
+    Session session = mock(Session.class);
+    when(sessionManager.getSessionByChannel(channel)).thenReturn(session);
+    when(selectionKey.isConnectable()).thenReturn(true);
+    doReturn(true).when(channel).connect(any());
+    vpnWriter.processTcpSelectionKey(selectionKey);
+
+    doThrow(ClosedChannelException.class).when(channel).connect(any());
+    vpnWriter.processTcpSelectionKey(selectionKey);
+
+    doThrow(UnresolvedAddressException.class).when(channel).connect(any());
+    vpnWriter.processTcpSelectionKey(selectionKey);
+
+    doThrow(IOException.class).when(channel).connect(any());
+    vpnWriter.processTcpSelectionKey(selectionKey);
+
+    doReturn(true).when(channel).isConnectionPending();
+    vpnWriter.processTcpSelectionKey(selectionKey);
+
+    doReturn(true).when(channel).isConnected();
+    vpnWriter.processTcpSelectionKey(selectionKey);
+
+    doReturn(true).when(session).isConnected();
+    when(selectionKey.isConnectable()).thenReturn(true);
+    vpnWriter.processTcpSelectionKey(selectionKey);
+
+    doReturn(true).when(session).isConnected();
+    when(selectionKey.isConnectable()).thenReturn(false);
+    vpnWriter.processTcpSelectionKey(selectionKey);
+
+    doReturn(false).when(session).isConnected();
+    when(selectionKey.isConnectable()).thenReturn(true);
+    vpnWriter.processTcpSelectionKey(selectionKey);
+
+    doReturn(false).when(session).isConnected();
+    when(selectionKey.isConnectable()).thenReturn(false);
+    vpnWriter.processTcpSelectionKey(selectionKey);
+  }
+
+  @Test
+  public void UdpSessionNotConnectedKeyConnectable() throws IOException {
     VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
     Session session = mock(Session.class);
 
@@ -113,7 +189,7 @@ public class VpnWriterTest {
   }
 
   @Test
-  public void sessionNotConnectedKeyNotConnectable() throws IOException {
+  public void UdpSessionNotConnectedKeyNotConnectable() throws IOException {
     VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
     Session session = mock(Session.class);
     when(sessionManager.getSessionByChannel(any())).thenReturn(session);
@@ -126,7 +202,7 @@ public class VpnWriterTest {
   }
 
   @Test
-  public void sessionConnected() throws IOException {
+  public void UdpSessionConnected() throws IOException {
     VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
     Session session = mock(Session.class);
     when(sessionManager.getSessionByChannel(any())).thenReturn(session);
@@ -257,10 +333,10 @@ public class VpnWriterTest {
     Selector selector = mock(Selector.class);
     when(sessionManager.getSelector()).thenReturn(selector);
     when(selector.selectedKeys()).thenReturn(selectionKeySet);
-    Thread t = new Thread(vpnWriter);
-    t.start();
     when(vpnWriter.isRunning()).thenReturn(true).thenReturn(false);
     when(vpnWriter.notRunning()).thenReturn(false);
+    Thread t = new Thread(vpnWriter);
+    t.start();
     vpnWriter.shutdown();
     t.join();
   }
