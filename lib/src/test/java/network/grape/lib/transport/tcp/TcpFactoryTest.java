@@ -16,6 +16,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import network.grape.lib.PacketHeaderException;
+import network.grape.lib.network.ip.FakeIp4Header;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.Ip6Header;
 import network.grape.lib.network.ip.IpHeader;
@@ -25,44 +26,6 @@ import org.junit.jupiter.api.Test;
  * Test the TcpPacketFactory class.
  */
 public class TcpFactoryTest {
-
-  private class FakeIp4Header implements IpHeader {
-
-    @Override
-    public short getProtocol() {
-      return 0;
-    }
-
-    @Override
-    public InetAddress getSourceAddress() {
-      return null;
-    }
-
-    @Override
-    public InetAddress getDestinationAddress() {
-      return null;
-    }
-
-    @Override
-    public void swapAddresses() {
-
-    }
-
-    @Override
-    public byte[] toByteArray() {
-      return new byte[0];
-    }
-
-    @Override
-    public int getHeaderLength() {
-      return 0;
-    }
-
-    @Override
-    public void setPayloadLength(int length) {
-
-    }
-  }
 
   @Test public void createPacketData() throws UnknownHostException {
     Ip4Header ip4Header = copyIp4Header(testIp4Header());

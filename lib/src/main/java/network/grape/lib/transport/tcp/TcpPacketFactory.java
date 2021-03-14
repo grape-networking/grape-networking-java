@@ -45,7 +45,7 @@ public class TcpPacketFactory {
    * @param data the data payload of the tcp packet
    * @return a checksummed tcp packet written with the ipheader and the payload into a buffer
    */
-  protected static byte[] createPacketData(IpHeader ip, TcpHeader tcp, byte[] data) {
+  public static byte[] createPacketData(IpHeader ip, TcpHeader tcp, byte[] data) {
     int dataLength = 0;
     if (data != null) {
       dataLength = data.length;
@@ -111,7 +111,7 @@ public class TcpPacketFactory {
    *
    * @param ip  the IP header from the SYN packet
    * @param tcp the TCP SYN packet
-   * @return a byte array filled in with IP, TCP SYN-ACK
+   * @return a tcp packet with the ACK for the previous SYN packet
    */
   public static byte[] createSynAckPacketData(IpHeader ip, TcpHeader tcp) {
     IpHeader ipHeader = copyIpHeader(ip);

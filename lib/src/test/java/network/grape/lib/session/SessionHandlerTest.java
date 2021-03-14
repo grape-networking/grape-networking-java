@@ -4,6 +4,7 @@ import static network.grape.lib.network.ip.IpPacketFactory.copyIp4Header;
 import static network.grape.lib.network.ip.IpPacketFactory.copyIp6Header;
 import static network.grape.lib.network.ip.IpTestCommon.testIp4Header;
 import static network.grape.lib.network.ip.IpTestCommon.testIp6Header;
+import static network.grape.lib.transport.tcp.TcpPacketFactory.copyTcpHeader;
 import static network.grape.lib.transport.tcp.TcpTest.testTcpHeader;
 import static network.grape.lib.transport.udp.UdpTest.testUdpHeader;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -28,7 +29,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
 import network.grape.lib.PacketHeaderException;
+import network.grape.lib.network.ip.FakeIp4Header;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.Ip6Header;
 import network.grape.lib.network.ip.IpHeader;
@@ -322,9 +325,8 @@ public class SessionHandlerTest {
   }
 
   @Test
-  public void testReplySynAck() throws UnknownHostException {
-
-    TcpHeader tcpHeader = testTcpHeader();
+  public void testReplySynAckSessionExists() throws UnknownHostException {
+    TcpHeader tcpHeader = copyTcpHeader(testTcpHeader());
     tcpHeader.setSyn(true);
     SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter));
     doNothing().when(protector).protect((Socket) any());
@@ -334,12 +336,28 @@ public class SessionHandlerTest {
 
     //ipv4, session already exists
     doReturn(session).when(sessionManager).getSessionByKey(anyString());
-    Ip4Header ip4Header = testIp4Header();
+    Ip4Header ip4Header = copyIp4Header(testIp4Header());
+    tcpHeader.setSequenceNumber(1);
     sessionHandler.replySynAck(ip4Header, tcpHeader);
+  }
 
-    //ipv6, session doesn't exist
-    Ip6Header ip6Header = testIp6Header();
+  @Test
+  public void testReplySynAckNewSession() throws UnknownHostException {
+    TcpHeader tcpHeader = copyTcpHeader(testTcpHeader());
+    tcpHeader.setSyn(true);
+    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter));
+    doNothing().when(protector).protect((Socket) any());
+    doReturn(new Object()).when(vpnWriter).getSyncSelector();
+    doReturn(new Object()).when(vpnWriter).getSyncSelector2();
+    Session session = mock(Session.class);
+
+    //seq # < 0, session != exist
+    tcpHeader.setSequenceNumber(-1);
     doReturn(null).when(sessionManager).getSessionByKey(anyString());
-    sessionHandler.replySynAck(ip6Header, tcpHeader);
+    SocketChannel socketChannel = mock(SocketChannel.class);
+    Ip4Header ip4Header = copyIp4Header(testIp4Header());
+    doReturn(null).when(sessionHandler).initAndConnectSocket(session,
+        ip4Header.getDestinationAddress(), tcpHeader.getDestinationPort());
+    sessionHandler.replySynAck(ip4Header, tcpHeader);
   }
 }

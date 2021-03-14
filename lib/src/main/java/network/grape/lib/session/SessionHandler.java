@@ -2,7 +2,10 @@ package network.grape.lib.session;
 
 import static network.grape.lib.network.ip.IpHeader.IP4_VERSION;
 import static network.grape.lib.network.ip.IpHeader.IP6_VERSION;
+import static network.grape.lib.network.ip.IpPacketFactory.copyIpHeader;
+import static network.grape.lib.transport.tcp.TcpPacketFactory.copyTcpHeader;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createFinAckData;
+import static network.grape.lib.transport.tcp.TcpPacketFactory.createPacketData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createResponseAckData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createRstData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createSynAckPacketData;
@@ -20,6 +23,7 @@ import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.Random;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.Ip6Header;
@@ -334,33 +338,29 @@ public class SessionHandler {
   /**
    * Initiate a new TCP connection with the start of a session and replying with SYN-ACK.
    *
-   * @param ipHeader the IpHeader of the source packet
-   * @param tcpHeader the TcpHeader of the source packet
+   * @param ip the IpHeader of the source packet
+   * @param tcp the TcpHeader of the source packet
    */
-  protected void replySynAck(IpHeader ipHeader, TcpHeader tcpHeader) {
+  protected void replySynAck(IpHeader ip, TcpHeader tcp) {
+    IpHeader ipHeader = copyIpHeader(ip);
+    TcpHeader tcpHeader = copyTcpHeader(tcp);
+
     // todo (jason): may need to set the ipv4 id here
+    ipHeader.swapAddresses();
+    tcpHeader.swapSourceDestination();
 
-    byte[] synAck = createSynAckPacketData(ipHeader, tcpHeader);
-    ByteBuffer newPacketBuffer = ByteBuffer.allocate(synAck.length);
-    newPacketBuffer.put(synAck);
-    newPacketBuffer.rewind();
-    TcpHeader newTcpHeader;
-    try {
-      if (ipHeader instanceof Ip4Header) {
-        Ip4Header ip4Header = Ip4Header.parseBuffer(newPacketBuffer);
-      } else {
-        Ip6Header ip6Header = Ip6Header.parseBuffer(newPacketBuffer);
-      }
-      newTcpHeader = TcpHeader.parseBuffer(newPacketBuffer);
-    } catch (PacketHeaderException e) {
-      e.printStackTrace();
-      return;
-    } catch (UnknownHostException e) {
-      e.printStackTrace();
-      return;
+    Random random = new Random();
+    long seqNumber = random.nextInt();
+    if (seqNumber < 0) {
+      seqNumber = seqNumber * -1;
     }
+    logger.info("Initial seq #" + seqNumber);
+    tcpHeader.setSequenceNumber(seqNumber);
+    long ackNumber = tcpHeader.getSequenceNumber() + 1;
+    tcpHeader.setAckNumber(ackNumber);
+    tcpHeader.setSyn(true);
+    tcpHeader.setAck(true);
 
-    logger.info("sending: SYN-ACK: \n" + BufferUtil.hexDump(synAck, 0, synAck.length, true, true));
     Session session = new Session(ipHeader.getSourceAddress(), tcpHeader.getSourcePort(),
         ipHeader.getDestinationAddress(), tcpHeader.getDestinationPort(),
         TransportHeader.TCP_PROTOCOL);
@@ -375,7 +375,8 @@ public class SessionHandler {
         tcpHeader.getDestinationPort());
 
     if (channel == null) {
-      logger.warn("Problem connecting for " + ipHeader.getDestinationAddress() + ":" + tcpHeader.getDestinationPort());
+      logger.warn("Problem connecting for " + ipHeader.getDestinationAddress() + ":"
+          + tcpHeader.getDestinationPort());
       return;
     }
 
@@ -422,10 +423,12 @@ public class SessionHandler {
     //int windowScaleFactor = (int) Math.pow(2, tcpHeader.getWindowScale());
     //session.setSendWindowSizeAndScale(tcpHeader.getWindowSize(), windowScaleFactor);
     //session.setMaxSegmentSize(tcpHeader.getMaxSegmentSize());
-    session.setSendUnack(newTcpHeader.getSequenceNumber());
-    session.setSendNext(newTcpHeader.getSequenceNumber() + 1);
-    session.setRecSequence(newTcpHeader.getAckNumber());
-    logger.info("send next: " + (newTcpHeader.getSequenceNumber() + 1));
+    session.setSendUnack(tcpHeader.getSequenceNumber());
+    session.setSendNext(tcpHeader.getSequenceNumber() + 1);
+    session.setRecSequence(tcpHeader.getAckNumber());
+    logger.info("send next: " + (tcpHeader.getSequenceNumber() + 1));
+
+    byte[] synAck = createPacketData(ipHeader, tcpHeader, null);
 
     try {
       vpnWriter.getOutputStream().write(synAck);
