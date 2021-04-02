@@ -85,7 +85,7 @@ dependencies {
         exclude group: 'ch.qos.logback'
     }
     runtimeOnly "com.github.tony19:logback-android:2.0.0"
-    implementation 'org.projectlombok:lombok:1.18.18'
+    implementation 'org.projectlombok:lombok:1.18.20'
     annotationProcessor 'org.projectlombok:lombok:1.18.18'
     annotationProcessor "com.google.dagger:hilt-android-compiler:${hiltVersion}"
 
