@@ -86,7 +86,7 @@ dependencies {
     }
     runtimeOnly "com.github.tony19:logback-android:2.0.0"
     implementation 'org.projectlombok:lombok:1.18.20'
-    annotationProcessor 'org.projectlombok:lombok:1.18.18'
+    annotationProcessor 'org.projectlombok:lombok:1.18.20'
     annotationProcessor "com.google.dagger:hilt-android-compiler:${hiltVersion}"
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
