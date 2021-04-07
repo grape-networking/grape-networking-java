@@ -227,11 +227,13 @@ public class SessionHandler {
 
       if (session == null) {
         logger.info("CAN'T FIND SESSION: " + ipHeader.getSourceAddress().toString() + ":"
-            + tcpHeader.getSourcePort() + ":" + ipHeader.getDestinationAddress().toString()
-            + ":" + tcpHeader.getDestinationPort() + TransportHeader.TCP_PROTOCOL);
+            + tcpHeader.getSourcePort() + "," + ipHeader.getDestinationAddress().toString()
+            + ":" + tcpHeader.getDestinationPort() + "::" + TransportHeader.TCP_PROTOCOL);
         if (tcpHeader.isFin()) {
+          logger.info("HEADER IS FIN, SENDING LAST ACK");
           sendLastAck(ipHeader, tcpHeader, session);
-        } else if (!tcpHeader.isRst()) {
+        } else if (tcpHeader.isRst()) {
+          logger.info("HEADER IS RST, SENDING RST");
           sendRstPacket(ipHeader, tcpHeader, payload.remaining(), session);
         } else {
           logger.info("Session not found, can't handle packet");
