@@ -172,8 +172,10 @@ public class VpnWriter implements Runnable {
       int port = session.getDestinationPort();
       SocketAddress address = new InetSocketAddress(inetAddress, port);
       boolean connected = false;
+      logger.info("CONNECTED: {} PENDING: {}", channel.isConnected(), channel.isConnectionPending());
       if (!channel.isConnected() && !channel.isConnectionPending()) {
         try {
+          logger.info("CONNECTING TO {}", address);
           connected = channel.connect(address);
         } catch (ClosedChannelException | UnresolvedAddressException
             | UnsupportedAddressTypeException | SecurityException e) {
@@ -191,9 +193,14 @@ public class VpnWriter implements Runnable {
       } else {
         logger.info("WAITING FOR CONNECTION TO FINISH");
         if (channel.isConnectionPending()) {
+          logger.info("CONNECTION PENDING");
+          logger.info("BLOCKING? {}", channel.isBlocking());
           connected = channel.finishConnect();
+          logger.info("CONNECTED? {}", connected);
           session.setConnected(connected);
           logger.info("Connected to remote tcp server: " + session.getKey());
+        } else {
+          logger.info("CONNECTION NOT PENDING");
         }
       }
     }

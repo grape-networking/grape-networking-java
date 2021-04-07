@@ -439,6 +439,7 @@ public class SessionHandler {
     byte[] synAck = createPacketData(ipHeader, tcpHeader, null);
 
     try {
+      logger.info("WRITING: " + BufferUtil.hexDump(synAck, 0, synAck.length, true, true));
       vpnWriter.getOutputStream().write(synAck);
       logger.info("Wrote SYN-ACK for session: " + session.getKey());
     } catch (IOException e) {
