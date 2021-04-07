@@ -8,10 +8,13 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -153,8 +156,10 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     vpnWriter = new VpnWriter(clientWriter, sessionManager, executor);
     vpnWriterThread = new Thread(vpnWriter);
 
+    List<InetAddress> filters = new ArrayList<>();
+    filters.add(InetAddress.getByName("159.89.158.71"));
     SessionHandler handler =
-        new SessionHandler(sessionManager, new SocketProtector(this), vpnWriter);
+        new SessionHandler(sessionManager, new SocketProtector(this), vpnWriter, filters);
 
     vpnWriterThread.start();
 

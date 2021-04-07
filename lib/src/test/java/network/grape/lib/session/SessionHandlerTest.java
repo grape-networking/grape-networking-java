@@ -30,6 +30,8 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.network.ip.FakeIp4Header;
 import network.grape.lib.network.ip.Ip4Header;
@@ -68,7 +70,7 @@ public class SessionHandlerTest {
 
   @Test
   public void handlePacketTest() throws PacketHeaderException, UnknownHostException {
-    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter));
+    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter, new ArrayList<>()));
 
     // empty stream
     ByteBuffer emptystream = ByteBuffer.allocate(0);
@@ -136,7 +138,7 @@ public class SessionHandlerTest {
     // session not found
     when(vpnWriter.getSyncSelector()).thenReturn(new Object());
     when(vpnWriter.getSyncSelector2()).thenReturn(new Object());
-    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter));
+    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter, new ArrayList<>()));
     when(sessionManager.getSession(ipHeader.getSourceAddress(), udpHeader.getSourcePort(),
         ipHeader.getDestinationAddress(), udpHeader.getDestinationPort(),
         TransportHeader.UDP_PROTOCOL)).thenReturn(null);
@@ -223,7 +225,7 @@ public class SessionHandlerTest {
     doReturn(new byte[0]).when(tcpHeader).toByteArray();
 
     // not any of the types of packets
-    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter));
+    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter, new ArrayList<>()));
     sessionHandler.handleTcpPacket(payload, ipHeader, tcpHeader);
 
     // syn
@@ -328,7 +330,7 @@ public class SessionHandlerTest {
   public void testReplySynAckSessionExists() throws UnknownHostException {
     TcpHeader tcpHeader = copyTcpHeader(testTcpHeader());
     tcpHeader.setSyn(true);
-    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter));
+    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter, new ArrayList<>()));
     doNothing().when(protector).protect((Socket) any());
     doReturn(new Object()).when(vpnWriter).getSyncSelector();
     doReturn(new Object()).when(vpnWriter).getSyncSelector2();
@@ -345,7 +347,7 @@ public class SessionHandlerTest {
   public void testReplySynAckNewSession() throws UnknownHostException {
     TcpHeader tcpHeader = copyTcpHeader(testTcpHeader());
     tcpHeader.setSyn(true);
-    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter));
+    SessionHandler sessionHandler = spy(new SessionHandler(sessionManager, protector, vpnWriter, new ArrayList<>()));
     doNothing().when(protector).protect((Socket) any());
     doReturn(new Object()).when(vpnWriter).getSyncSelector();
     doReturn(new Object()).when(vpnWriter).getSyncSelector2();
@@ -360,4 +362,8 @@ public class SessionHandlerTest {
         ip4Header.getDestinationAddress(), tcpHeader.getDestinationPort());
     sessionHandler.replySynAck(ip4Header, tcpHeader);
   }
+
+  // todo: assert on the session handler that the results we are getting back are actually valid
+  // ie:) look at what is written into the stream and ensure:
+  // - the syn ack has the correct ack #, the right flags are set, the checksum is correct, etc.
 }

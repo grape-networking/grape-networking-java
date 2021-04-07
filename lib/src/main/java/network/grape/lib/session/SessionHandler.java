@@ -8,7 +8,6 @@ import static network.grape.lib.transport.tcp.TcpPacketFactory.createFinAckData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createPacketData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createResponseAckData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createRstData;
-import static network.grape.lib.transport.tcp.TcpPacketFactory.createSynAckPacketData;
 import static network.grape.lib.util.Constants.MAX_RECEIVE_BUFFER_SIZE;
 
 import java.io.IOException;
@@ -23,7 +22,9 @@ import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.List;
 import java.util.Random;
+
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.Ip6Header;
@@ -48,6 +49,7 @@ public class SessionHandler {
   private final Selector selector;
   private final SessionManager sessionManager;
   private final VpnWriter vpnWriter;
+  private final List<InetAddress> filterTo;
 
   /**
    * Construct a SessionHandler with a SessionManager to keep track of sessions and SocketProtector
@@ -56,13 +58,16 @@ public class SessionHandler {
    *
    * @param sessionManager the session manager which maps the SelectorKey and SessionKey to Session
    * @param protector      the protector which prevents vpn loopback
+   * @param vpnWriter      the writer used to write back to the application
+   * @param filterTo       a list of InetAddresses to only listen to traffic to / from
    */
   public SessionHandler(SessionManager sessionManager, SocketProtector protector,
-                        VpnWriter vpnWriter) {
+                        VpnWriter vpnWriter, List<InetAddress> filterTo) {
     this.sessionManager = sessionManager;
     this.selector = sessionManager.getSelector();
     this.protector = protector;
     this.vpnWriter = vpnWriter;
+    this.filterTo = filterTo;
   }
 
   /**
@@ -88,13 +93,12 @@ public class SessionHandler {
       throw new PacketHeaderException("Got a packet which isn't Ip4 or Ip6: " + version);
     }
 
-    /*
-    if (!ipHeader.getDestinationAddress().equals(Inet4Address.getByName("192.168.1.10"))
-        && (!ipHeader.getSourceAddress().equals(Inet4Address.getByName("192.168.1.10")))) {
-      //logger.info(ipHeader.getDestinationAddress().toString() + " "
-      // + ipHeader.getSourceAddress().toString());
-      return;
-    } */
+    if (!filterTo.isEmpty()) {
+      if (!filterTo.contains(ipHeader.getDestinationAddress()) && !filterTo.contains(ipHeader.getSourceAddress())) {
+        // logger.info("Skipping {} to {}", ipHeader.getSourceAddress(), ipHeader.getDestinationAddress());
+        return;
+      }
+    }
 
     logger.info(
         "GOT TRAFFIC TO/FROM: " + ipHeader.getDestinationAddress().toString() + " "
