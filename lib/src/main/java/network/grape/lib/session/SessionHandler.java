@@ -362,13 +362,15 @@ public class SessionHandler {
     }
     logger.info("Initial seq #" + seqNumber);
     tcpHeader.setSequenceNumber(seqNumber);
-    long ackNumber = tcpHeader.getSequenceNumber() + 1;
+    long ackNumber = tcp.getSequenceNumber() + 1;
     tcpHeader.setAckNumber(ackNumber);
     tcpHeader.setSyn(true);
     tcpHeader.setAck(true);
 
-    Session session = new Session(ipHeader.getSourceAddress(), tcpHeader.getSourcePort(),
-        ipHeader.getDestinationAddress(), tcpHeader.getDestinationPort(),
+    // note: we use the ip and tcp here rather than the new ones because the one new ones are
+    // already swapped for the response
+    Session session = new Session(ip.getSourceAddress(), tcp.getSourcePort(),
+        ip.getDestinationAddress(), tcp.getDestinationPort(),
         TransportHeader.TCP_PROTOCOL);
 
     // todo (jason): may need to set session values from tcp options here
