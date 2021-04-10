@@ -379,12 +379,13 @@ public class SessionHandler {
       return;
     }
 
-    SocketChannel channel = initAndConnectSocket(session, ipHeader.getDestinationAddress(),
-        tcpHeader.getDestinationPort());
+    // note: again we use the ip and tcp here otherwise we try to connect to ourselves!
+    SocketChannel channel = initAndConnectSocket(session, ip.getDestinationAddress(),
+        tcp.getDestinationPort());
 
     if (channel == null) {
-      logger.warn("Problem connecting for " + ipHeader.getDestinationAddress() + ":"
-          + tcpHeader.getDestinationPort());
+      logger.warn("Problem connecting for " + ip.getDestinationAddress() + ":"
+          + tcp.getDestinationPort());
       return;
     }
 
