@@ -1,0 +1,9 @@
+apply plugin: 'application'
+
+dependencies {
+    implementation project(path: ':lib')
+}
+
+application {
+    mainClass = 'network.grape.tcp_image_server.TcpServer'
+}

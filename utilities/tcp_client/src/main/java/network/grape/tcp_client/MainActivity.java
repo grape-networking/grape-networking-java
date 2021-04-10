@@ -72,14 +72,24 @@ public class MainActivity extends AppCompatActivity {
                 outputStream.write(imageInByte);
                 outputStream.flush();
 
+                System.out.println("Wrote image");
+
                 InputStream inputStream = s.getInputStream();
-                byte[] sizeAr = new byte[4];
-                inputStream.read(sizeAr);
-                int inputSize = ByteBuffer.wrap(sizeAr).asIntBuffer().get();
-                byte[] imageAr = new byte[inputSize];
-                inputStream.read(imageAr);
+//                byte[] sizeAr = new byte[4];
+//                inputStream.read(sizeAr);
+//                int inputSize = ByteBuffer.wrap(sizeAr).asIntBuffer().get();
+//                byte[] imageAr = new byte[inputSize];
+//                inputStream.read(imageAr);
                 Drawable drawable = BitmapDrawable.createFromStream(inputStream, "Network");
-                imageView.setImageDrawable(drawable);
+                System.out.println("Read image");
+                s.close();
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        imageView.setImageDrawable(drawable);
+                    }
+                });
 
             } catch (IOException e) {
                 e.printStackTrace();
