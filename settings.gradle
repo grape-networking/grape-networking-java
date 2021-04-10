@@ -1,3 +1,4 @@
+include ':utilities:tcp_client'
 include ':app'
 include ':lib'
 include ':proxy'
