@@ -81,7 +81,7 @@ public class SocketDataReaderWorker extends SocketWorker implements Runnable {
       IpHeader testip = Ip4Header.parseBuffer(t);
       UdpHeader test = UdpHeader.parseBuffer(t);
       logger.info(testip.toString() + "\n" + test.toString());
-      logger.info(BufferUtil.hexDump(packetData, 0, packetData.length, true, true));
+      //logger.info(BufferUtil.hexDump(packetData, 0, packetData.length, true, true));
     } catch (PacketHeaderException | UnknownHostException e) {
       logger.error("Problem constructing packet from previous headers: " + e.toString());
       return false;
@@ -224,8 +224,8 @@ public class SocketDataReaderWorker extends SocketWorker implements Runnable {
 
       try {
         outputStream.write(data);
-        logger.info("Wrote " + data.length + " to VPN \n "
-            + BufferUtil.hexDump(data, 0, data.length, true, true));
+//        logger.info("Wrote " + data.length + " to VPN \n "
+//            + BufferUtil.hexDump(data, 0, data.length, true, true));
       } catch (IOException ex) {
         logger.error(
             "Failed to send ACK + Data packet for session " + sessionKey + " " + ex.toString());
@@ -239,6 +239,7 @@ public class SocketDataReaderWorker extends SocketWorker implements Runnable {
 
     if (ipHeader == null || tcpHeader == null) {
       logger.error("Couldn't find last ip or tcp header, can't send FIN: " + sessionKey);
+      return;
     }
 
     final byte[] data =
