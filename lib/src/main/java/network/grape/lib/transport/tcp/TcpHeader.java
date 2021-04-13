@@ -451,7 +451,7 @@ public class TcpHeader implements TransportHeader {
     return option;
   }
 
-  protected static TcpOption parseTimestamp(ByteBuffer stream) {
+  protected static TcpOption parseTimestamp(ByteBuffer stream) throws Exception {
     System.out.println("TIMESTAMP");
     // https://tools.ietf.org/html/rfc7323#page-12
     // https://tools.ietf.org/id/draft-scheffenegger-tcpm-timestamp-negotiation-05.html#:~:text=A%20TCP%20may%20send%20the,%3E%20segment%20for%20the%20connection.%22
@@ -471,15 +471,16 @@ public class TcpHeader implements TransportHeader {
       // get two ints = 8 + type + len
       int tsval = stream.getInt();
       int tsecr = stream.getInt();
-      System.out.println("GOT TIMESTAMP: " + tsval + " " + tsecr);
+      //System.out.println("GOT TIMESTAMP: " + tsval + " " + tsecr);
       tsecr = (int) (System.currentTimeMillis() / 1000L);
-      System.out.println("Updated: " + tsval + " " + tsecr + " options: " + option.size);
+      //System.out.println("Updated: " + tsval + " " + tsecr + " options: " + option.size);
       option.value = ByteBuffer.allocate(8);
       // swap the order to tsval and tsecr (we want tsval to be set with out own timestamp
       option.value.putInt(tsecr);
       option.value.putInt(tsval);
     }
-    return option;
+    throw new Exception("Skipping Timestamp option");
+    //return option;
   }
 
   /**
