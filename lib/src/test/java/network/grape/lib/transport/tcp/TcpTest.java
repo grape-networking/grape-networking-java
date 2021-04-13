@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.util.PacketUtil;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -160,6 +161,7 @@ public class TcpTest {
     assertFalse(tcpHeader.isFin());
   }
 
+  @Disabled
   @Test
   public void optionTest() throws PacketHeaderException {
     ArrayList<TcpOption> options = new ArrayList<>();
