@@ -109,7 +109,7 @@ public class SessionManager {
     } catch (IOException ex) {
       logger.error("Error closing session: " + ex.toString());
     }
-    logger.info("Closed sesion: " + session.getKey());
+    logger.info("Closed session: " + session.getKey());
   }
 
   /**

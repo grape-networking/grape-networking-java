@@ -101,9 +101,9 @@ public class SessionHandler {
     }
 
     logger.info(
-        "GOT TRAFFIC TO/FROM: " + ipHeader.getDestinationAddress().toString() + " "
-            + ipHeader.getSourceAddress().toString());
-    logger.info("PROTO: " + ipHeader.getProtocol());
+        "GOT VPN TRAFFIC TO: " + ipHeader.getDestinationAddress().toString() + " FROM"
+            + ipHeader.getSourceAddress().toString() + " " + stream.limit() + " bytes");
+    //logger.info("PROTO: " + ipHeader.getProtocol());
 
     final TransportHeader transportHeader;
     if (ipHeader.getProtocol() == TransportHeader.UDP_PROTOCOL) {
@@ -440,7 +440,7 @@ public class SessionHandler {
     byte[] synAck = createPacketData(ipHeader, tcpHeader, null);
 
     try {
-      logger.info("WRITING: " + BufferUtil.hexDump(synAck, 0, synAck.length, true, true));
+      // logger.info("WRITING: " + BufferUtil.hexDump(synAck, 0, synAck.length, true, true));
       vpnWriter.getOutputStream().write(synAck);
       logger.info("Wrote SYN-ACK for session: " + session.getKey());
     } catch (IOException e) {
