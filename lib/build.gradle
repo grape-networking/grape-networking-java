@@ -12,6 +12,7 @@ buildscript {
 
     dependencies {
         classpath "com.android.tools.build:gradle:4.1.3"
+        classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.15"
     }
 }
 
@@ -19,6 +20,7 @@ apply plugin: 'java-library'
 apply plugin: 'com.android.lint'
 apply plugin: 'jacoco'
 apply plugin: 'maven-publish'
+apply plugin: 'com.google.protobuf'
 
 compileJava   {
     sourceCompatibility = '1.8'
@@ -37,6 +39,7 @@ dependencies {
         exclude group: 'ch.qos.logback'
     }
 
+    implementation "io.grpc:grpc-protobuf-lite:1.37.0" // CURRENT_GRPC_VERSION
     testRuntimeOnly "uk.org.lidalia:slf4j-test:1.2.0"
     testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter-params:${jUnitVersion}"
@@ -91,4 +94,23 @@ task updatePom(type: Copy) {
     into "."
     rename ("pom-default.xml", "pom.xml")
     dependsOn(generatePomFileForMavenPublication)
+}
+
+protobuf {
+    protoc { artifact = 'com.google.protobuf:protoc:3.12.0' }
+    plugins {
+        grpc { artifact = 'io.grpc:protoc-gen-grpc-java:1.37.0' // CURRENT_GRPC_VERSION
+        }
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java { option 'lite' }
+            }
+            task.plugins {
+                grpc { // Options added to --grpc_out
+                    option 'lite' }
+            }
+        }
+    }
 }
