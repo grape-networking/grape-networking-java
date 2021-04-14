@@ -157,7 +157,7 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     vpnWriterThread = new Thread(vpnWriter);
 
     List<InetAddress> filters = new ArrayList<>();
-    // filters.add(InetAddress.getByName("10.0.0.111"));
+    //filters.add(InetAddress.getByName("10.0.0.111"));
     SessionHandler handler =
         new SessionHandler(sessionManager, new SocketProtector(this), vpnWriter, filters);
 

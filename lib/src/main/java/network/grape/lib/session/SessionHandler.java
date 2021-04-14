@@ -260,7 +260,7 @@ public class SessionHandler {
           sendFinAck(ipHeader, tcpHeader, session);
         } else if (session.isAckedToFin() && !tcpHeader.isFin()) {
           // the last ACK from VPN after FIN-ACK flag was set
-          sessionManager.closeSession(session);
+          //sessionManager.closeSession(session);
           logger.info("Got last ACK after FIN, session is now closed");
         }
       }
@@ -565,7 +565,7 @@ public class SessionHandler {
       vpnWriter.getOutputStream().write(data);
       if (session != null) {
         session.getSelectionKey().cancel();
-        sessionManager.closeSession(session);
+        //sessionManager.closeSession(session);
         logger.info("ACK to client's FIN and close session: " + session.getKey());
       }
     } catch (IOException ex) {

@@ -111,6 +111,7 @@ public class Session {
 
   synchronized int appendOutboundData(ByteBuffer data) {
     final int remaining = data.remaining();
+    logger.info("POS: {} REMAINING: {}", data.position(), data.remaining());
     sendingStream.write(data.array(), data.position(), data.remaining());
     logger.info(
         "Enqueued: " + remaining + " bytes in the outbound queue for " + this + " total size: "

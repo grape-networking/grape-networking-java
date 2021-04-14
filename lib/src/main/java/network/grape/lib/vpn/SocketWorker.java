@@ -67,6 +67,7 @@ public class SocketWorker {
       return;
     }
 
-    sessionManager.closeSession(session);
+    //todo figure out if this should be here
+    //sessionManager.closeSession(session);
   }
 }

@@ -1,6 +1,8 @@
 package network.grape.lib.util;
 
 import java.nio.Buffer;
+import java.util.Arrays;
+
 import network.grape.lib.transport.tcp.TcpHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +63,12 @@ public class PacketUtil {
     return value;
   }
 
+  public static byte[] addElementUsingArraysCopyOf(byte[] srcArray, byte elementToAdd) {
+    byte[] destArray = Arrays.copyOf(srcArray, srcArray.length + 1);
+    destArray[destArray.length - 1] = elementToAdd;
+    return destArray;
+  }
+
   /**
    * Computes the checksum of a byte array with a given offset and length.
    *
@@ -70,6 +78,11 @@ public class PacketUtil {
    * @return the checksum (short) as two byte array so its easy to copy back into place
    */
   public static byte[] calculateChecksum(byte[] data, int offset, int length) {
+    if (length % 2 != 0) {
+      data = addElementUsingArraysCopyOf(data, (byte) 0);
+    }
+
+
     int start = offset;
     int sum = 0;
     while (start < length) {

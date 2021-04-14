@@ -47,9 +47,8 @@ public class SocketDataWriterWorker extends SocketWorker implements Runnable {
     }
     session.setBusyWrite(false);
 
-    // todo: find a way to factor this into common code with the reader
     if (session.isAbortingConnection()) {
-      abortSession(session);
+      //abortSession(session);
     }
   }
 
@@ -63,6 +62,7 @@ public class SocketDataWriterWorker extends SocketWorker implements Runnable {
 
     try {
       logger.debug("writing TCP data to: " + sessionKey);
+      System.out.println("WRITE TCP TO " + sessionKey + " SIZE: " + data.length);
       channel.write(buffer);
     } catch (NotYetConnectedException ex) {
       logger.error("writing to unconnected socket for key: " + sessionKey + " :" + ex.toString());

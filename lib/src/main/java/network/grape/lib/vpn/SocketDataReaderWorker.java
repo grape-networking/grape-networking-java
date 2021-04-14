@@ -7,6 +7,7 @@ import static network.grape.lib.util.Constants.MAX_RECEIVE_BUFFER_SIZE;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.DatagramChannel;
@@ -19,6 +20,7 @@ import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionManager;
+import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.transport.tcp.TcpHeader;
 import network.grape.lib.transport.udp.UdpHeader;
 import network.grape.lib.transport.udp.UdpPacketFactory;
@@ -66,7 +68,7 @@ public class SocketDataReaderWorker extends SocketWorker implements Runnable {
     }
 
     if (session.isAbortingConnection()) {
-      abortSession(session);
+      //abortSession(session);
     } else {
       session.setBusyRead(false);
     }
@@ -150,12 +152,13 @@ public class SocketDataReaderWorker extends SocketWorker implements Runnable {
         if (!session.isClientWindowFull()) {
           len = channel.read(buffer);
           if (len > 0) {
+            logger.info("GOT {} bytes from TCP endpoint", len);
             sendToRequester(buffer, len, session);
             buffer.clear();
           } else if (len == -1) {
-            logger.info("End of data from remote server, will send FIN to session: " + sessionKey);
-            sendFin(session);
-            session.setAbortingConnection(true);
+            //logger.info("End of data from remote server, will send FIN to session: " + sessionKey);
+            //sendFin(session);
+            //session.setAbortingConnection(true);
           }
         } else {
           logger.info("client window full, now pause for " + sessionKey);
@@ -198,7 +201,6 @@ public class SocketDataReaderWorker extends SocketWorker implements Runnable {
   private void pushDataToClient(Session session) {
     if (!session.hasReceivedData()) {
       logger.info("No data for VPN");
-      ;
     }
 
     // likely 60 to leave room for TCP and IP headers
@@ -223,7 +225,24 @@ public class SocketDataReaderWorker extends SocketWorker implements Runnable {
           session.getTimestampSender(), session.getTimestampReplyTo());
 
       try {
+        ByteBuffer temp = ByteBuffer.allocate(data.length);
+        temp.put(data);
+        temp.rewind();
+        Ip4Header ip4Header = Ip4Header.parseBuffer(temp);
+        TransportHeader transportHeader = TcpHeader.parseBuffer(temp);
+        logger.info("SENDING TO VPN CLIENT: {} {}", ip4Header, transportHeader);
+        //logger.info(BufferUtil.hexDump(data, 0, data.length, true, true));
+      } catch (PacketHeaderException e) {
+        e.printStackTrace();
+        logger.info(BufferUtil.hexDump(data, 0, data.length, true, true));
+      } catch (UnknownHostException e) {
+        e.printStackTrace();
+      }
+
+      try {
         outputStream.write(data);
+        outputStream.flush();
+        logger.info("Wrote {} bytes to VPN from {}", data.length, ipHeader.getDestinationAddress());
 //        logger.info("Wrote " + data.length + " to VPN \n "
 //            + BufferUtil.hexDump(data, 0, data.length, true, true));
       } catch (IOException ex) {
