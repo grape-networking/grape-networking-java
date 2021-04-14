@@ -39,7 +39,8 @@ dependencies {
         exclude group: 'ch.qos.logback'
     }
 
-    implementation "io.grpc:grpc-protobuf-lite:1.37.0" // CURRENT_GRPC_VERSION
+    api "io.grpc:grpc-protobuf-lite:1.37.0" // CURRENT_GRPC_VERSION
+    implementation 'io.grpc:grpc-stub:1.37.0' // CURRENT_GRPC_VERSION
     testRuntimeOnly "uk.org.lidalia:slf4j-test:1.2.0"
     testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter-params:${jUnitVersion}"

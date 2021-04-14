@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
 import java.util.ArrayList;
@@ -21,13 +20,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
 import lombok.Setter;
-import network.grape.lib.PacketHeaderException;
 import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionHandler;
 import network.grape.lib.session.SessionManager;
 import network.grape.lib.vpn.ProtectSocket;
 import network.grape.lib.vpn.SocketProtector;
+import network.grape.lib.vpn.VpnClient;
 import network.grape.lib.vpn.VpnReader;
 import network.grape.lib.vpn.VpnWriter;
 import org.slf4j.Logger;
@@ -171,6 +171,9 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     vpnReader = new VpnReader(clientReader, handler, packet);
     vpnReaderThread = new Thread(vpnReader);
     vpnReaderThread.start();
+
+    VpnClient vpnClient = new VpnClient();
+    vpnClient.connect();
   }
 
   @Override

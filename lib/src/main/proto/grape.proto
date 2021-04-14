@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option java_package = "network.grape.vpn";
+option java_outer_classname = "VpnService";
+
+package vpn;
+
+service Vpn {
+  rpc SayHello (HelloRequest) returns (HelloResponse) {}
+}
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloResponse {
+  string message = 1;
+}
