@@ -1,5 +1,19 @@
-apply plugin: 'java-library'
+apply plugin: 'application'
+
+compileJava   {
+    sourceCompatibility = '11'
+    targetCompatibility = '11'
+}
 
 dependencies {
+    implementation project(path: ':lib')
+    implementation "org.slf4j:slf4j-api:1.7.30"
+    implementation ('com.papertrailapp:logback-syslog4j:1.0.0') {
+        exclude group: 'ch.qos.logback'
+    }
+    testRuntimeOnly "uk.org.lidalia:slf4j-test:1.2.0"
+}
 
+application {
+    mainClass = 'network.grape.proxy.ProxyMain'
 }
