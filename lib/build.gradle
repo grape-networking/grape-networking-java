@@ -96,21 +96,21 @@ task updatePom(type: Copy) {
     dependsOn(generatePomFileForMavenPublication)
 }
 
-protobuf {
-    protoc { artifact = 'com.google.protobuf:protoc:3.12.0' }
-    plugins {
-        grpc { artifact = 'io.grpc:protoc-gen-grpc-java:1.37.0' // CURRENT_GRPC_VERSION
-        }
-    }
-    generateProtoTasks {
-        all().each { task ->
-            task.builtins {
-                java { option 'lite' }
-            }
-            task.plugins {
-                grpc { // Options added to --grpc_out
-                    option 'lite' }
-            }
-        }
-    }
-}
+//protobuf {
+//    protoc { artifact = 'com.google.protobuf:protoc:3.12.0' }
+//    plugins {
+//        grpc { artifact = 'io.grpc:protoc-gen-grpc-java:1.37.0' // CURRENT_GRPC_VERSION
+//        }
+//    }
+//    generateProtoTasks {
+//        all().each { task ->
+//            task.builtins {
+//                java { option 'lite' }
+//            }
+//            task.plugins {
+//                grpc { // Options added to --grpc_out
+//                    option 'lite' }
+//            }
+//        }
+//    }
+//}

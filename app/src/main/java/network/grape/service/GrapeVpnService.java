@@ -27,7 +27,7 @@ import network.grape.lib.session.SessionHandler;
 import network.grape.lib.session.SessionManager;
 import network.grape.lib.vpn.ProtectSocket;
 import network.grape.lib.vpn.SocketProtector;
-import network.grape.lib.vpn.VpnClient;
+//import network.grape.lib.vpn.VpnClient;
 import network.grape.lib.vpn.VpnReader;
 import network.grape.lib.vpn.VpnWriter;
 import org.slf4j.Logger;
@@ -168,12 +168,12 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
 
     // Packets to be sent are queued in this input stream.
     FileInputStream clientReader = new FileInputStream(vpnInterface.getFileDescriptor());
-    vpnReader = new VpnReader(clientReader, handler, packet);
+    vpnReader = new VpnReader(clientReader, handler, packet, new SocketProtector(this));
     vpnReaderThread = new Thread(vpnReader);
     vpnReaderThread.start();
 
-    VpnClient vpnClient = new VpnClient();
-    vpnClient.connect();
+//    VpnClient vpnClient = new VpnClient();
+//    vpnClient.connect();
   }
 
   @Override
