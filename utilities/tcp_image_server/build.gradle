@@ -7,3 +7,8 @@ dependencies {
 application {
     mainClass = 'network.grape.tcp_image_server.TcpServer'
 }
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
