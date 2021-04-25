@@ -453,7 +453,13 @@ public class SessionHandler {
   protected void sendLastAck(IpHeader ipHeader, TcpHeader tcpHeader, Session session) {
     byte[] data = createResponseAckData(ipHeader, tcpHeader, tcpHeader.getSequenceNumber() + 1);
     try {
-      session.getOutputStream().write(data);
+      if (session != null) {
+        OutputStream outputStream = session.getOutputStream();
+        if (outputStream != null) {
+          outputStream.write(data);
+          outputStream.flush();;
+        }
+      }
       logger.info("Sent last ACK packet to session: " + ipHeader.getSourceAddress().toString() + ":"
           + tcpHeader.getSourcePort() + ":" + ipHeader.getDestinationAddress().toString()
           + ":" + tcpHeader.getDestinationPort() + TransportHeader.TCP_PROTOCOL);
@@ -468,7 +474,13 @@ public class SessionHandler {
                                Session session) {
     byte[] data = createRstData(ipHeader, tcpHeader, dataLength);
     try {
-      session.getOutputStream().write(data);
+      if (session != null) {
+        OutputStream outputStream = session.getOutputStream();
+        if (outputStream != null) {
+          outputStream.write(data);
+          outputStream.flush();;
+        }
+      }
       logger.info("Sent RST packet to session: " + ipHeader.getSourceAddress().toString() + ":"
           + tcpHeader.getSourcePort() + ":" + ipHeader.getDestinationAddress().toString()
           + ":" + tcpHeader.getDestinationPort() + TransportHeader.TCP_PROTOCOL);
