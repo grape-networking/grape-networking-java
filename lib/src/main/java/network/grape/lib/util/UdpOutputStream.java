@@ -45,6 +45,8 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import network.grape.lib.vpn.SocketProtector;
+
 public class UdpOutputStream extends OutputStream {
 
     public static final int DEFAULT_BUFFER_SIZE = 1024;
@@ -116,10 +118,10 @@ public class UdpOutputStream extends OutputStream {
      ***                ***
      *****************************************************************
      */
-    public UdpOutputStream(String address, int portI)
+    public UdpOutputStream(String address, int portI, SocketProtector protector)
             throws UnknownHostException, SocketException, IOException {
 
-        open(InetAddress.getByName(address), portI);
+        open(InetAddress.getByName(address), portI, protector);
     }
 
     /*
@@ -139,10 +141,10 @@ public class UdpOutputStream extends OutputStream {
      ***                ***
      *****************************************************************
      */
-    public UdpOutputStream(InetAddress address, int portI)
+    public UdpOutputStream(InetAddress address, int portI, SocketProtector protector)
             throws SocketException, IOException {
 
-        open(address, portI);
+        open(address, portI, protector);
     }
 
     /*
@@ -162,10 +164,10 @@ public class UdpOutputStream extends OutputStream {
      ***                ***
      *****************************************************************
      */
-    public UdpOutputStream(String address, int portI, int buffSize)
+    public UdpOutputStream(String address, int portI, int buffSize, SocketProtector protector)
             throws UnknownHostException, SocketException, IOException {
 
-        open(InetAddress.getByName(address), portI);
+        open(InetAddress.getByName(address), portI, protector);
         setBufferSize(buffSize);
     }
 
@@ -186,10 +188,10 @@ public class UdpOutputStream extends OutputStream {
      ***                ***
      *****************************************************************
      */
-    public UdpOutputStream(InetAddress address, int portI, int buffSize)
+    public UdpOutputStream(InetAddress address, int portI, int buffSize, SocketProtector protector)
             throws SocketException, IOException {
 
-        open(address, portI);
+        open(address, portI, protector);
         setBufferSize(buffSize);
     }
 
@@ -211,10 +213,11 @@ public class UdpOutputStream extends OutputStream {
      ***                ***
      *****************************************************************
      */
-    public void open(InetAddress address, int portI)
+    public void open(InetAddress address, int portI, SocketProtector protector)
             throws SocketException, IOException {
 
         dsock = new DatagramSocket();
+        protector.protect(dsock);
         iAdd = address;
         port = portI;
     }

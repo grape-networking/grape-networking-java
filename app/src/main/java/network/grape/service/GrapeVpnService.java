@@ -28,6 +28,8 @@ import network.grape.lib.session.SessionManager;
 import network.grape.lib.vpn.ProtectSocket;
 import network.grape.lib.vpn.SocketProtector;
 //import network.grape.lib.vpn.VpnClient;
+import network.grape.lib.vpn.VpnForwardingReader;
+import network.grape.lib.vpn.VpnForwardingWriter;
 import network.grape.lib.vpn.VpnReader;
 import network.grape.lib.vpn.VpnWriter;
 import org.slf4j.Logger;
@@ -45,8 +47,8 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
   private final Logger logger;
   @Setter private ParcelFileDescriptor vpnInterface;
   @Setter private Thread captureThread;
-  @Setter private VpnWriter vpnWriter;
-  @Setter private VpnReader vpnReader;
+  @Setter private VpnForwardingWriter vpnWriter;
+  @Setter private VpnForwardingReader vpnReader;
   @Setter private Thread vpnWriterThread;
   @Setter private Thread vpnReaderThread;
 
@@ -142,9 +144,12 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
    */
   public void startTrafficHandler() throws IOException {
     logger.info("startTrafficHandler() :traffic handling starting");
-    // Packets received need to be written to this output stream.
-    FileOutputStream clientWriter = new FileOutputStream(vpnInterface.getFileDescriptor());
 
+    FileOutputStream clientWriter = new FileOutputStream(vpnInterface.getFileDescriptor());
+    ByteBuffer vpnPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
+    vpnWriter = new VpnForwardingWriter(clientWriter, vpnPacket, new SocketProtector(this));
+    vpnWriterThread.start();
+    /*
     Map<String, Session> sessionTable = new ConcurrentHashMap<>();
     Selector selector = Selector.open();
     SessionManager sessionManager = new SessionManager(sessionTable, selector);
@@ -152,23 +157,24 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     // background thread for writing output to the vpn outputstream
     final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
     ThreadPoolExecutor executor = new ThreadPoolExecutor(10, 100, 10, TimeUnit.SECONDS, taskQueue);
-
-    vpnWriter = new VpnWriter(clientWriter, sessionManager, executor);
+    vpnWriter = new VpnWriter(sessionManager, executor);
     vpnWriterThread = new Thread(vpnWriter);
 
     List<InetAddress> filters = new ArrayList<>();
     //filters.add(InetAddress.getByName("10.0.0.111"));
     SessionHandler handler =
-        new SessionHandler(sessionManager, new SocketProtector(this), vpnWriter, filters);
+        new SessionHandler(sessionManager, new SocketProtector(this), filters);
 
     vpnWriterThread.start();
-
+    */
     // Allocate the buffer for a single packet.
-    ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_LEN);
+    ByteBuffer appPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
 
     // Packets to be sent are queued in this input stream.
     FileInputStream clientReader = new FileInputStream(vpnInterface.getFileDescriptor());
-    vpnReader = new VpnReader(clientReader, handler, packet, new SocketProtector(this));
+
+    //vpnReader = new VpnReader(clientReader, clientWriter, handler, packet, new SocketProtector(this));
+    vpnReader = new VpnForwardingReader(clientReader, appPacket, new SocketProtector(this));
     vpnReaderThread = new Thread(vpnReader);
     vpnReaderThread.start();
   }

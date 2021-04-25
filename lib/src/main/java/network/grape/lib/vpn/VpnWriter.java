@@ -1,8 +1,6 @@
 package network.grape.lib.vpn;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;

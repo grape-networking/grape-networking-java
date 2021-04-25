@@ -49,8 +49,8 @@ public class SessionHandler {
   private final SocketProtector protector;
   private final Selector selector;
   private final SessionManager sessionManager;
-  private final VpnWriter vpnWriter;
   private final List<InetAddress> filterTo;
+  private final VpnWriter vpnWriter;
 
   /**
    * Construct a SessionHandler with a SessionManager to keep track of sessions and SocketProtector
@@ -59,11 +59,10 @@ public class SessionHandler {
    *
    * @param sessionManager the session manager which maps the SelectorKey and SessionKey to Session
    * @param protector      the protector which prevents vpn loopback
-   * @param vpnWriter      the writer used to write back to the application
    * @param filterTo       a list of InetAddresses to only listen to traffic to / from
    */
-  public SessionHandler(SessionManager sessionManager, SocketProtector protector,
-                        VpnWriter vpnWriter, List<InetAddress> filterTo) {
+  public SessionHandler(SessionManager sessionManager, SocketProtector protector, VpnWriter vpnWriter,
+                        List<InetAddress> filterTo) {
     this.sessionManager = sessionManager;
     this.selector = sessionManager.getSelector();
     this.protector = protector;
@@ -444,7 +443,7 @@ public class SessionHandler {
 
     try {
       // logger.info("WRITING: " + BufferUtil.hexDump(synAck, 0, synAck.length, true, true));
-      vpnWriter.getOutputStream().write(synAck);
+      session.getOutputStream().write(synAck);
       logger.info("Wrote SYN-ACK for session: " + session.getKey());
     } catch (IOException e) {
       e.printStackTrace();
@@ -454,7 +453,7 @@ public class SessionHandler {
   protected void sendLastAck(IpHeader ipHeader, TcpHeader tcpHeader, Session session) {
     byte[] data = createResponseAckData(ipHeader, tcpHeader, tcpHeader.getSequenceNumber() + 1);
     try {
-      vpnWriter.getOutputStream().write(data);
+      session.getOutputStream().write(data);
       logger.info("Sent last ACK packet to session: " + ipHeader.getSourceAddress().toString() + ":"
           + tcpHeader.getSourcePort() + ":" + ipHeader.getDestinationAddress().toString()
           + ":" + tcpHeader.getDestinationPort() + TransportHeader.TCP_PROTOCOL);
@@ -469,7 +468,7 @@ public class SessionHandler {
                                Session session) {
     byte[] data = createRstData(ipHeader, tcpHeader, dataLength);
     try {
-      vpnWriter.getOutputStream().write(data);
+      session.getOutputStream().write(data);
       logger.info("Sent RST packet to session: " + ipHeader.getSourceAddress().toString() + ":"
           + tcpHeader.getSourcePort() + ":" + ipHeader.getDestinationAddress().toString()
           + ":" + tcpHeader.getDestinationPort() + TransportHeader.TCP_PROTOCOL);
@@ -488,7 +487,7 @@ public class SessionHandler {
     session.setRecSequence(ackNumber);
     byte[] data = createResponseAckData(ipHeader, tcpHeader, ackNumber);
     try {
-      vpnWriter.getOutputStream().write(data);
+      session.getOutputStream().write(data);
     } catch (IOException e) {
       logger
           .error("Failed to send ACK packet for session: " + session.getKey() + ":" + e.toString());
@@ -503,7 +502,7 @@ public class SessionHandler {
         "sending: ACK# " + tcpHeader.getSequenceNumber() + " + " + acceptedDataLength + " = "
             + ackNumber + "\n" + BufferUtil.hexDump(data, 0, data.length, true, true));
     try {
-      vpnWriter.getOutputStream().write(data);
+      session.getOutputStream().write(data);
     } catch (IOException e) {
       logger
           .error("Failed to send ACK packet for session: " + session.getKey() + ":" + e.toString());
@@ -549,7 +548,7 @@ public class SessionHandler {
     final long seq = tcpHeader.getAckNumber();
     final byte[] data = createFinAckData(ipHeader, tcpHeader, ack, seq, true, false);
     try {
-      vpnWriter.getOutputStream().write(data);
+      session.getOutputStream().write(data);
       logger.info("Wrote FIN-ACK for session: " + session.getKey());
     } catch (IOException e) {
       logger.error(
@@ -565,7 +564,7 @@ public class SessionHandler {
     long seq = tcpHeader.getAckNumber();
     byte[] data = createFinAckData(ipHeader, tcpHeader, ack, seq, true, true);
     try {
-      vpnWriter.getOutputStream().write(data);
+      session.getOutputStream().write(data);
       if (session != null) {
         session.getSelectionKey().cancel();
         //sessionManager.closeSession(session);

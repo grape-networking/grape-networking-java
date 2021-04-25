@@ -72,16 +72,13 @@ public class VpnReader implements Runnable {
         data = packet.array();
         length = fileInputStream.read(data);
         if (length > 0) {
-          DatagramPacket opacket = new DatagramPacket(data, length, new InetSocketAddress("10.0.0.111", 8888));
-          outgoing.send(opacket);
           // logger.info("received packet from vpn client: " + length);
-          // re-enable this for vpn handling on the phone
-//          try {
-//            packet.limit(length);
-//            handler.handlePacket(packet, outputStream);
-//          } catch (PacketHeaderException | UnknownHostException ex) {
-//            logger.error(ex.toString());
-//          }
+          try {
+            packet.limit(length);
+            handler.handlePacket(packet, fileOutputStream);
+          } catch (PacketHeaderException | UnknownHostException ex) {
+            logger.error(ex.toString());
+          }
           packet.clear();
         } else {
           // todo: remove this and just let it spin on the read I guess?

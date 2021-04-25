@@ -46,7 +46,7 @@ public class ProxyMain implements ProtectSocket {
         final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
         SessionManager sessionManager = new SessionManager(sessionTable, selector);
         ThreadPoolExecutor executor = new ThreadPoolExecutor(10, 100, 10, TimeUnit.SECONDS, taskQueue);
-        VpnWriter vpnWriter = new VpnWriter(null, sessionManager, executor);
+        VpnWriter vpnWriter = new VpnWriter(sessionManager, executor);
         List<InetAddress> filters = new ArrayList<>();
         handler = new SessionHandler(sessionManager, new SocketProtector(this), vpnWriter, filters);
     }
@@ -64,7 +64,7 @@ public class ProxyMain implements ProtectSocket {
             ByteBuffer packet = ByteBuffer.wrap(request.getData());
             packet.limit(request.getLength());
             try {
-                UdpOutputStream outputStream = new UdpOutputStream(request.getAddress(), request.getPort());
+                UdpOutputStream outputStream = new UdpOutputStream(request.getAddress(), request.getPort(), new SocketProtector(this));
                 handler.handlePacket(packet, outputStream);
             } catch (PacketHeaderException | UnknownHostException ex) {
                 logger.error(ex.toString());
