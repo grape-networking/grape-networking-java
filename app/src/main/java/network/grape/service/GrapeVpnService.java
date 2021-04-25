@@ -148,6 +148,7 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     FileOutputStream clientWriter = new FileOutputStream(vpnInterface.getFileDescriptor());
     ByteBuffer vpnPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
     vpnWriter = new VpnForwardingWriter(clientWriter, vpnPacket, new SocketProtector(this));
+    vpnWriterThread = new Thread(vpnWriter);
     vpnWriterThread.start();
     /*
     Map<String, Session> sessionTable = new ConcurrentHashMap<>();
