@@ -45,6 +45,7 @@ test these locally before pushing you can do so as follows:
 - https://github.com/google/vpn-reverse-tether
 - https://github.com/httptoolkit/httptoolkit-android
 - https://github.com/zhengchun/LocalVPN-Kotlin
+- https://github.com/WireGuard/wireguard-android
 
 ## Linux
 - https://github.com/gsliepen/tinc

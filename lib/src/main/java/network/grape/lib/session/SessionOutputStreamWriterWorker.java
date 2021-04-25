@@ -1,17 +1,16 @@
-package network.grape.lib.vpn;
+package network.grape.lib.session;
 
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createRstData;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.AbstractSelectableChannel;
 import java.util.Date;
-import network.grape.lib.session.Session;
-import network.grape.lib.session.SessionManager;
+
 import network.grape.lib.transport.tcp.TcpHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,13 +19,15 @@ import org.slf4j.LoggerFactory;
  * Background task which writes data to the outgoing channel, or in the case of an Exception for a
  * TCP connection, writes an RST to the VPN stream to reset the connection.
  */
-public class SocketDataWriterWorker extends SocketWorker implements Runnable {
+public class SessionOutputStreamWriterWorker extends SessionWorker implements Runnable {
   private final Logger logger;
+  private final OutputStream outputStream;
 
-  SocketDataWriterWorker(FileOutputStream outputStream, String sessionKey,
+  public SessionOutputStreamWriterWorker(OutputStream outputStream, String sessionKey,
                          SessionManager sessionManager) {
-    super(outputStream, sessionKey, sessionManager);
-    this.logger = LoggerFactory.getLogger(SocketDataWriterWorker.class);
+    super(sessionKey, sessionManager);
+    this.outputStream = outputStream;
+    this.logger = LoggerFactory.getLogger(SessionOutputStreamWriterWorker.class);
   }
 
   @Override
@@ -48,7 +49,7 @@ public class SocketDataWriterWorker extends SocketWorker implements Runnable {
     session.setBusyWrite(false);
 
     if (session.isAbortingConnection()) {
-      //abortSession(session);
+      abortSession(session);
     }
   }
 
@@ -75,6 +76,7 @@ public class SocketDataWriterWorker extends SocketWorker implements Runnable {
           (TcpHeader) session.getLastTransportHeader(), 0);
       try {
         outputStream.write(rstData);
+        outputStream.flush();
       } catch (IOException e) {
         logger.error("Error writing to VPN to reset the connection");
       }

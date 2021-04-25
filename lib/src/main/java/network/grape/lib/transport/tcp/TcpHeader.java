@@ -377,7 +377,7 @@ public class TcpHeader implements TransportHeader {
       }
     } else {
       // don't get any bytes because len is only 2
-      System.out.println("IGNORING SACK_PERMITTED");
+      //System.out.println("IGNORING SACK_PERMITTED");
     }
     throw new Exception("Ignoring SACK PERMITTED");
     //return option;
@@ -452,7 +452,7 @@ public class TcpHeader implements TransportHeader {
   }
 
   protected static TcpOption parseTimestamp(ByteBuffer stream) throws Exception {
-    System.out.println("TIMESTAMP");
+    //System.out.println("TIMESTAMP");
     // https://tools.ietf.org/html/rfc7323#page-12
     // https://tools.ietf.org/id/draft-scheffenegger-tcpm-timestamp-negotiation-05.html#:~:text=A%20TCP%20may%20send%20the,%3E%20segment%20for%20the%20connection.%22
     int optionLength = stream.get();
@@ -530,7 +530,7 @@ public class TcpHeader implements TransportHeader {
           System.out.println("UNKNOWN OPTION: " + optionNumber);
         }
       } catch (Exception ex) {
-        System.out.println("Error parsing option: " + ex.toString());
+        //System.out.println("Error parsing option: " + ex.toString());
       }
     }
     return options;

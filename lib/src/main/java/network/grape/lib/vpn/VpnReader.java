@@ -1,7 +1,12 @@
 package network.grape.lib.vpn;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import lombok.Setter;
@@ -19,22 +24,29 @@ public class VpnReader implements Runnable {
   private final Logger logger;
   @Setter private volatile boolean running;
   private final FileInputStream fileInputStream;
+  private final FileOutputStream fileOutputStream;
   private final SessionHandler handler;
   private final ByteBuffer packet;
+  private final SocketProtector protector;
 
   /**
    * Construt a VPN reader to handle traffic coming from the apps connected to the VPN.
    *
    * @param inputStream the inputstream of all traffic from the VPN
+   * @param outputStream the stream to write back into the VPN interface.
    * @param handler a session handler which should have been instantiates outside of this class
    * @param packet the bytebuffer that inputstream data should be read into for parsing
+   * @param protector used to protect the outgoing sockets
    */
-  public VpnReader(FileInputStream inputStream, SessionHandler handler, ByteBuffer packet) {
+  public VpnReader(FileInputStream inputStream, FileOutputStream outputStream, SessionHandler handler, ByteBuffer packet,
+                   SocketProtector protector) {
     logger = LoggerFactory.getLogger(VpnReader.class);
     this.fileInputStream = inputStream;
+    this.fileOutputStream = outputStream;
     this.handler = handler;
     this.packet = packet;
     this.running = false;
+    this.protector = protector;
   }
 
   public boolean isRunning() {
@@ -46,6 +58,15 @@ public class VpnReader implements Runnable {
     running = true;
     byte[] data;
     int length;
+    DatagramSocket outgoing;
+    try {
+      outgoing = new DatagramSocket();
+      protector.protect(outgoing);
+      outgoing.connect(new InetSocketAddress("10.0.0.111", 8888));
+    } catch (SocketException e) {
+      e.printStackTrace();
+      return;
+    }
     while (isRunning()) {
       try {
         data = packet.array();
@@ -54,7 +75,7 @@ public class VpnReader implements Runnable {
           // logger.info("received packet from vpn client: " + length);
           try {
             packet.limit(length);
-            handler.handlePacket(packet);
+            handler.handlePacket(packet, fileOutputStream);
           } catch (PacketHeaderException | UnknownHostException ex) {
             logger.error(ex.toString());
           }

@@ -1,6 +1,5 @@
 package network.grape.lib.vpn;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -18,6 +17,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import lombok.Getter;
 import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionManager;
+import network.grape.lib.session.SessionOutputStreamReaderWorker;
+import network.grape.lib.session.SessionOutputStreamWriterWorker;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +34,6 @@ public class VpnWriter implements Runnable {
   private final Logger logger;
   @Getter private final Object syncSelector = new Object();
   @Getter private final Object syncSelector2 = new Object();
-  @Getter private final FileOutputStream outputStream;
   private final SessionManager sessionManager;
   // create thread pool for reading/writing data to socket
   private final ThreadPoolExecutor workerPool;
@@ -41,13 +42,11 @@ public class VpnWriter implements Runnable {
   /**
    * Construct a new VpnWriter with the workerpool provided.
    *
-   * @param outputStream the stream to write back into the VPN interface.
    * @param workerPool   the worker pool to execute reader and writer threads in.
    */
-  public VpnWriter(FileOutputStream outputStream, SessionManager sessionManager,
+  public VpnWriter(SessionManager sessionManager,
                    ThreadPoolExecutor workerPool) {
     this.logger = LoggerFactory.getLogger(VpnWriter.class);
-    this.outputStream = outputStream;
     this.sessionManager = sessionManager;
     this.workerPool = workerPool;
   }
@@ -220,14 +219,14 @@ public class VpnWriter implements Runnable {
     if (selectionKey.isValid() && selectionKey.isWritable() && !session.isBusyWrite()
         && session.hasDataToSend() && session.isDataForSendingReady()) {
       session.setBusyWrite(true);
-      final SocketDataWriterWorker worker =
-          new SocketDataWriterWorker(outputStream, session.getKey(), sessionManager);
+      final SessionOutputStreamWriterWorker worker =
+              new SessionOutputStreamWriterWorker(session.getOutputStream(), session.getKey(), sessionManager);
       workerPool.execute(worker);
     }
     if (selectionKey.isValid() && selectionKey.isReadable() && !session.isBusyRead()) {
       session.setBusyRead(true);
-      final SocketDataReaderWorker worker =
-          new SocketDataReaderWorker(outputStream, session.getKey(), sessionManager);
+      final SessionOutputStreamReaderWorker worker =
+              new SessionOutputStreamReaderWorker(session.getOutputStream(), session.getKey(), sessionManager);
       workerPool.execute(worker);
     }
   }

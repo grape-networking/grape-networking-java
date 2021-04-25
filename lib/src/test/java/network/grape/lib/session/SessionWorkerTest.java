@@ -1,4 +1,4 @@
-package network.grape.lib.vpn;
+package network.grape.lib.session;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -14,22 +14,22 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionManager;
+import network.grape.lib.session.SessionWorker;
+
 import org.junit.jupiter.api.Test;
 
 /**
  * Test the Socket Worker class.
  */
-public class SocketWorkerTest {
+public class SessionWorkerTest {
 
-  FileOutputStream fileOutputStream;
   String sessionKey;
   SessionManager sessionManager;
 
   @Test public void abortSessionTest() throws IOException {
-    fileOutputStream = mock(FileOutputStream.class);
     sessionKey = "somekey";
     sessionManager = mock(SessionManager.class);
-    SocketWorker socketWorker = spy(new SocketWorker(fileOutputStream, sessionKey, sessionManager));
+    SessionWorker socketWorker = spy(new SessionWorker(sessionKey, sessionManager));
     Session session = mock(Session.class);
     SelectionKey selectionKey = mock(SelectionKey.class);
     doReturn(selectionKey).when(session).getSelectionKey();

@@ -1,4 +1,4 @@
-package network.grape.lib.vpn;
+package network.grape.lib.session;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -22,12 +22,12 @@ import org.mockito.Spy;
 /**
  * Test the Writer Worker class.
  */
-public class SocketDataWriterWorkerTest {
+public class SessionOutputStreamWriterWorkerTest {
 
   FileOutputStream fileOutputStream;
   String sessionKey;
   SessionManager sessionManager;
-  @Spy SocketDataWriterWorker socketDataWriterWorker;
+  @Spy SessionOutputStreamWriterWorker socketDataWriterWorker;
 
   /**
    * Initialize the mocks and spys for the tests.
@@ -38,7 +38,7 @@ public class SocketDataWriterWorkerTest {
     sessionKey = "somekey";
     sessionManager = mock(SessionManager.class);
     socketDataWriterWorker =
-        spy(new SocketDataWriterWorker(fileOutputStream, sessionKey, sessionManager));
+        spy(new SessionOutputStreamWriterWorker(fileOutputStream, sessionKey, sessionManager));
   }
 
   @Test

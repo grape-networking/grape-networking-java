@@ -2,6 +2,7 @@ package network.grape.lib.session;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -36,6 +37,7 @@ public class Session {
   @Setter @Getter private TransportHeader lastTransportHeader;
   @Setter @Getter private SelectionKey selectionKey;
   @Setter @Getter private AbstractSelectableChannel channel;
+  @Getter @Setter private OutputStream outputStream; //outputstream back to the client
 
   @Getter @Setter private boolean connected = false;
   //closing session and aborting connection, will be done by background task
@@ -91,14 +93,18 @@ public class Session {
    * @param destinationIp   the destination IP - where the actual request is going to
    * @param destinationPort the destiation port where the actual request is going to
    * @param protocol        this is the protocol number representing either TCP or UDP
+   * @param outputstream    the outputstream back to the the source. On the phone its the
+   *                        FileOutputStream given from the VPN. Otherwise its the Socket
+   *                        outputstream if running as a VPN server on the cloud.
    */
   public Session(InetAddress sourceIp, int sourcePort, InetAddress destinationIp,
-                 int destinationPort, short protocol) {
+                 int destinationPort, short protocol, OutputStream outputstream) {
     this.sourceIp = sourceIp;
     this.destinationIp = destinationIp;
     this.sourcePort = sourcePort;
     this.destinationPort = destinationPort;
     this.protocol = protocol;
+    this.outputStream = outputstream;
 
     sendingStream = new ByteArrayOutputStream();
     receivingStream = new ByteArrayOutputStream();
