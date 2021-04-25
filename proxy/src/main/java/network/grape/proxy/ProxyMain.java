@@ -37,6 +37,7 @@ public class ProxyMain implements ProtectSocket {
     private static final int DEFAULT_PORT = 8888;
     private DatagramSocket socket;
     private final SessionHandler handler;
+    private Thread vpnWriterThread;
 
     public ProxyMain() throws IOException {
         logger = LoggerFactory.getLogger(ProxyMain.class);
@@ -47,12 +48,14 @@ public class ProxyMain implements ProtectSocket {
         SessionManager sessionManager = new SessionManager(sessionTable, selector);
         ThreadPoolExecutor executor = new ThreadPoolExecutor(10, 100, 10, TimeUnit.SECONDS, taskQueue);
         VpnWriter vpnWriter = new VpnWriter(sessionManager, executor);
+        vpnWriterThread = new Thread(vpnWriter);
         List<InetAddress> filters = new ArrayList<>();
         handler = new SessionHandler(sessionManager, new SocketProtector(this), vpnWriter, filters);
     }
 
     private void service() throws IOException {
         // assume that each packet from the grape app is <= MAX_RECEIVE_BUFFER_SIZE
+        vpnWriterThread.start();
         byte[] buffer = new byte[MAX_RECEIVE_BUFFER_SIZE];
         while (true) {
             DatagramPacket request = new DatagramPacket(buffer, MAX_RECEIVE_BUFFER_SIZE);
