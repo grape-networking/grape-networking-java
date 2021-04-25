@@ -26,6 +26,11 @@ compileJava   {
     targetCompatibility = '11'
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
 dependencies {
     // note: this gives a lint warning, but if we take it out, it doesn't find annotations
     // https://stackoverflow.com/a/64726112
