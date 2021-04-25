@@ -45,6 +45,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import lombok.Getter;
 import network.grape.lib.vpn.ProtectSocket;
 import network.grape.lib.vpn.SocketProtector;
 
@@ -52,7 +53,7 @@ public class UdpInputStream extends InputStream {
 
     private static final int PACKET_BUFFER_SIZE = 5000;
 
-    DatagramSocket dsock = null;
+    @Getter DatagramSocket dsock = null;
     DatagramPacket dpack = null;
 
     byte[] ddata = new byte[PACKET_BUFFER_SIZE];
@@ -124,8 +125,9 @@ public class UdpInputStream extends InputStream {
     public void open(String address, int port, SocketProtector protector)
             throws UnknownHostException, SocketException {
 
-        dsock = new DatagramSocket(port, InetAddress.getByName(address));
+        dsock = new DatagramSocket();
         protector.protect(dsock);
+        dsock.connect(InetAddress.getByName(address), port);
     }
 
     /*

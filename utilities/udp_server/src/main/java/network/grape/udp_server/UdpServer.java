@@ -14,7 +14,7 @@ import java.net.SocketException;
  */
 public class UdpServer {
 
-  private static final int DEFAULT_PORT = 8888;
+  private static final int DEFAULT_PORT = 8889;
   private DatagramSocket socket;
 
   public UdpServer() throws SocketException {

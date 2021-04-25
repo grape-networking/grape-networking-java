@@ -5,8 +5,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 
+import lombok.Getter;
 import lombok.Setter;
 import network.grape.lib.util.UdpInputStream;
 
@@ -20,13 +24,18 @@ public class VpnForwardingWriter implements Runnable {
     private final FileOutputStream outputStream;
     private final ByteBuffer packet;
     private final SocketProtector protector;
+    @Getter private DatagramSocket socket;
+    private final UdpInputStream inputStream;
 
-    public VpnForwardingWriter(FileOutputStream outputStream, ByteBuffer packet, SocketProtector protector) {
+    public VpnForwardingWriter(FileOutputStream outputStream, ByteBuffer packet, SocketProtector protector) throws SocketException, UnknownHostException {
         logger = LoggerFactory.getLogger(VpnForwardingReader.class);
         this.outputStream = outputStream;
         this.packet = packet;
         this.protector = protector;
         this.running = false;
+
+        inputStream = new UdpInputStream("10.0.0.111", 8888, protector);
+        socket = inputStream.getDsock();
     }
 
     public boolean isRunning() {
@@ -40,7 +49,6 @@ public class VpnForwardingWriter implements Runnable {
         int length;
 
         try {
-            UdpInputStream inputStream = new UdpInputStream("10.0.0.111", 8888, protector);
             while (isRunning()) {
                 data = packet.array();
                 length = inputStream.read(data);

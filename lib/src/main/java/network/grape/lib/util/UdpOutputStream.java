@@ -62,6 +62,12 @@ public class UdpOutputStream extends OutputStream {
     int idx = 0; // buffer index; points to next empty buffer byte
     int bufferMax = DEFAULT_MAX_BUFFER_SIZE;
 
+    public UdpOutputStream(DatagramSocket socket) {
+        dsock = socket;
+        iAdd = socket.getInetAddress();
+        port = socket.getPort();
+    }
+
     /********************** constructors ********************/
     /*
      *****************************************************************
