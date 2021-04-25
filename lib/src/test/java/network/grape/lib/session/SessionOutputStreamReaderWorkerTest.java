@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Test the Reader Worker.
  */
-public class SocketDataReaderWorkerTest {
+public class SessionOutputStreamReaderWorkerTest {
 
   FileOutputStream fileOutputStream;
   String sessionKey;

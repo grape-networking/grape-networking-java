@@ -20,6 +20,7 @@ import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionManager;
+import network.grape.lib.session.SessionWorker;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.transport.tcp.TcpHeader;
 import network.grape.lib.transport.udp.UdpHeader;
@@ -33,7 +34,7 @@ import org.slf4j.LoggerFactory;
  * clients. In the case of the TCP connection, it also writes FIN packets when the connection
  * terminates.
  */
-public class SocketDataReaderWorker extends SocketWorker implements Runnable {
+public class SessionOutputStreamReaderWorker extends SessionWorker implements Runnable {
   private final Logger logger;
 
   /**
@@ -43,7 +44,7 @@ public class SocketDataReaderWorker extends SocketWorker implements Runnable {
    * @param sessionKey     the sessionKey for this writer
    * @param sessionManager the sessionManager instance
    */
-  SocketDataReaderWorker(FileOutputStream outputStream, String sessionKey,
+  SessionOutputStreamReaderWorker(FileOutputStream outputStream, String sessionKey,
                          SessionManager sessionManager) {
     super(outputStream, sessionKey, sessionManager);
     this.logger = LoggerFactory.getLogger(SocketDataReaderWorker.class);
