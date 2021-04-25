@@ -109,9 +109,9 @@ public class SessionHandlerTest {
     ip4HeaderPayload.put(ip4buffer);
     ip4HeaderPayload.put(udpBuffer);
     ip4HeaderPayload.rewind();
-    doNothing().when(sessionHandler).handleUdpPacket(any(), any(), any(), outputStream);
+    doNothing().when(sessionHandler).handleUdpPacket(any(), any(), any(), any());
     sessionHandler.handlePacket(ip4HeaderPayload, outputStream);
-    verify(sessionHandler, times(1)).handleUdpPacket(any(), any(), any(), outputStream);
+    verify(sessionHandler, times(1)).handleUdpPacket(any(), any(), any(), any());
 
     // ipv6 with tcp payload
     Ip6Header ip6Header = copyIp6Header(testIp6Header());
@@ -125,9 +125,9 @@ public class SessionHandlerTest {
     ip6HeaderPayload.put(ip6buffer);
     ip6HeaderPayload.put(tcpBuffer);
     ip6HeaderPayload.rewind();
-    doNothing().when(sessionHandler).handleTcpPacket(any(), any(), any(), outputStream);
+    doNothing().when(sessionHandler).handleTcpPacket(any(), any(), any(), any());
     sessionHandler.handlePacket(ip6HeaderPayload, outputStream);
-    verify(sessionHandler, times(1)).handleTcpPacket(any(), any(), any(), outputStream);
+    verify(sessionHandler, times(1)).handleTcpPacket(any(), any(), any(), any());
   }
 
   @Test

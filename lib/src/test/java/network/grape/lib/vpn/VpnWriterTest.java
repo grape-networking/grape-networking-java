@@ -37,7 +37,6 @@ import org.mockito.Mockito;
  */
 public class VpnWriterTest {
 
-  FileOutputStream fileOutputStream;
   ThreadPoolExecutor workerPool;
   SessionManager sessionManager;
 
@@ -46,7 +45,6 @@ public class VpnWriterTest {
    */
   @BeforeEach
   public void before() {
-    fileOutputStream = mock(FileOutputStream.class);
     workerPool = mock(ThreadPoolExecutor.class);
     sessionManager = mock(SessionManager.class);
   }
@@ -72,7 +70,7 @@ public class VpnWriterTest {
 
   @Test
   public void invalidUdpSelector() {
-    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    VpnWriter vpnWriter = spy(new VpnWriter(sessionManager, workerPool));
     SelectionKey selectionKey = mock(SelectionKey.class);
     when(selectionKey.isValid()).thenReturn(false);
     vpnWriter.processUdpSelectionKey(selectionKey);
@@ -80,7 +78,7 @@ public class VpnWriterTest {
 
   @Test
   public void invalidTcpSelector() throws IOException {
-    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    VpnWriter vpnWriter = spy(new VpnWriter(sessionManager, workerPool));
     SelectionKey selectionKey = mock(SelectionKey.class);
     when(selectionKey.isValid()).thenReturn(false);
     vpnWriter.processTcpSelectionKey(selectionKey);
@@ -88,7 +86,7 @@ public class VpnWriterTest {
 
   @Test
   public void nullTcpChannel() throws IOException {
-    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    VpnWriter vpnWriter = spy(new VpnWriter(sessionManager, workerPool));
     SelectionKey selectionKey = mock(SelectionKey.class);
     when(selectionKey.isValid()).thenReturn(true);
     when(selectionKey.channel()).thenReturn(null);
@@ -98,13 +96,13 @@ public class VpnWriterTest {
   @Test
   public void udpSessionNotFound() throws IOException {
     SelectionKey selectionKey = prepSelectionKey(false);
-    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    VpnWriter vpnWriter = spy(new VpnWriter(sessionManager, workerPool));
     vpnWriter.processUdpSelectionKey(selectionKey);
   }
 
   @Test
   public void tcpSessionNotFound() throws IOException {
-    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    VpnWriter vpnWriter = spy(new VpnWriter(sessionManager, workerPool));
     SelectionKey selectionKey = mock(SelectionKey.class);
     when(selectionKey.isValid()).thenReturn(true);
     SocketChannel channel = mock(SocketChannel.class);
@@ -115,7 +113,7 @@ public class VpnWriterTest {
 
   @Test
   public void TcpSessionNotConnectedKeyConnectable() throws IOException {
-    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    VpnWriter vpnWriter = spy(new VpnWriter(sessionManager, workerPool));
     SelectionKey selectionKey = mock(SelectionKey.class);
     when(selectionKey.isValid()).thenReturn(true);
     SocketChannel channel = mock(SocketChannel.class);
@@ -160,7 +158,7 @@ public class VpnWriterTest {
 
   @Test
   public void UdpSessionNotConnectedKeyConnectable() throws IOException {
-    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    VpnWriter vpnWriter = spy(new VpnWriter(sessionManager, workerPool));
     Session session = mock(Session.class);
 
     //io exception on connect
@@ -190,7 +188,7 @@ public class VpnWriterTest {
 
   @Test
   public void UdpSessionNotConnectedKeyNotConnectable() throws IOException {
-    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    VpnWriter vpnWriter = spy(new VpnWriter(sessionManager, workerPool));
     Session session = mock(Session.class);
     when(sessionManager.getSessionByChannel(any())).thenReturn(session);
     SelectionKey selectionKey = prepSelectionKey(true);
@@ -203,7 +201,7 @@ public class VpnWriterTest {
 
   @Test
   public void UdpSessionConnected() throws IOException {
-    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    VpnWriter vpnWriter = spy(new VpnWriter(sessionManager, workerPool));
     Session session = mock(Session.class);
     when(sessionManager.getSessionByChannel(any())).thenReturn(session);
     SelectionKey selectionKey = prepSelectionKey(false);
@@ -218,7 +216,7 @@ public class VpnWriterTest {
   public void testProcessSelector() {
     Session session = mock(Session.class);
     SelectionKey selectionKey = mock(SelectionKey.class);
-    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    VpnWriter vpnWriter = spy(new VpnWriter(sessionManager, workerPool));
 
     when(selectionKey.isValid()).thenReturn(false);
     vpnWriter.processSelector(selectionKey, session);
@@ -276,7 +274,7 @@ public class VpnWriterTest {
   public void runTest() throws InterruptedException, IOException {
 
     // base case, nothing back from the selector
-    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    VpnWriter vpnWriter = spy(new VpnWriter( sessionManager, workerPool));
     Selector selector = mock(Selector.class);
     when(sessionManager.getSelector()).thenReturn(selector);
     when(vpnWriter.isRunning()).thenReturn(true).thenReturn(false);
@@ -285,7 +283,7 @@ public class VpnWriterTest {
     t.join();
 
     // exception on select
-    vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    vpnWriter = spy(new VpnWriter(sessionManager, workerPool));
     selector = mock(Selector.class);
     when(selector.select()).thenThrow(IOException.class);
     when(sessionManager.getSelector()).thenReturn(selector);
@@ -295,7 +293,7 @@ public class VpnWriterTest {
     t.join();
 
     // exception on select + interrupt in handler
-    vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    vpnWriter = spy(new VpnWriter(sessionManager, workerPool));
     selector = mock(Selector.class);
     when(selector.select()).thenThrow(IOException.class);
     when(sessionManager.getSelector()).thenReturn(selector);
@@ -327,7 +325,7 @@ public class VpnWriterTest {
     when(serverSocketKey.channel()).thenReturn(serverSocketChannel);
     selectionKeySet.add(serverSocketKey);
 
-    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    VpnWriter vpnWriter = spy(new VpnWriter(sessionManager, workerPool));
     doNothing().when(vpnWriter).processUdpSelectionKey(any());
 
     Selector selector = mock(Selector.class);
@@ -343,7 +341,7 @@ public class VpnWriterTest {
 
   @Test public void runTestNotRunning() throws InterruptedException {
     // base case, nothing back from the selector
-    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    VpnWriter vpnWriter = spy(new VpnWriter(sessionManager, workerPool));
     Selector selector = mock(Selector.class);
     when(sessionManager.getSelector()).thenReturn(selector);
     when(vpnWriter.isRunning()).thenReturn(true).thenReturn(false);
@@ -361,7 +359,7 @@ public class VpnWriterTest {
     when(udpKey.channel()).thenReturn(udpChannel);
     selectionKeySet.add(udpKey);
 
-    VpnWriter vpnWriter = spy(new VpnWriter(fileOutputStream, sessionManager, workerPool));
+    VpnWriter vpnWriter = spy(new VpnWriter(sessionManager, workerPool));
     doNothing().when(vpnWriter).processUdpSelectionKey(any());
 
     Selector selector = mock(Selector.class);

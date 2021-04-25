@@ -10,6 +10,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import network.grape.lib.PacketHeaderException;
@@ -26,10 +27,11 @@ public class VpnReaderTest {
   @Disabled
   @Test public void runTest() throws IOException, PacketHeaderException {
     FileInputStream fileInputStream = mock(FileInputStream.class);
+    FileOutputStream fileOutputStream = mock(FileOutputStream.class);
     SessionHandler sessionHandler = mock(SessionHandler.class);
     ByteBuffer packet = mock(ByteBuffer.class);
     SocketProtector socketProtector = mock(SocketProtector.class);
-    VpnReader vpnReader = spy(new VpnReader(fileInputStream, sessionHandler, packet, socketProtector));
+    VpnReader vpnReader = spy(new VpnReader(fileInputStream, fileOutputStream, sessionHandler, packet, socketProtector));
     doReturn(true).doReturn(false).when(vpnReader).isRunning();
 
     // read length = 0
@@ -38,12 +40,12 @@ public class VpnReaderTest {
     // read length > 0
     doReturn(true).doReturn(false).when(vpnReader).isRunning();
     doReturn(10).when(fileInputStream).read(any());
-    doNothing().when(sessionHandler).handlePacket(any());
+    doNothing().when(sessionHandler).handlePacket(any(), fileOutputStream);
     vpnReader.run();
 
     // read length > 0, packetheader exception
     doReturn(true).doReturn(false).when(vpnReader).isRunning();
-    doThrow(PacketHeaderException.class).when(sessionHandler).handlePacket(any());
+    doThrow(PacketHeaderException.class).when(sessionHandler).handlePacket(any(), fileOutputStream);
     vpnReader.run();
 
     // IO Ex
@@ -54,10 +56,11 @@ public class VpnReaderTest {
 
   @Test public void shutDownTest() {
     FileInputStream fileInputStream = mock(FileInputStream.class);
+    FileOutputStream fileOutputStream = mock(FileOutputStream.class);
     SessionHandler sessionHandler = mock(SessionHandler.class);
     ByteBuffer packet = mock(ByteBuffer.class);
     SocketProtector socketProtector = mock(SocketProtector.class);
-    VpnReader vpnReader = spy(new VpnReader(fileInputStream, sessionHandler, packet, socketProtector));
+    VpnReader vpnReader = spy(new VpnReader(fileInputStream, fileOutputStream, sessionHandler, packet, socketProtector));
 
     assertFalse(vpnReader.isRunning());
     vpnReader.setRunning(true);

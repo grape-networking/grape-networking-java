@@ -5,23 +5,37 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
+import java.io.FileOutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.ThreadPoolExecutor;
+
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.util.Constants;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
  * Tests for the Session class.
  */
 public class SessionTest {
+
+  FileOutputStream outputStream;
+
+  @BeforeEach
+  public void before() {
+    outputStream = mock(FileOutputStream.class);
+  }
+
   @Test
   public void appendDataGetDataTest() throws UnknownHostException {
     Session session =
         new Session(InetAddress.getLocalHost(), 9999, InetAddress.getLocalHost(), 8888,
-            TransportHeader.UDP_PROTOCOL);
+            TransportHeader.UDP_PROTOCOL, outputStream);
 
     byte[] rawdata = testIp4Header().toByteArray();
     ByteBuffer buffer = ByteBuffer.allocate(rawdata.length);
@@ -39,7 +53,7 @@ public class SessionTest {
   @Test
   public void recieveDataTest() throws UnknownHostException {
     Session session = new Session(InetAddress.getLocalHost(), 9999,
-        InetAddress.getLocalHost(), 8888, TransportHeader.TCP_PROTOCOL);
+        InetAddress.getLocalHost(), 8888, TransportHeader.TCP_PROTOCOL, outputStream);
 
     session.setSendWindowSizeAndScale(1, 1);
     assertFalse(session.isClientWindowFull());
