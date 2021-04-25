@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <!-- This module was also published with a richer model, Gradle metadata,  -->
   <!-- which should be used instead. Do not delete the following line which  -->
@@ -11,6 +11,12 @@
   <artifactId>lib</artifactId>
   <version>1.0</version>
   <dependencies>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-protobuf-lite</artifactId>
+      <version>1.37.0</version>
+      <scope>compile</scope>
+    </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
@@ -34,6 +40,12 @@
           <groupId>ch.qos.logback</groupId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-stub</artifactId>
+      <version>1.37.0</version>
+      <scope>runtime</scope>
     </dependency>
   </dependencies>
 </project>
