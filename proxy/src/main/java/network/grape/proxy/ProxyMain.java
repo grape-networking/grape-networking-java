@@ -3,7 +3,6 @@ package network.grape.proxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -26,6 +25,7 @@ import network.grape.lib.PacketHeaderException;
 import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionHandler;
 import network.grape.lib.session.SessionManager;
+import network.grape.lib.util.UdpOutputStream;
 import network.grape.lib.vpn.ProtectSocket;
 import network.grape.lib.vpn.SocketProtector;
 import network.grape.lib.vpn.VpnWriter;
@@ -41,13 +41,12 @@ public class ProxyMain implements ProtectSocket {
     public ProxyMain() throws IOException {
         logger = LoggerFactory.getLogger(ProxyMain.class);
         socket = new DatagramSocket(DEFAULT_PORT);
-        FileOutputStream clientWriter = new FileOutputStream("/dev/null");
         Map<String, Session> sessionTable = new ConcurrentHashMap<>();
         Selector selector = Selector.open();
         final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
         SessionManager sessionManager = new SessionManager(sessionTable, selector);
         ThreadPoolExecutor executor = new ThreadPoolExecutor(10, 100, 10, TimeUnit.SECONDS, taskQueue);
-        VpnWriter vpnWriter = new VpnWriter(clientWriter, sessionManager, executor);
+        VpnWriter vpnWriter = new VpnWriter(null, sessionManager, executor);
         List<InetAddress> filters = new ArrayList<>();
         handler = new SessionHandler(sessionManager, new SocketProtector(this), vpnWriter, filters);
     }
@@ -65,7 +64,8 @@ public class ProxyMain implements ProtectSocket {
             ByteBuffer packet = ByteBuffer.wrap(request.getData());
             packet.limit(request.getLength());
             try {
-                handler.handlePacket(packet);
+                UdpOutputStream outputStream = new UdpOutputStream(request.getAddress(), request.getPort());
+                handler.handlePacket(packet, outputStream);
             } catch (PacketHeaderException | UnknownHostException ex) {
                 logger.error(ex.toString());
             }

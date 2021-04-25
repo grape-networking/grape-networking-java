@@ -27,7 +27,7 @@ public class SessionOutputStreamWriterWorkerTest {
   FileOutputStream fileOutputStream;
   String sessionKey;
   SessionManager sessionManager;
-  @Spy SocketDataWriterWorker socketDataWriterWorker;
+  @Spy SessionOutputStreamWriterWorker socketDataWriterWorker;
 
   /**
    * Initialize the mocks and spys for the tests.
@@ -38,7 +38,7 @@ public class SessionOutputStreamWriterWorkerTest {
     sessionKey = "somekey";
     sessionManager = mock(SessionManager.class);
     socketDataWriterWorker =
-        spy(new SocketDataWriterWorker(fileOutputStream, sessionKey, sessionManager));
+        spy(new SessionOutputStreamWriterWorker(fileOutputStream, sessionKey, sessionManager));
   }
 
   @Test

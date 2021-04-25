@@ -1,4 +1,4 @@
-package network.grape.lib.vpn;
+package network.grape.lib.session;
 
 import static network.grape.lib.network.ip.IpTestCommon.testIp4Header;
 import static network.grape.lib.transport.udp.UdpTest.testUdpHeader;
@@ -22,6 +22,7 @@ import network.grape.lib.session.SessionManager;
 import network.grape.lib.transport.udp.UdpHeader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 /**
  * Test the Reader Worker.
@@ -31,7 +32,7 @@ public class SessionOutputStreamReaderWorkerTest {
   FileOutputStream fileOutputStream;
   String sessionKey;
   SessionManager sessionManager;
-  SocketDataReaderWorker socketDataReaderWorker;
+  SessionOutputStreamReaderWorker socketDataReaderWorker;
 
   /**
    * Initialize the mocks and spys for each test.
@@ -42,7 +43,7 @@ public class SessionOutputStreamReaderWorkerTest {
     sessionKey = "somekey";
     sessionManager = mock(SessionManager.class);
     socketDataReaderWorker =
-        spy(new SocketDataReaderWorker(fileOutputStream, sessionKey, sessionManager));
+        Mockito.spy(new SessionOutputStreamReaderWorker(fileOutputStream, sessionKey, sessionManager));
   }
 
   @Test

@@ -6,6 +6,7 @@ dependencies {
     implementation ('com.papertrailapp:logback-syslog4j:1.0.0') {
         exclude group: 'ch.qos.logback'
     }
+    implementation "org.slf4j:slf4j-simple:1.7.30"
     testRuntimeOnly "uk.org.lidalia:slf4j-test:1.2.0"
 }
 

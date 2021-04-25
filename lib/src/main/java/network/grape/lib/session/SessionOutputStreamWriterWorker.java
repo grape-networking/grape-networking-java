@@ -2,8 +2,8 @@ package network.grape.lib.session;
 
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createRstData;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.NotYetConnectedException;
@@ -21,9 +21,9 @@ import org.slf4j.LoggerFactory;
  */
 public class SessionOutputStreamWriterWorker extends SessionWorker implements Runnable {
   private final Logger logger;
-  private final FileOutputStream outputStream;
+  private final OutputStream outputStream;
 
-  SessionOutputStreamWriterWorker(FileOutputStream outputStream, String sessionKey,
+  public SessionOutputStreamWriterWorker(OutputStream outputStream, String sessionKey,
                          SessionManager sessionManager) {
     super(sessionKey, sessionManager);
     this.outputStream = outputStream;
@@ -76,6 +76,7 @@ public class SessionOutputStreamWriterWorker extends SessionWorker implements Ru
           (TcpHeader) session.getLastTransportHeader(), 0);
       try {
         outputStream.write(rstData);
+        outputStream.flush();
       } catch (IOException e) {
         logger.error("Error writing to VPN to reset the connection");
       }

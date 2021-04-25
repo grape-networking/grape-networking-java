@@ -11,6 +11,7 @@ import static network.grape.lib.transport.tcp.TcpPacketFactory.createRstData;
 import static network.grape.lib.util.Constants.MAX_RECEIVE_BUFFER_SIZE;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -53,8 +54,8 @@ public class SessionHandler {
 
   /**
    * Construct a SessionHandler with a SessionManager to keep track of sessions and SocketProtector
-   * to ensure the VPN actually alllows the outbound connections to use the real internet instad of
-   * looping back into VPN.
+   * to ensure the VPN actually alllows the outbound connections to use the real internet instead of
+   * looping back into VPN (only needed when using making a VPN connection to a server on the phone)
    *
    * @param sessionManager the session manager which maps the SelectorKey and SessionKey to Session
    * @param protector      the protector which prevents vpn loopback
@@ -74,8 +75,9 @@ public class SessionHandler {
    * Handle each packet which arrives on the VPN interface, and determine how to process.
    *
    * @param stream raw bytes to be read
+   * @param outputstream the outputstream to write responses back to
    */
-  public void handlePacket(ByteBuffer stream) throws PacketHeaderException, UnknownHostException {
+  public void handlePacket(ByteBuffer stream, OutputStream outputstream) throws PacketHeaderException, UnknownHostException {
     if (stream.remaining() < 1) {
       throw new PacketHeaderException("Need at least a single byte to determine the packet type");
     }
@@ -108,18 +110,18 @@ public class SessionHandler {
     final TransportHeader transportHeader;
     if (ipHeader.getProtocol() == TransportHeader.UDP_PROTOCOL) {
       transportHeader = UdpHeader.parseBuffer(stream);
-      handleUdpPacket(stream, ipHeader, (UdpHeader) transportHeader);
+      handleUdpPacket(stream, ipHeader, (UdpHeader) transportHeader, outputstream);
     } else if (ipHeader.getProtocol() == TransportHeader.TCP_PROTOCOL) {
       //logger.warn("PACKET: \n" + BufferUtil.hexDump(debugbuffer, 0, stream.limit(), true, true));
       transportHeader = TcpHeader.parseBuffer(stream);
-      handleTcpPacket(stream, ipHeader, (TcpHeader) transportHeader);
+      handleTcpPacket(stream, ipHeader, (TcpHeader) transportHeader, outputstream);
     } else {
       throw new PacketHeaderException(
           "Got an unsupported transport protocol: " + ipHeader.getProtocol());
     }
   }
 
-  protected void handleUdpPacket(ByteBuffer payload, IpHeader ipHeader, UdpHeader udpHeader) {
+  protected void handleUdpPacket(ByteBuffer payload, IpHeader ipHeader, UdpHeader udpHeader, OutputStream outputStream) {
     // try to find an existing session
     Session session = sessionManager.getSession(ipHeader.getSourceAddress(),
         udpHeader.getSourcePort(),
@@ -130,7 +132,7 @@ public class SessionHandler {
     if (session == null) {
       session = new Session(ipHeader.getSourceAddress(), udpHeader.getSourcePort(),
           ipHeader.getDestinationAddress(),
-          udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL);
+          udpHeader.getDestinationPort(), TransportHeader.UDP_PROTOCOL, outputStream);
 
       DatagramChannel channel;
       try {
@@ -207,7 +209,7 @@ public class SessionHandler {
     return channel;
   }
 
-  protected void handleTcpPacket(ByteBuffer payload, IpHeader ipHeader, TcpHeader tcpHeader) {
+  protected void handleTcpPacket(ByteBuffer payload, IpHeader ipHeader, TcpHeader tcpHeader, OutputStream outputStream) {
     byte[] buffer = new byte[ipHeader.getHeaderLength() + tcpHeader.getHeaderLength()];
     System.arraycopy(ipHeader.toByteArray(), 0, buffer, 0, ipHeader.getHeaderLength());
     System.arraycopy(tcpHeader.toByteArray(), 0, buffer, ipHeader.getHeaderLength(),
@@ -217,7 +219,7 @@ public class SessionHandler {
       // 3-way handshake and create session
       // set window scale, set reply time in options
       logger.info("SYN:"); // \n" + BufferUtil.hexDump(buffer, 0, buffer.length, true, true));
-      replySynAck(ipHeader, tcpHeader);
+      replySynAck(ipHeader, tcpHeader, outputStream);
     } else if (tcpHeader.isAck()) {
       logger.info("ACK!"); // \n" + BufferUtil.hexDump(buffer, 0, buffer.length, true, true));
       Session session =
@@ -346,8 +348,9 @@ public class SessionHandler {
    *
    * @param ip the IpHeader of the source packet
    * @param tcp the TcpHeader of the source packet
+   * @param outputstream the Outputstream to respond back to
    */
-  protected void replySynAck(IpHeader ip, TcpHeader tcp) {
+  protected void replySynAck(IpHeader ip, TcpHeader tcp, OutputStream outputstream) {
     IpHeader ipHeader = copyIpHeader(ip);
     TcpHeader tcpHeader = copyTcpHeader(tcp);
 
@@ -371,7 +374,7 @@ public class SessionHandler {
     // already swapped for the response
     Session session = new Session(ip.getSourceAddress(), tcp.getSourcePort(),
         ip.getDestinationAddress(), tcp.getDestinationPort(),
-        TransportHeader.TCP_PROTOCOL);
+        TransportHeader.TCP_PROTOCOL, outputstream);
 
     // todo (jason): may need to set session values from tcp options here
     if (sessionManager.getSessionByKey(session.getKey()) != null) {

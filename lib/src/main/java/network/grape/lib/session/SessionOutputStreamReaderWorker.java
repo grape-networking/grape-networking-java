@@ -1,13 +1,12 @@
-package network.grape.lib.vpn;
+package network.grape.lib.session;
 
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createFinData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createResponsePacketData;
 import static network.grape.lib.util.Constants.MAX_RECEIVE_BUFFER_SIZE;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.UnknownHostException;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.DatagramChannel;
@@ -18,9 +17,6 @@ import java.util.Date;
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.IpHeader;
-import network.grape.lib.session.Session;
-import network.grape.lib.session.SessionManager;
-import network.grape.lib.session.SessionWorker;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.transport.tcp.TcpHeader;
 import network.grape.lib.transport.udp.UdpHeader;
@@ -36,6 +32,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SessionOutputStreamReaderWorker extends SessionWorker implements Runnable {
   private final Logger logger;
+  private final OutputStream outputStream;
 
   /**
    * Construct a new read worker.
@@ -44,10 +41,11 @@ public class SessionOutputStreamReaderWorker extends SessionWorker implements Ru
    * @param sessionKey     the sessionKey for this writer
    * @param sessionManager the sessionManager instance
    */
-  SessionOutputStreamReaderWorker(FileOutputStream outputStream, String sessionKey,
+  public SessionOutputStreamReaderWorker(OutputStream outputStream, String sessionKey,
                          SessionManager sessionManager) {
-    super(outputStream, sessionKey, sessionManager);
-    this.logger = LoggerFactory.getLogger(SocketDataReaderWorker.class);
+    super(sessionKey, sessionManager);
+    this.outputStream = outputStream;
+    this.logger = LoggerFactory.getLogger(SessionOutputStreamReaderWorker.class);
   }
 
   @Override
@@ -69,7 +67,7 @@ public class SessionOutputStreamReaderWorker extends SessionWorker implements Ru
     }
 
     if (session.isAbortingConnection()) {
-      //abortSession(session);
+      abortSession(session);
     } else {
       session.setBusyRead(false);
     }
@@ -122,6 +120,7 @@ public class SessionOutputStreamReaderWorker extends SessionWorker implements Ru
 
           if (verifyPacketData(packetData)) {
             outputStream.write(packetData);
+            outputStream.flush();
           } else {
             logger.warn("Skipping writing packet back to VPN because verification failed");
           }
@@ -158,8 +157,8 @@ public class SessionOutputStreamReaderWorker extends SessionWorker implements Ru
             buffer.clear();
           } else if (len == -1) {
             //logger.info("End of data from remote server, will send FIN to session: " + sessionKey);
-            //sendFin(session);
-            //session.setAbortingConnection(true);
+            sendFin(session);
+            session.setAbortingConnection(true);
           }
         } else {
           logger.info("client window full, now pause for " + sessionKey);
@@ -267,6 +266,7 @@ public class SessionOutputStreamReaderWorker extends SessionWorker implements Ru
             session.getTimestampSender(), session.getTimestampReplyTo());
     try {
       outputStream.write(data);
+      outputStream.flush();
     } catch (IOException ex) {
       logger.error(
           "Failed to send FIN packet for session " + sessionKey + " " + ex.toString());

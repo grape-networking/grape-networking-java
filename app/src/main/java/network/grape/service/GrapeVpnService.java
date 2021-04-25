@@ -171,9 +171,6 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     vpnReader = new VpnReader(clientReader, handler, packet, new SocketProtector(this));
     vpnReaderThread = new Thread(vpnReader);
     vpnReaderThread.start();
-
-//    VpnClient vpnClient = new VpnClient();
-//    vpnClient.connect();
   }
 
   @Override
