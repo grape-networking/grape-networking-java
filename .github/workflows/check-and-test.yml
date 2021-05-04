@@ -15,6 +15,10 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: '11.0.4'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2.0.6
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
       - name: check deps
         run: ./gradlew lib:generatePomFileForMavenPublication && diff lib/pom.xml lib/build/publications/maven/pom-default.xml
       - name: lint
