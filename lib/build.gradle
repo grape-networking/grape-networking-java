@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        jUnitVersion = "5.7.1"
+        jUnitVersion = "5.7.2"
     }
     repositories {
         google()
