@@ -93,7 +93,7 @@ dependencies {
     testImplementation "com.google.dagger:hilt-android-testing:${hiltVersion}"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}"
     testRuntimeOnly "uk.org.lidalia:slf4j-test:1.2.0"
-    testImplementation "org.mockito:mockito-inline:3.10.0"
+    testImplementation "org.mockito:mockito-inline:3.11.0"
     testImplementation "org.robolectric:robolectric:${roboelectricVersion}"
     testAnnotationProcessor "com.google.dagger:hilt-android-compiler:${hiltVersion}"
 
