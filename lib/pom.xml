@@ -14,7 +14,7 @@
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-protobuf-lite</artifactId>
-      <version>1.37.0</version>
+      <version>1.38.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -44,7 +44,7 @@
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-stub</artifactId>
-      <version>1.37.0</version>
+      <version>1.38.0</version>
       <scope>runtime</scope>
     </dependency>
   </dependencies>
