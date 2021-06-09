@@ -14,16 +14,18 @@ import java.net.SocketException;
  */
 public class UdpServer {
 
-  private static final int DEFAULT_PORT = 8889;
+  public static final int DEFAULT_PORT = 8889;
   private DatagramSocket socket;
+  private volatile boolean running;
 
   public UdpServer() throws SocketException {
     socket = new DatagramSocket(DEFAULT_PORT);
   }
 
-  private void service() throws IOException {
+  public void service() throws IOException {
     byte[] buffer = new byte[MAX_RECEIVE_BUFFER_SIZE];
-    while (true) {
+    running = true;
+    while (running) {
       System.out.println("Listening on port: " + DEFAULT_PORT + " for data");
       DatagramPacket request = new DatagramPacket(buffer, MAX_RECEIVE_BUFFER_SIZE);
       socket.receive(request);
@@ -39,12 +41,17 @@ public class UdpServer {
       InetAddress clientAddress = request.getAddress();
       int clientPort = request.getPort();
 
-      byte[] sendback = "GOT IT".getBytes();
+      byte[] sendback = new String(recv).getBytes();
 
       DatagramPacket response =
           new DatagramPacket(sendback, sendback.length, clientAddress, clientPort);
       socket.send(response);
     }
+  }
+
+  public void shutdown() {
+    running = false;
+    socket.close();
   }
 
   public static void main(String[] args) {

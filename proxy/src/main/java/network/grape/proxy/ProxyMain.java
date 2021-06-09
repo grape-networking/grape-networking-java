@@ -33,11 +33,12 @@ import network.grape.lib.vpn.VpnWriter;
 import static network.grape.lib.util.Constants.MAX_RECEIVE_BUFFER_SIZE;
 
 public class ProxyMain implements ProtectSocket {
+    public static final int DEFAULT_PORT = 8888;
     private final Logger logger;
-    private static final int DEFAULT_PORT = 8888;
     private DatagramSocket socket;
     private final SessionHandler handler;
     private Thread vpnWriterThread;
+    private volatile boolean running;
 
     public ProxyMain() throws IOException {
         logger = LoggerFactory.getLogger(ProxyMain.class);
@@ -53,11 +54,12 @@ public class ProxyMain implements ProtectSocket {
         handler = new SessionHandler(sessionManager, new SocketProtector(this), vpnWriter, filters);
     }
 
-    private void service() throws IOException {
+    public void service() throws IOException {
         // assume that each packet from the grape app is <= MAX_RECEIVE_BUFFER_SIZE
         vpnWriterThread.start();
         byte[] buffer = new byte[MAX_RECEIVE_BUFFER_SIZE];
-        while (true) {
+        running = true;
+        while (running) {
             DatagramPacket request = new DatagramPacket(buffer, MAX_RECEIVE_BUFFER_SIZE);
             socket.receive(request);
 
@@ -73,6 +75,10 @@ public class ProxyMain implements ProtectSocket {
                 logger.error(ex.toString());
             }
         }
+    }
+
+    public void shutdown() {
+        running = false;
     }
 
     public static void main(String[] args) {

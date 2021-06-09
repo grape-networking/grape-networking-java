@@ -17,7 +17,7 @@ import java.util.Scanner;
  * A UDP client which sends lines of text to the udp server and listens for a reply back
  */
 public class UdpClient {
-  private static final int DEFAULT_PORT = 8889;
+  private static final int DEFAULT_PORT = 8888;
   private InetAddress serverAddress;
   private int serverPort;
   private DatagramSocket socket;
@@ -45,7 +45,7 @@ public class UdpClient {
   }
 
   public static void main(String[] args) throws IOException {
-    UdpClient udpClient = new UdpClient("10.0.0.89", DEFAULT_PORT);
+    UdpClient udpClient = new UdpClient("10.0.0.103", DEFAULT_PORT);
     System.out.println("sending data to " + udpClient.serverAddress.getHostAddress() + ":" + udpClient.serverPort);
 
     BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
