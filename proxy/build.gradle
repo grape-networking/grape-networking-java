@@ -7,7 +7,12 @@ dependencies {
         exclude group: 'ch.qos.logback'
     }
     implementation "org.slf4j:slf4j-simple:1.7.30"
+
     testRuntimeOnly "uk.org.lidalia:slf4j-test:1.2.0"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:${jUnitVersion}"
+    testImplementation "org.mockito:mockito-inline:3.11.0"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}"
 }
 
 application {
