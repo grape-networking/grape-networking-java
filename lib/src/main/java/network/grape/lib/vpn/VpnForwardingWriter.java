@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -21,20 +22,20 @@ import network.grape.lib.util.UdpInputStream;
 public class VpnForwardingWriter implements Runnable {
     private final Logger logger;
     @Setter private volatile boolean running;
-    private final FileOutputStream outputStream;
+    private final OutputStream outputStream;
     private final ByteBuffer packet;
     private final SocketProtector protector;
     @Getter private DatagramSocket socket;
     private final UdpInputStream inputStream;
 
-    public VpnForwardingWriter(FileOutputStream outputStream, ByteBuffer packet, SocketProtector protector) throws SocketException, UnknownHostException {
+    public VpnForwardingWriter(OutputStream outputStream, ByteBuffer packet, String remoteHost, int remotePort, SocketProtector protector) throws SocketException, UnknownHostException {
         logger = LoggerFactory.getLogger(VpnForwardingReader.class);
         this.outputStream = outputStream;
         this.packet = packet;
         this.protector = protector;
         this.running = false;
 
-        inputStream = new UdpInputStream("10.0.0.111", 8888, protector);
+        inputStream = new UdpInputStream(remoteHost, remotePort, protector);
         socket = inputStream.getDsock();
     }
 

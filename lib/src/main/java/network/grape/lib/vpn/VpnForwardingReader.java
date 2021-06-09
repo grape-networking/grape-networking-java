@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -32,13 +33,13 @@ import network.grape.lib.util.UdpOutputStream;
 public class VpnForwardingReader implements Runnable {
     private final Logger logger;
     @Setter private volatile boolean running;
-    private final FileInputStream inputStream;
+    private final InputStream inputStream;
     private final ByteBuffer packet;
     private final SocketProtector protector;
     private final DatagramSocket socket;
     private final List<InetAddress> filterTo;
 
-    public VpnForwardingReader(FileInputStream inputStream, ByteBuffer packet, SocketProtector protector, DatagramSocket socket, List<InetAddress> filterTo) {
+    public VpnForwardingReader(InputStream inputStream, ByteBuffer packet, SocketProtector protector, DatagramSocket socket, List<InetAddress> filterTo) {
         logger = LoggerFactory.getLogger(VpnForwardingReader.class);
         this.inputStream = inputStream;
         this.packet = packet;

@@ -147,7 +147,7 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
 
     FileOutputStream clientWriter = new FileOutputStream(vpnInterface.getFileDescriptor());
     ByteBuffer vpnPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
-    vpnWriter = new VpnForwardingWriter(clientWriter, vpnPacket, new SocketProtector(this));
+    vpnWriter = new VpnForwardingWriter(clientWriter, vpnPacket, "10.0.0.103", 8888, new SocketProtector(this));
     vpnWriterThread = new Thread(vpnWriter);
     vpnWriterThread.start();
     /*
@@ -177,7 +177,7 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     //vpnReader = new VpnReader(clientReader, clientWriter, handler, packet, new SocketProtector(this));
 
     List<InetAddress> filters = new ArrayList<>();
-    filters.add(InetAddress.getByName("10.0.0.111"));
+    filters.add(InetAddress.getByName("10.0.0.103"));
 
     vpnReader = new VpnForwardingReader(clientReader, appPacket, new SocketProtector(this), vpnWriter.getSocket(), filters);
     vpnReaderThread = new Thread(vpnReader);

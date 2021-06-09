@@ -5,17 +5,13 @@ import java.net.UnknownHostException;
 
 public class VpnClient {
 
-    private InetAddress serverAddress;
-    private int serverPort;
     private VpnForwardingWriter vpnWriter;
     private VpnForwardingReader vpnReader;
     private Thread vpnWriterThread;
     private Thread vpnReaderThread;
     private volatile boolean running;
 
-    public VpnClient(String host, int port, VpnForwardingWriter vpnWriter, VpnForwardingReader vpnReader) throws UnknownHostException {
-        this.serverAddress = InetAddress.getByName(host);
-        this.serverPort = port;
+    public VpnClient(VpnForwardingWriter vpnWriter, VpnForwardingReader vpnReader) {
         this.vpnReader = vpnReader;
         this.vpnWriter = vpnWriter;
     }
