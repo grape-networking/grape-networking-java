@@ -12,3 +12,11 @@ java {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
 }
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'network.grape.udp_server.UdpServer'
+        )
+    }
+}
