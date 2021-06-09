@@ -24,6 +24,7 @@ public class UdpServer {
   private void service() throws IOException {
     byte[] buffer = new byte[MAX_RECEIVE_BUFFER_SIZE];
     while (true) {
+      System.out.println("Listening on port: " + DEFAULT_PORT + " for data");
       DatagramPacket request = new DatagramPacket(buffer, MAX_RECEIVE_BUFFER_SIZE);
       socket.receive(request);
 

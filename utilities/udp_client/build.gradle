@@ -1,0 +1,22 @@
+apply plugin: 'application'
+
+dependencies {
+    implementation project(path: ':lib')
+}
+
+application {
+    mainClass = 'network.grape.udp_client.UdpClient'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'network.grape.udp_client.UdpClient'
+        )
+    }
+}
