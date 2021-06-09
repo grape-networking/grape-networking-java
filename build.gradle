@@ -22,3 +22,11 @@ allprojects {
         resolutionStrategy.force 'org.objenesis:objenesis:3.2'
     }
 }
+
+task installGitHooks(type: Copy) {
+    from new File(rootProject.rootDir, 'scripts/pre-commit')
+    into { new File(rootProject.rootDir, '.git/hooks') }
+    fileMode 0777
+}
+
+tasks.getByPath(':app:preBuild').dependsOn installGitHooks
