@@ -1,5 +1,6 @@
 package network.grape.lib.transport.udp;
 
+import static network.grape.lib.network.ip.IpHeader.IP4_VERSION;
 import static network.grape.lib.network.ip.IpHeader.IP4_WORD_LEN;
 import static network.grape.lib.network.ip.IpHeader.IP6HEADER_LEN;
 import static network.grape.lib.network.ip.IpPacketFactory.copyIpHeader;
@@ -7,6 +8,10 @@ import static network.grape.lib.transport.TransportHeader.TCP_WORD_LEN;
 import static network.grape.lib.transport.TransportHeader.UDP_HEADER_LEN;
 import static network.grape.lib.transport.TransportHeader.UDP_PROTOCOL;
 
+import java.lang.reflect.MalformedParametersException;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.IpHeader;
@@ -101,6 +106,56 @@ public class UdpPacketFactory {
     System.arraycopy(udpChecksum, 0, udpData, 6, 2);
     int start = ipData.length;
     System.arraycopy(udpData, 0, buffer, start, udpData.length);
+
+    return buffer;
+  }
+
+  /**
+   * Encapsulates the data buffer with a UDP header and returns it as a buffer
+   * @param sourceAddress the InetAddress of the source for the pseudoheader checksum calc
+   * @param destinationAddress the InetAddress of the destination for the pseudoheader checksum calc
+   * @param sourcePort the source port on the machine doing the encapsulation
+   * @param destinationPort the destination port on the receiving machine
+   * @param data the data to encapsulate
+   * @return a byte array of the UDP header + the data
+   */
+  public static byte[] encapsulate(InetAddress sourceAddress, InetAddress destinationAddress, int sourcePort, int destinationPort, byte[] data) {
+    int udpLen = UDP_HEADER_LEN;
+    if (data != null) {
+      udpLen += data.length;
+    }
+    byte[] buffer = new byte[udpLen];
+    UdpHeader header = new UdpHeader(sourcePort, destinationPort, data.length, 0);
+
+    ByteBuffer pseudoHeader;
+    if (sourceAddress instanceof Inet4Address) {
+      if (!(destinationAddress instanceof  Inet4Address)) {
+        throw new IllegalArgumentException("Source is Ip4Address and Dest isn't");
+      }
+      pseudoHeader = ByteBuffer.allocate(12 + udpLen);
+      pseudoHeader.put(sourceAddress.getAddress());
+      pseudoHeader.put(destinationAddress.getAddress());
+      pseudoHeader.put((byte) 0x00);
+      pseudoHeader.put(UDP_PROTOCOL);
+      pseudoHeader.putShort((short) udpLen);
+      pseudoHeader.put(data);
+    } else {
+      if (!(destinationAddress instanceof Inet6Address)) {
+        throw new IllegalArgumentException("Source is Ip6Address and Dest isn't");
+      }
+      pseudoHeader = ByteBuffer.allocate(40 + udpLen);
+      pseudoHeader.put(sourceAddress.getAddress());
+      pseudoHeader.put(destinationAddress.getAddress());
+      pseudoHeader.putInt(udpLen);
+      pseudoHeader.putInt(UDP_PROTOCOL);
+    }
+
+    byte[] pseudoheaderBuffer = pseudoHeader.array();
+
+    byte[] udpChecksum = PacketUtil.calculateChecksum(
+            pseudoheaderBuffer, 0, pseudoheaderBuffer.length);
+
+    System.arraycopy(udpChecksum, 0, buffer, 6, 2);
 
     return buffer;
   }
