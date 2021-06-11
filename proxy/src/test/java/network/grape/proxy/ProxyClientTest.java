@@ -1,7 +1,8 @@
 package network.grape.proxy;
 
 import static org.mockito.Mockito.mock;
-import static network.grape.lib.util.Constants.MAX_RECEIVE_BUFFER_SIZE;
+
+import static network.grape.lib.transport.TransportHeader.UDP_PROTOCOL;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -18,7 +19,11 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
+import network.grape.lib.network.ip.IpPacketFactory;
+import network.grape.lib.transport.udp.UdpHeader;
+import network.grape.lib.transport.udp.UdpPacketFactory;
 import network.grape.lib.vpn.SocketProtector;
 import network.grape.lib.vpn.VpnClient;
 import network.grape.lib.vpn.VpnForwardingReader;
@@ -102,8 +107,13 @@ public class ProxyClientTest {
         VpnForwardingReader vpnReader = new VpnForwardingReader(inputStream, appPacket, protector, vpnWriter.getSocket(), filters);
 
         vpnClient = new VpnClient(vpnWriter, vpnReader);
+        //vpnClient.start();
 
         // todo: write something into the inputstream and assert the response we expect comes out
         // of the outputstream side
+        InetAddress source = InetAddress.getLocalHost();
+        int sourcePort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
+        byte[] udpPacket = UdpPacketFactory.encapsulate(source, source, 7777, UdpServer.DEFAULT_PORT, "test".getBytes());
+        byte[] ipPacket = IpPacketFactory.encapsulate(source, source, UDP_PROTOCOL, udpPacket);
     }
 }
