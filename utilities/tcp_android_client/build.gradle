@@ -32,6 +32,17 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    lintOptions {
+        abortOnError false
+        warningsAsErrors false
+        showAll true
+        explainIssues true
+        xmlOutput file("build/reports/lint/report.xml")
+        htmlOutput file("build/reports/lint/report.html")
+        disable "UnsafeExperimentalUsageError",
+                "UnsafeExperimentalUsageWarning"
+    }
+
     buildTypes {
         release {
             minifyEnabled false
