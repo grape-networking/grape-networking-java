@@ -126,6 +126,9 @@ public class UdpPacketFactory {
     }
     byte[] buffer = new byte[udpLen];
     UdpHeader header = new UdpHeader(sourcePort, destinationPort, data.length, 0);
+    byte[] headerData = header.toByteArray();
+    System.arraycopy(headerData, 0, buffer, 0, headerData.length);
+    System.arraycopy(data, 0, buffer, headerData.length, data.length);
 
     ByteBuffer pseudoHeader;
     if (sourceAddress instanceof Inet4Address) {

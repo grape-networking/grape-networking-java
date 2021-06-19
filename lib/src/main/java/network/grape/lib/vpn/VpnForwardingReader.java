@@ -108,7 +108,7 @@ public class VpnForwardingReader implements Runnable {
                     }
 
                     packet.rewind();
-                    outputStream.write(packet.array());
+                    outputStream.write(packet.array(), 0, length);
                     outputStream.flush();
                 }
             }

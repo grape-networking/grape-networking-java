@@ -92,6 +92,7 @@ public class IpPacketFactory {
     }
     byte[] buffer = new byte[totalLength];
     System.arraycopy(ipData, 0, buffer, 0, ipData.length);
+    System.arraycopy(data, 0, buffer, ipData.length, data.length);
     return buffer;
   }
 }
