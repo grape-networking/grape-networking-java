@@ -8,6 +8,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -21,7 +23,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import network.grape.lib.PacketHeaderException;
+import network.grape.lib.network.ip.Ip4Header;
+import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.network.ip.IpPacketFactory;
+import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.transport.udp.UdpHeader;
 import network.grape.lib.transport.udp.UdpPacketFactory;
 import network.grape.lib.vpn.SocketProtector;
@@ -91,29 +97,47 @@ public class ProxyClientTest {
     }
 
     // sends a udp request via the proxy, expects an echo back received through the proxy
-    @Test public void proxyEchoTest() throws UnknownHostException, SocketException {
+    @Test public void proxyEchoTest() throws UnknownHostException, SocketException, InterruptedException, PacketHeaderException {
 
         // setup the writing side of the vpn
-        OutputStream outputStream = mock(OutputStream.class);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         SocketProtector protector = mock(SocketProtector.class);
         ByteBuffer vpnPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
         VpnForwardingWriter vpnWriter = new VpnForwardingWriter(outputStream, vpnPacket, "127.0.0.1", ProxyMain.DEFAULT_PORT, protector);
 
+        // put a packet into the inputstream
+        InetAddress source = InetAddress.getLocalHost();
+        System.out.println("SOURCE: " + source.toString());
+        int sourcePort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
+        byte[] udpPacket = UdpPacketFactory.encapsulate(source, source, sourcePort, UdpServer.DEFAULT_PORT, "test".getBytes());
+        byte[] ipPacket = IpPacketFactory.encapsulate(source, source, UDP_PROTOCOL, udpPacket);
+
+        ByteBuffer buffer = ByteBuffer.allocate(ipPacket.length);
+        buffer.put(ipPacket);
+        buffer.rewind();
+        Ip4Header ip4Header = Ip4Header.parseBuffer(buffer);
+        UdpHeader udpHeader = UdpHeader.parseBuffer(buffer);
+        assert(ip4Header.getSourceAddress().equals(source));
+        assert(udpHeader.getSourcePort() == sourcePort);
+        assert(ip4Header.getDestinationAddress().equals(source));
+        assert(udpHeader.getDestinationPort() == UdpServer.DEFAULT_PORT);
+
+        System.out.println("IP packet length: " + ipPacket.length);
+
         // setup the reading side of the vpn
-        InputStream inputStream = mock(InputStream.class);
+        InputStream inputStream = new ByteArrayInputStream(ipPacket);
         ByteBuffer appPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
         List<InetAddress> filters = new ArrayList<>();
-        filters.add(InetAddress.getByName("127.0.0.1"));
+        filters.add(source);
         VpnForwardingReader vpnReader = new VpnForwardingReader(inputStream, appPacket, protector, vpnWriter.getSocket(), filters);
 
         vpnClient = new VpnClient(vpnWriter, vpnReader);
-        //vpnClient.start();
+        vpnClient.start();
 
-        // todo: write something into the inputstream and assert the response we expect comes out
-        // of the outputstream side
-        InetAddress source = InetAddress.getLocalHost();
-        int sourcePort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
-        byte[] udpPacket = UdpPacketFactory.encapsulate(source, source, 7777, UdpServer.DEFAULT_PORT, "test".getBytes());
-        byte[] ipPacket = IpPacketFactory.encapsulate(source, source, UDP_PROTOCOL, udpPacket);
+        Thread.sleep(3000);
+
+        byte[] received = outputStream.toByteArray();
+        System.out.println("RECEIVED: " + received.length + " bytes");
+        assert(received.length > 0);
     }
 }
