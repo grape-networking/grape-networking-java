@@ -35,7 +35,7 @@ dependencies {
     implementation 'org.projectlombok:lombok:1.18.20'
     annotationProcessor 'org.projectlombok:lombok:1.18.20'
 
-    implementation "org.slf4j:slf4j-api:1.7.30"
+    implementation "org.slf4j:slf4j-api:1.7.31"
     implementation ('com.papertrailapp:logback-syslog4j:1.0.0') {
         exclude group: 'ch.qos.logback'
     }
