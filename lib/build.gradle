@@ -32,6 +32,7 @@ dependencies {
     // note: this gives a lint warning, but if we take it out, it doesn't find annotations
     // https://stackoverflow.com/a/64726112
     //noinspection AnnotationProcessorOnCompilePath
+    implementation "androidx.multidex:multidex:$multidex_version"
     implementation 'org.projectlombok:lombok:1.18.20'
     annotationProcessor 'org.projectlombok:lombok:1.18.20'
 
