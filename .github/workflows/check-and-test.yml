@@ -75,7 +75,7 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R
       - name: codecov upload
-        uses: codecov/codecov-action@v2.0.1
+        uses: codecov/codecov-action@v2.0.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: app-reports/coverage/debug/report.xml,lib-reports/jacoco/jacoco.xml
