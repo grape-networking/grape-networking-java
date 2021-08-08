@@ -59,8 +59,12 @@ jobs:
           xml_path: app/build/reports/lint/report.xml
 #      - name: checkstyle
 #        run: ./gradlew app:checkstyle
+      # https://github.com/marketplace/actions/android-emulator-runner
       - name: junit5 instrumented tests (with jacoco coverage reports))
-        run: ./gradlew app:connectedCheck && ./gradlew app:jacocoTestDebugUnitTestReport
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          script: ./gradlew app:connectedCheck && ./gradlew app:jacocoTestDebugUnitTestReport
       - uses: actions/upload-artifact@v2
         with:
           name: app-reports
