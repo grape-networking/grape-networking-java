@@ -60,7 +60,7 @@ jobs:
 #      - name: checkstyle
 #        run: ./gradlew app:checkstyle
       - name: junit5 instrumented tests (with jacoco coverage reports))
-        run: ./gradlew app:connectedCheck && ./gradlew app:jacocoTestDebugUnitTestReport
+        run: adb connect android-emulator:5555 && adb wait-for-device && ./gradlew app:connectedCheck && ./gradlew app:jacocoTestDebugUnitTestReport
       - uses: actions/upload-artifact@v2
         with:
           name: app-reports
