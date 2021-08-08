@@ -34,7 +34,8 @@ limitations under the License.
  *****************************************************************
  */
 
-//package com.rbnb.utility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.io.IOException;
@@ -42,6 +43,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
@@ -52,6 +54,7 @@ import network.grape.lib.vpn.SocketProtector;
 public class UdpInputStream extends InputStream {
 
     private static final int PACKET_BUFFER_SIZE = 5000;
+    private final Logger logger;
 
     @Getter DatagramSocket dsock = null;
     DatagramPacket dpack = null;
@@ -79,7 +82,7 @@ public class UdpInputStream extends InputStream {
      ***                ***
      *****************************************************************
      */
-    public UdpInputStream() {}
+    public UdpInputStream() { this.logger = LoggerFactory.getLogger(UdpInputStream.class); }
 
     /*
      *****************************************************************
@@ -98,10 +101,10 @@ public class UdpInputStream extends InputStream {
      ***                ***
      *****************************************************************
      */
-    public UdpInputStream(String address, int port, SocketProtector protector)
+    public UdpInputStream(int port, SocketProtector protector)
             throws UnknownHostException, SocketException {
-
-        open(address, port, protector);
+        this.logger = LoggerFactory.getLogger(UdpInputStream.class);
+        open(port, protector);
     }
 
     /************ opening and closing the stream ************/
@@ -122,12 +125,12 @@ public class UdpInputStream extends InputStream {
      ***                ***
      *****************************************************************
      */
-    public void open(String address, int port, SocketProtector protector)
+    public void open(int port, SocketProtector protector)
             throws UnknownHostException, SocketException {
-
-        dsock = new DatagramSocket();
+        System.out.println("OPEN:" + port);
+        dsock = new DatagramSocket(port);
+        dsock.setReuseAddress(true);
         protector.protect(dsock);
-        dsock.connect(InetAddress.getByName(address), port);
     }
 
     /*
@@ -245,6 +248,7 @@ public class UdpInputStream extends InputStream {
         if (packIdx == packSize) {
             receive();
         }
+        System.out.println("GOT HERE");
 
         int lenRemaining = len;
 
@@ -319,6 +323,7 @@ public class UdpInputStream extends InputStream {
      */
     private void receive() throws IOException {
         dpack = new DatagramPacket(ddata, PACKET_BUFFER_SIZE);
+        System.out.println("LISTENING ON: " + dsock.getLocalPort());
         dsock.receive(dpack);
         packIdx = 0;
         packSize = dpack.getLength();

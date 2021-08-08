@@ -11,27 +11,13 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.nio.channels.Selector;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
 import lombok.Setter;
-import network.grape.lib.session.Session;
-import network.grape.lib.session.SessionHandler;
-import network.grape.lib.session.SessionManager;
 import network.grape.lib.vpn.ProtectSocket;
 import network.grape.lib.vpn.SocketProtector;
-//import network.grape.lib.vpn.VpnClient;
 import network.grape.lib.vpn.VpnForwardingReader;
 import network.grape.lib.vpn.VpnForwardingWriter;
-import network.grape.lib.vpn.VpnReader;
-import network.grape.lib.vpn.VpnWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,7 +133,7 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
 
     FileOutputStream clientWriter = new FileOutputStream(vpnInterface.getFileDescriptor());
     ByteBuffer vpnPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
-    vpnWriter = new VpnForwardingWriter(clientWriter, vpnPacket, "10.0.0.103", 8888, new SocketProtector(this));
+    vpnWriter = new VpnForwardingWriter(clientWriter, vpnPacket, 8888, new SocketProtector(this));
     vpnWriterThread = new Thread(vpnWriter);
     vpnWriterThread.start();
     /*
@@ -174,12 +160,14 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     // Packets to be sent are queued in this input stream.
     FileInputStream clientReader = new FileInputStream(vpnInterface.getFileDescriptor());
 
-    //vpnReader = new VpnReader(clientReader, clientWriter, handler, packet, new SocketProtector(this));
+    //vpnReader = new VpnReader(clientReader, clientWriter, handler, packet,
+    // new SocketProtector(this));
 
     List<InetAddress> filters = new ArrayList<>();
     filters.add(InetAddress.getByName("10.0.0.103"));
 
-    vpnReader = new VpnForwardingReader(clientReader, appPacket, new SocketProtector(this), vpnWriter.getSocket(), filters);
+    vpnReader = new VpnForwardingReader(clientReader, appPacket, new SocketProtector(this),
+            vpnWriter.getSocket(), filters);
     vpnReaderThread = new Thread(vpnReader);
     vpnReaderThread.start();
   }

@@ -28,14 +28,14 @@ public class VpnForwardingWriter implements Runnable {
     @Getter private DatagramSocket socket;
     private final UdpInputStream inputStream;
 
-    public VpnForwardingWriter(OutputStream outputStream, ByteBuffer packet, String remoteHost, int remotePort, SocketProtector protector) throws SocketException, UnknownHostException {
+    public VpnForwardingWriter(OutputStream outputStream, ByteBuffer packet, int localPort, SocketProtector protector) throws SocketException, UnknownHostException {
         logger = LoggerFactory.getLogger(VpnForwardingReader.class);
         this.outputStream = outputStream;
         this.packet = packet;
         this.protector = protector;
         this.running = false;
 
-        inputStream = new UdpInputStream(remoteHost, remotePort, protector);
+        inputStream = new UdpInputStream(localPort, protector);
         socket = inputStream.getDsock();
     }
 
@@ -54,7 +54,7 @@ public class VpnForwardingWriter implements Runnable {
                 data = packet.array();
                 length = inputStream.read(data);
                 if (length > 0) {
-                    // logger.info("received packet from vpn: " + length);
+                    logger.info("received packet from vpn: " + length);
                     packet.limit(length);
                     outputStream.write(packet.array());
                     outputStream.flush();

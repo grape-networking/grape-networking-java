@@ -109,11 +109,13 @@ public class SessionHandler {
     final TransportHeader transportHeader;
     if (ipHeader.getProtocol() == TransportHeader.UDP_PROTOCOL) {
       transportHeader = UdpHeader.parseBuffer(stream);
+      logger.info("UDP from port: " + transportHeader.getSourcePort() + " to " + transportHeader.getDestinationPort());
       handleUdpPacket(stream, ipHeader, (UdpHeader) transportHeader, outputstream);
     } else if (ipHeader.getProtocol() == TransportHeader.TCP_PROTOCOL) {
       //logger.warn("PACKET: \n" + BufferUtil.hexDump(debugbuffer, 0, stream.limit(), true, true));
       transportHeader = TcpHeader.parseBuffer(stream);
       handleTcpPacket(stream, ipHeader, (TcpHeader) transportHeader, outputstream);
+      logger.info("TCP from port: " + transportHeader.getSourcePort() + " to " + transportHeader.getDestinationPort());
     } else {
       throw new PacketHeaderException(
           "Got an unsupported transport protocol: " + ipHeader.getProtocol());

@@ -121,6 +121,7 @@ public class SessionOutputStreamReaderWorker extends SessionWorker implements Ru
           if (verifyPacketData(packetData)) {
             outputStream.write(packetData);
             outputStream.flush();
+            logger.info("Wrote {} bytes to outputstream", packetData.length);
           } else {
             logger.warn("Skipping writing packet back to VPN because verification failed");
           }

@@ -65,7 +65,7 @@ public class VpnForwardingReader implements Runnable {
                 data = packet.array();
                 length = inputStream.read(data);
                 if (length > 0) {
-                    //logger.info("received packet from vpn client: " + length);
+                    logger.info("received packet from vpn client: " + length);
                     packet.limit(length);
 
                     try {

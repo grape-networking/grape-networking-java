@@ -2,6 +2,9 @@ package network.grape.lib.network.ip;
 
 import java.net.InetAddress;
 
+/**
+ * Class used to mock out an Ip4Header.
+ */
 public class FakeIp4Header implements IpHeader {
 
   @Override

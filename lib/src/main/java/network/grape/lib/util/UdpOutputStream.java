@@ -36,6 +36,9 @@ limitations under the License.
  ***                ***
  *****************************************************************
  */
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.OutputStream;
 import java.io.IOException;
 
@@ -45,10 +48,12 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import network.grape.lib.session.SessionOutputStreamReaderWorker;
 import network.grape.lib.vpn.SocketProtector;
 
 public class UdpOutputStream extends OutputStream {
 
+    private final Logger logger;
     public static final int DEFAULT_BUFFER_SIZE = 1024;
     public static final int DEFAULT_MAX_BUFFER_SIZE = 8192;
 
@@ -63,9 +68,14 @@ public class UdpOutputStream extends OutputStream {
     int bufferMax = DEFAULT_MAX_BUFFER_SIZE;
 
     public UdpOutputStream(DatagramSocket socket) {
+        this.logger = LoggerFactory.getLogger(UdpOutputStream.class);
         dsock = socket;
         iAdd = socket.getInetAddress();
         port = socket.getPort();
+    }
+
+    public int getLocalPort() {
+        return dsock.getLocalPort();
     }
 
     /********************** constructors ********************/
@@ -85,7 +95,9 @@ public class UdpOutputStream extends OutputStream {
      ***                ***
      *****************************************************************
      */
-    public UdpOutputStream() {}
+    public UdpOutputStream() {
+        this.logger = LoggerFactory.getLogger(UdpOutputStream.class);
+    }
 
     /*
      *****************************************************************
@@ -105,6 +117,7 @@ public class UdpOutputStream extends OutputStream {
      */
     public UdpOutputStream(int buffSize) {
         setBufferSize(buffSize);
+        this.logger = LoggerFactory.getLogger(UdpOutputStream.class);
     }
 
     /*
@@ -126,7 +139,7 @@ public class UdpOutputStream extends OutputStream {
      */
     public UdpOutputStream(String address, int portI, SocketProtector protector)
             throws UnknownHostException, SocketException, IOException {
-
+        this.logger = LoggerFactory.getLogger(UdpOutputStream.class);
         open(InetAddress.getByName(address), portI, protector);
     }
 
@@ -149,7 +162,7 @@ public class UdpOutputStream extends OutputStream {
      */
     public UdpOutputStream(InetAddress address, int portI, SocketProtector protector)
             throws SocketException, IOException {
-
+        this.logger = LoggerFactory.getLogger(UdpOutputStream.class);
         open(address, portI, protector);
     }
 
@@ -172,7 +185,7 @@ public class UdpOutputStream extends OutputStream {
      */
     public UdpOutputStream(String address, int portI, int buffSize, SocketProtector protector)
             throws UnknownHostException, SocketException, IOException {
-
+        this.logger = LoggerFactory.getLogger(UdpOutputStream.class);
         open(InetAddress.getByName(address), portI, protector);
         setBufferSize(buffSize);
     }
@@ -196,7 +209,7 @@ public class UdpOutputStream extends OutputStream {
      */
     public UdpOutputStream(InetAddress address, int portI, int buffSize, SocketProtector protector)
             throws SocketException, IOException {
-
+        this.logger = LoggerFactory.getLogger(UdpOutputStream.class);
         open(address, portI, protector);
         setBufferSize(buffSize);
     }
@@ -286,6 +299,8 @@ public class UdpOutputStream extends OutputStream {
         }
 
         // send data
+        System.out.println("P: " + port);
+        logger.debug("ATTEMPTING TO SEND TO PORT {}", port);
         dpack = new DatagramPacket(outdata, idx, iAdd, port);
         dsock.send(dpack);
 
@@ -338,6 +353,7 @@ public class UdpOutputStream extends OutputStream {
      *****************************************************************
      */
     public void write(byte[] data) throws IOException {
+        logger.debug("WRITING {} bytes to {}:{}", data.length, iAdd.getHostName(), port);
         write(data, 0, data.length);
     }
 
@@ -359,6 +375,7 @@ public class UdpOutputStream extends OutputStream {
      *****************************************************************
      */
     public void write(byte[] data, int off, int len) throws IOException {
+        logger.debug("WRITING {} bytes to :{}", len, port);
         int lenRemaining = len;
 
         try {
