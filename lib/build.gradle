@@ -33,6 +33,7 @@ dependencies {
     // https://stackoverflow.com/a/64726112
     //noinspection AnnotationProcessorOnCompilePath
     implementation "androidx.multidex:multidex:$multidex_version"
+    //noinspection AnnotationProcessorOnCompilePath
     implementation 'org.projectlombok:lombok:1.18.20'
     annotationProcessor 'org.projectlombok:lombok:1.18.20'
 
