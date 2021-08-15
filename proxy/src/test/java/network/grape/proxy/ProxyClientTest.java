@@ -99,7 +99,6 @@ public class ProxyClientTest {
 
     // sends a udp request via the proxy, expects an echo back received through the proxy
     // todo: fix
-    @Disabled
     @Test public void proxyEchoTest() throws UnknownHostException, SocketException, InterruptedException, PacketHeaderException {
 
         // setup the writing side of the vpn

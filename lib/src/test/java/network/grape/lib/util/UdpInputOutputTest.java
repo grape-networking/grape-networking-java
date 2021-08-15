@@ -1,6 +1,7 @@
 package network.grape.lib.util;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.mockito.Mockito;
 
 import java.io.IOException;
@@ -11,7 +12,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import network.grape.lib.vpn.SocketProtector;
 
 public class UdpInputOutputTest {
-    @Test public void UdpInputOutputTest() throws IOException, InterruptedException {
+    @Timeout(10)
+    @Test() public void UdpInputOutputTest() throws IOException, InterruptedException {
         SocketProtector protect = Mockito.mock(SocketProtector.class);
         InetAddress source = InetAddress.getLocalHost();
         UdpOutputStream udpOutputStream = new UdpOutputStream(source, 9999, 512, protect);
@@ -38,6 +40,6 @@ public class UdpInputOutputTest {
         }
         t.join();
         // todo: fix this failing test
-        // assert(Arrays.equals(buf, "test".getBytes()));
+        assert(Arrays.equals(buf, "test".getBytes()));
     }
 }
