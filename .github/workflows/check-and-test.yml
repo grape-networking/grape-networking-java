@@ -67,6 +67,7 @@ jobs:
           path: app/build/reports
 
   integration-tests:
+    needs: [lib_checks, android_checks]
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
@@ -80,7 +81,11 @@ jobs:
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
       - name: run proxy-client test
-        run: ./gradlew proxy:test
+        run: ./gradlew proxy:test --info
+      - uses: actions/upload-artifact@v2
+        with:
+          name: proxy-reports
+          path: proxy/build/reports
 
   upload-coverage-reports:
     needs: [lib_checks, android_checks]
