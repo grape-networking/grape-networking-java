@@ -9,6 +9,7 @@ dependencies {
     implementation "org.slf4j:slf4j-simple:1.7.32"
 
     testImplementation project(path: ':utilities:udp_server')
+    testImplementation project(path: ':utilities:tcp_server')
     testRuntimeOnly "uk.org.lidalia:slf4j-test:1.2.0"
     testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter-params:${jUnitVersion}"

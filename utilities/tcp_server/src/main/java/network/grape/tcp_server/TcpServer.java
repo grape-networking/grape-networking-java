@@ -15,7 +15,7 @@ import java.util.concurrent.Executors;
  */
 public class TcpServer {
 
-  private static final int DEFAULT_PORT = 8888;
+  public static final int DEFAULT_PORT = 8888;
   private ServerSocketChannel serverSocketChannel;
   private Executor executor;
 
@@ -25,14 +25,13 @@ public class TcpServer {
     executor = Executors.newFixedThreadPool(5);
   }
 
-  private void service() {
+  public void service() {
     while(true) {
       System.out.println("Waiting for connection...");
       try {
         SocketChannel socketChannel = serverSocketChannel.accept();
         if (socketChannel == null) {
           System.out.println("Null socketchannel");
-          continue;
         } else {
           System.out.println("Got a new connection");
           executor.execute(() -> handleConnection(socketChannel));

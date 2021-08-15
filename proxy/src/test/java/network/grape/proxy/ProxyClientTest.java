@@ -1,5 +1,6 @@
 package network.grape.proxy;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 import static network.grape.lib.transport.TransportHeader.UDP_PROTOCOL;
@@ -18,6 +19,8 @@ import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -36,6 +39,7 @@ import network.grape.lib.vpn.SocketProtector;
 import network.grape.lib.vpn.VpnClient;
 import network.grape.lib.vpn.VpnForwardingReader;
 import network.grape.lib.vpn.VpnForwardingWriter;
+import network.grape.tcp_server.TcpServer;
 import network.grape.udp_server.UdpServer;
 
 /**
@@ -48,8 +52,10 @@ public class ProxyClientTest {
     static VpnClient vpnClient;
     static ProxyMain proxyMain;
     static UdpServer udpServer;
+    static TcpServer tcpServer;
     static Thread proxyThread;
     static Thread udpServerThread;
+    static Thread tcpServerThread;
 
     @BeforeAll public static void init() throws IOException {
         proxyMain = new ProxyMain();
@@ -70,6 +76,11 @@ public class ProxyClientTest {
             }
         });
         udpServerThread.start();
+        tcpServer = new TcpServer();
+        tcpServerThread = new Thread(()-> {
+            tcpServer.service();
+        });
+        tcpServerThread.start();
     }
 
     @AfterAll public static void cleanup() throws InterruptedException {
@@ -85,7 +96,7 @@ public class ProxyClientTest {
 
     // sends to the test udp server and expects an echo back without using the proxy as a sanity
     // check
-    @Test public void noProxyEchoTest() throws IOException {
+    @Test public void noProxyUdpEchoTest() throws IOException {
         InetAddress serverAddress = InetAddress.getLocalHost();
         int serverPort = UdpServer.DEFAULT_PORT;
         byte[] buffer = "test".getBytes();
@@ -98,9 +109,25 @@ public class ProxyClientTest {
         assert(new String(recv).equals("test"));
     }
 
+    @Test public void noProxyTcpEchoTest() throws IOException {
+        InetAddress serverAddress = InetAddress.getLocalHost();
+        int serverPort = TcpServer.DEFAULT_PORT;
+        byte[] buffer = "test".getBytes();
+        InetSocketAddress inetSocketAddress = new InetSocketAddress(serverAddress, serverPort);
+        Socket s = new Socket();
+        s.connect(inetSocketAddress);
+        OutputStream outputStream = s.getOutputStream();
+        InputStream inputStream = s.getInputStream();
+        outputStream.write(buffer);
+        byte[] recv = new byte[buffer.length];
+        int size = inputStream.read(recv);
+        assertEquals(size, recv.length);
+        assert(new String(recv).equals("test"));
+        s.close();
+    }
+
     // sends a udp request via the proxy, expects an echo back received through the proxy
-    // todo: fix
-    @Test public void proxyEchoTest() throws UnknownHostException, SocketException, InterruptedException, PacketHeaderException {
+    @Test public void proxyUdpEchoTest() throws UnknownHostException, SocketException, InterruptedException, PacketHeaderException {
 
         // setup the writing side of the vpn
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
