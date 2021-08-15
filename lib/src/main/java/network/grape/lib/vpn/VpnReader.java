@@ -3,6 +3,8 @@ package network.grape.lib.vpn;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
@@ -23,8 +25,8 @@ public class VpnReader implements Runnable {
 
   private final Logger logger;
   @Setter private volatile boolean running;
-  private final FileInputStream fileInputStream;
-  private final FileOutputStream fileOutputStream;
+  private final InputStream inputStream;
+  private final OutputStream outputStream;
   private final SessionHandler handler;
   private final ByteBuffer packet;
   private final SocketProtector protector;
@@ -38,11 +40,11 @@ public class VpnReader implements Runnable {
    * @param packet the bytebuffer that inputstream data should be read into for parsing
    * @param protector used to protect the outgoing sockets
    */
-  public VpnReader(FileInputStream inputStream, FileOutputStream outputStream, SessionHandler handler, ByteBuffer packet,
+  public VpnReader(InputStream inputStream, OutputStream outputStream, SessionHandler handler, ByteBuffer packet,
                    SocketProtector protector) {
     logger = LoggerFactory.getLogger(VpnReader.class);
-    this.fileInputStream = inputStream;
-    this.fileOutputStream = outputStream;
+    this.inputStream = inputStream;
+    this.outputStream = outputStream;
     this.handler = handler;
     this.packet = packet;
     this.running = false;
@@ -70,12 +72,12 @@ public class VpnReader implements Runnable {
     while (isRunning()) {
       try {
         data = packet.array();
-        length = fileInputStream.read(data);
+        length = inputStream.read(data);
         if (length > 0) {
           // logger.info("received packet from vpn client: " + length);
           try {
             packet.limit(length);
-            handler.handlePacket(packet, fileOutputStream);
+            handler.handlePacket(packet, outputStream);
           } catch (PacketHeaderException | UnknownHostException ex) {
             logger.error(ex.toString());
           }
