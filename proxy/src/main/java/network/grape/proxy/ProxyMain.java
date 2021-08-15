@@ -62,6 +62,10 @@ public class ProxyMain implements ProtectSocket {
         while (running) {
             DatagramPacket request = new DatagramPacket(buffer, MAX_RECEIVE_BUFFER_SIZE);
             socket.receive(request);
+            if (!socket.isConnected()) {
+                protectSocket(socket);
+                socket.connect(request.getAddress(), request.getPort());
+            }
 
             System.out.println("Got Data." + request.getLength() + " bytes from: " +
                     request.getSocketAddress().toString());
@@ -69,7 +73,7 @@ public class ProxyMain implements ProtectSocket {
             ByteBuffer packet = ByteBuffer.wrap(request.getData());
             packet.limit(request.getLength());
             try {
-                UdpOutputStream outputStream = new UdpOutputStream(request.getAddress(), request.getPort(), new SocketProtector(this));
+                UdpOutputStream outputStream = new UdpOutputStream(socket);
                 handler.handlePacket(packet, outputStream);
             } catch (PacketHeaderException | UnknownHostException ex) {
                 logger.error(ex.toString());

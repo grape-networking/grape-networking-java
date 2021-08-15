@@ -3,6 +3,7 @@ package network.grape.proxy;
 import static org.mockito.Mockito.mock;
 
 import static network.grape.lib.transport.TransportHeader.UDP_PROTOCOL;
+import static network.grape.proxy.ProxyMain.DEFAULT_PORT;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -132,7 +133,11 @@ public class ProxyClientTest {
         ByteBuffer appPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
         List<InetAddress> filters = new ArrayList<>();
         filters.add(source);
-        VpnForwardingReader vpnReader = new VpnForwardingReader(inputStream, appPacket, protector, vpnWriter.getSocket(), filters);
+
+        DatagramSocket vpnSocket = vpnWriter.getSocket();
+        vpnSocket.connect(InetAddress.getLocalHost(), DEFAULT_PORT);
+
+        VpnForwardingReader vpnReader = new VpnForwardingReader(inputStream, appPacket, vpnSocket, filters);
 
         vpnClient = new VpnClient(vpnWriter, vpnReader);
         vpnClient.start();
@@ -142,5 +147,7 @@ public class ProxyClientTest {
         byte[] received = outputStream.toByteArray();
         System.out.println("RECEIVED: " + received.length + " bytes");
         assert(received.length > 0);
+
+        vpnClient.shutdown();
     }
 }

@@ -26,26 +26,32 @@ public class UdpServer {
     byte[] buffer = new byte[MAX_RECEIVE_BUFFER_SIZE];
     running = true;
     while (running) {
-      System.out.println("Listening on port: " + DEFAULT_PORT + " for data");
+      System.out.println("Echo server Listening on port: " + DEFAULT_PORT + " for data");
       DatagramPacket request = new DatagramPacket(buffer, MAX_RECEIVE_BUFFER_SIZE);
-      socket.receive(request);
 
-      System.out.println("Got Data." + request.getLength() + " bytes from: " +
-          request.getSocketAddress().toString());
+      try {
+        socket.receive(request);
 
-      byte[] recv = new byte[request.getLength()];
-      System.arraycopy(request.getData(), 0, recv, 0, request.getLength());
+        System.out.println("Got Data." + request.getLength() + " bytes from: " +
+                request.getSocketAddress().toString());
 
-      System.out.println(new String(recv));
+        byte[] recv = new byte[request.getLength()];
+        System.arraycopy(request.getData(), 0, recv, 0, request.getLength());
 
-      InetAddress clientAddress = request.getAddress();
-      int clientPort = request.getPort();
+        System.out.println("DATA RECEIVED AT ECHO SERVER: " + new String(recv));
 
-      byte[] sendback = new String(recv).getBytes();
+        InetAddress clientAddress = request.getAddress();
+        int clientPort = request.getPort();
 
-      DatagramPacket response =
-          new DatagramPacket(sendback, sendback.length, clientAddress, clientPort);
-      socket.send(response);
+        byte[] sendback = new String(recv).getBytes();
+
+        DatagramPacket response =
+                new DatagramPacket(sendback, sendback.length, clientAddress, clientPort);
+        socket.send(response);
+        System.out.println("RESPONSE SENT BACK: " + new String(recv));
+      } catch(SocketException ex) {
+        System.out.println("Socket Exception, likely shutting down: " + ex.toString());
+      }
     }
   }
 

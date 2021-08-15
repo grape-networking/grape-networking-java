@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Timeout;
 import org.mockito.Mockito;
 
 import java.io.IOException;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -16,7 +18,11 @@ public class UdpInputOutputTest {
     @Test() public void UdpInputOutputTest() throws IOException, InterruptedException {
         SocketProtector protect = Mockito.mock(SocketProtector.class);
         InetAddress source = InetAddress.getLocalHost();
-        UdpOutputStream udpOutputStream = new UdpOutputStream(source, 9999, 512, protect);
+
+        DatagramSocket socket = new DatagramSocket();
+        socket.connect(new InetSocketAddress(source, 9999));
+
+        UdpOutputStream udpOutputStream = new UdpOutputStream(socket);
         UdpInputStream udpInputStream = new UdpInputStream(9999, protect);
 
         byte[] buf = new byte[4];

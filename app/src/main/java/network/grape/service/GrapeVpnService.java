@@ -28,6 +28,9 @@ import org.slf4j.LoggerFactory;
 public class GrapeVpnService extends VpnService implements Runnable, ProtectSocket {
 
   private static final int MAX_PACKET_LEN = 1500;
+  private static final String VPN_ADDRESS = "10.0.0.3";
+  private static final int VPN_LOCAL_PORT = 8888;
+  private static final int VPN_REMOTE_PORT = 9999;
 
   // SLF4J
   private final Logger logger;
@@ -133,7 +136,7 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
 
     FileOutputStream clientWriter = new FileOutputStream(vpnInterface.getFileDescriptor());
     ByteBuffer vpnPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
-    vpnWriter = new VpnForwardingWriter(clientWriter, vpnPacket, 8888, new SocketProtector(this));
+    vpnWriter = new VpnForwardingWriter(clientWriter, vpnPacket, VPN_LOCAL_PORT, new SocketProtector(this));
     vpnWriterThread = new Thread(vpnWriter);
     vpnWriterThread.start();
     /*
@@ -166,8 +169,11 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     List<InetAddress> filters = new ArrayList<>();
     filters.add(InetAddress.getByName("10.0.0.103"));
 
-    vpnReader = new VpnForwardingReader(clientReader, appPacket, new SocketProtector(this),
-            vpnWriter.getSocket(), filters);
+
+    DatagramSocket vpnsocket = vpnWriter.getSocket();
+    vpnsocket.connect(InetAddress.getByName(VPN_ADDRESS), VPN_REMOTE_PORT);
+
+    vpnReader = new VpnForwardingReader(clientReader, appPacket, vpnsocket, filters);
     vpnReaderThread = new Thread(vpnReader);
     vpnReaderThread.start();
   }

@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
@@ -59,186 +60,21 @@ public class UdpOutputStream extends OutputStream {
 
     protected DatagramSocket dsock = null;
     DatagramPacket dpack = null;
-    InetAddress iAdd = null;
-    int port = 0;
 
     byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
     byte[] outdata = null;
     int idx = 0; // buffer index; points to next empty buffer byte
     int bufferMax = DEFAULT_MAX_BUFFER_SIZE;
 
-    public UdpOutputStream(DatagramSocket socket) {
+    public UdpOutputStream(DatagramSocket socket) throws SocketException {
         this.logger = LoggerFactory.getLogger(UdpOutputStream.class);
         dsock = socket;
-        iAdd = socket.getInetAddress();
-        port = socket.getPort();
+        System.out.println("UDP OUTPUT STREAM, local: " + socket.getLocalAddress().getHostName()
+                + ":" + socket.getLocalPort() + " remote: " + socket.getInetAddress().getHostName() + ":" + socket.getPort());
     }
 
     public int getLocalPort() {
         return dsock.getLocalPort();
-    }
-
-    /********************** constructors ********************/
-    /*
-     *****************************************************************
-     ***                ***
-     ***  Name :  UDPOutputStream                                 ***
-     ***  By   :  U. Bergstrom   (Creare Inc., Hanover, NH)  ***
-     ***  For  :  E-Scan            ***
-     ***  Date :  October, 2001          ***
-     ***                ***
-     ***  Copyright 2001 Creare Inc.        ***
-     ***  All Rights Reserved          ***
-     ***                ***
-     ***  Description :            ***
-     ***       Default constructor.                                ***
-     ***                ***
-     *****************************************************************
-     */
-    public UdpOutputStream() {
-        this.logger = LoggerFactory.getLogger(UdpOutputStream.class);
-    }
-
-    /*
-     *****************************************************************
-     ***                ***
-     ***  Name :  UDPOutputStream                                 ***
-     ***  By   :  U. Bergstrom   (Creare Inc., Hanover, NH)  ***
-     ***  For  :  E-Scan            ***
-     ***  Date :  October, 2001          ***
-     ***                ***
-     ***  Copyright 2001 Creare Inc.        ***
-     ***  All Rights Reserved          ***
-     ***                ***
-     ***  Description :            ***
-     ***       Constructor.  Sets size of buffer.                  ***
-     ***                ***
-     *****************************************************************
-     */
-    public UdpOutputStream(int buffSize) {
-        setBufferSize(buffSize);
-        this.logger = LoggerFactory.getLogger(UdpOutputStream.class);
-    }
-
-    /*
-     *****************************************************************
-     ***                ***
-     ***  Name :  UDPOutputStream                                 ***
-     ***  By   :  U. Bergstrom   (Creare Inc., Hanover, NH)  ***
-     ***  For  :  E-Scan            ***
-     ***  Date :  October, 2001          ***
-     ***                ***
-     ***  Copyright 2001 Creare Inc.        ***
-     ***  All Rights Reserved          ***
-     ***                ***
-     ***  Description :            ***
-     ***       Constructor.  Sets the address and port of the  UDP ***
-     ***   socket to write to.                                     ***
-     ***                ***
-     *****************************************************************
-     */
-    public UdpOutputStream(String address, int portI, SocketProtector protector)
-            throws UnknownHostException, SocketException, IOException {
-        this.logger = LoggerFactory.getLogger(UdpOutputStream.class);
-        open(InetAddress.getByName(address), portI, protector);
-    }
-
-    /*
-     *****************************************************************
-     ***                ***
-     ***  Name :  UDPOutputStream                                 ***
-     ***  By   :  U. Bergstrom   (Creare Inc., Hanover, NH)  ***
-     ***  For  :  E-Scan            ***
-     ***  Date :  November, 2001          ***
-     ***                ***
-     ***  Copyright 2001 Creare Inc.        ***
-     ***  All Rights Reserved          ***
-     ***                ***
-     ***  Description :            ***
-     ***       Constructor.  Sets the address and port of the  UDP ***
-     ***   socket to write to.                                     ***
-     ***                ***
-     *****************************************************************
-     */
-    public UdpOutputStream(InetAddress address, int portI, SocketProtector protector)
-            throws SocketException, IOException {
-        this.logger = LoggerFactory.getLogger(UdpOutputStream.class);
-        open(address, portI, protector);
-    }
-
-    /*
-     *****************************************************************
-     ***                ***
-     ***  Name :  UDPOutputStream                                 ***
-     ***  By   :  U. Bergstrom   (Creare Inc., Hanover, NH)  ***
-     ***  For  :  E-Scan            ***
-     ***  Date :  October, 2001          ***
-     ***                ***
-     ***  Copyright 2001 Creare Inc.        ***
-     ***  All Rights Reserved          ***
-     ***                ***
-     ***  Description :            ***
-     ***       Constructor.  Sets the address and port of the  UDP ***
-     ***   socket to write to.  Sets the size of the buffer.       ***
-     ***                ***
-     *****************************************************************
-     */
-    public UdpOutputStream(String address, int portI, int buffSize, SocketProtector protector)
-            throws UnknownHostException, SocketException, IOException {
-        this.logger = LoggerFactory.getLogger(UdpOutputStream.class);
-        open(InetAddress.getByName(address), portI, protector);
-        setBufferSize(buffSize);
-    }
-
-    /*
-     *****************************************************************
-     ***                ***
-     ***  Name :  UDPOutputStream                                 ***
-     ***  By   :  U. Bergstrom   (Creare Inc., Hanover, NH)  ***
-     ***  For  :  E-Scan            ***
-     ***  Date :  October, 2001          ***
-     ***                ***
-     ***  Copyright 2001 Creare Inc.        ***
-     ***  All Rights Reserved          ***
-     ***                ***
-     ***  Description :            ***
-     ***       Constructor.  Sets the address and port of the  UDP ***
-     ***   socket to write to.  Sets the size of the buffer.       ***
-     ***                ***
-     *****************************************************************
-     */
-    public UdpOutputStream(InetAddress address, int portI, int buffSize, SocketProtector protector)
-            throws SocketException, IOException {
-        this.logger = LoggerFactory.getLogger(UdpOutputStream.class);
-        open(address, portI, protector);
-        setBufferSize(buffSize);
-    }
-
-    /************ opening and closing the stream ************/
-    /*
-     *****************************************************************
-     ***                ***
-     ***  Name :  open                                             ***
-     ***  By   :  U. Bergstrom   (Creare Inc., Hanover, NH)  ***
-     ***  For  :  E-Scan            ***
-     ***  Date :  October, 2001          ***
-     ***                ***
-     ***  Copyright 2001 Creare Inc.        ***
-     ***  All Rights Reserved          ***
-     ***                ***
-     ***  Description :            ***
-     ***       The user may use this method to set the address and ***
-     ***   port of the UDP socket to write to.                     ***
-     ***                ***
-     *****************************************************************
-     */
-    public void open(InetAddress address, int portI, SocketProtector protector)
-            throws SocketException, IOException {
-
-        dsock = new DatagramSocket();
-        protector.protect(dsock);
-        iAdd = address;
-        port = portI;
     }
 
     /*
@@ -299,9 +135,7 @@ public class UdpOutputStream extends OutputStream {
         }
 
         // send data
-        System.out.println("P: " + port);
-        logger.debug("ATTEMPTING TO SEND TO PORT {}", port);
-        dpack = new DatagramPacket(outdata, idx, iAdd, port);
+        dpack = new DatagramPacket(outdata, idx, dsock.getInetAddress(), dsock.getPort());
         dsock.send(dpack);
 
         // reset buffer index
@@ -353,8 +187,8 @@ public class UdpOutputStream extends OutputStream {
      *****************************************************************
      */
     public void write(byte[] data) throws IOException {
-        System.out.println("WRITING " + data.length + " bytes to " + iAdd.getHostName() + ":" + port);
-        logger.debug("WRITING {} bytes to {}:{}", data.length, iAdd.getHostName(), port);
+        System.out.println("WRITING " + data.length + " bytes to " + dsock.getInetAddress().getHostName() + ":" + dsock.getPort());
+        logger.debug("WRITING {} bytes to {}:{}", data.length, dsock.getInetAddress().getHostAddress(), dsock.getPort());
         write(data, 0, data.length);
     }
 
@@ -376,7 +210,7 @@ public class UdpOutputStream extends OutputStream {
      *****************************************************************
      */
     public void write(byte[] data, int off, int len) throws IOException {
-        logger.debug("WRITING {} bytes to :{}", len, port);
+        logger.debug("WRITING {} bytes to {}:{}", len, dsock.getInetAddress().getHostName(), dsock.getPort());
         int lenRemaining = len;
 
         try {

@@ -35,15 +35,14 @@ public class VpnForwardingReader implements Runnable {
     @Setter private volatile boolean running;
     private final InputStream inputStream;
     private final ByteBuffer packet;
-    private final SocketProtector protector;
     private final DatagramSocket socket;
     private final List<InetAddress> filterTo;
 
-    public VpnForwardingReader(InputStream inputStream, ByteBuffer packet, SocketProtector protector, DatagramSocket socket, List<InetAddress> filterTo) {
+    public VpnForwardingReader(InputStream inputStream, ByteBuffer packet,
+                               DatagramSocket socket, List<InetAddress> filterTo) {
         logger = LoggerFactory.getLogger(VpnForwardingReader.class);
         this.inputStream = inputStream;
         this.packet = packet;
-        this.protector = protector;
         this.running = false;
         this.socket = socket;
         this.filterTo = filterTo;

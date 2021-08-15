@@ -127,7 +127,7 @@ public class UdpInputStream extends InputStream {
      */
     public void open(int port, SocketProtector protector)
             throws UnknownHostException, SocketException {
-        System.out.println("OPEN:" + port);
+        System.out.println("OPEN: " + port);
         dsock = new DatagramSocket(port);
         dsock.setReuseAddress(true);
         protector.protect(dsock);
@@ -225,7 +225,7 @@ public class UdpInputStream extends InputStream {
      */
     public int read(byte[] buff) throws IOException {
         System.out.println("Waiting for " + buff.length + " bytes of data");
-        return read(buff, 0, buff.length);
+        return read(buff, 0, buff.length, true);
     }
 
     /*
@@ -245,7 +245,7 @@ public class UdpInputStream extends InputStream {
      ***                ***
      *****************************************************************
      */
-    public int read(byte[] buff, int off, int len) throws IOException {
+    public int read(byte[] buff, int off, int len, boolean returnInstant) throws IOException {
         if (packIdx == packSize) {
             receive();
         }
@@ -260,6 +260,11 @@ public class UdpInputStream extends InputStream {
                     off + (len - lenRemaining),
                     available());
             lenRemaining -= available();
+            if (returnInstant) {
+                int totalRecv = available();
+                packSize = 0;
+                return totalRecv;
+            }
             receive();
         }
 
