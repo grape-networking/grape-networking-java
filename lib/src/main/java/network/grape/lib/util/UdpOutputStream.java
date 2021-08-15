@@ -353,6 +353,7 @@ public class UdpOutputStream extends OutputStream {
      *****************************************************************
      */
     public void write(byte[] data) throws IOException {
+        System.out.println("WRITING " + data.length + " bytes to " + iAdd.getHostName() + ":" + port);
         logger.debug("WRITING {} bytes to {}:{}", data.length, iAdd.getHostName(), port);
         write(data, 0, data.length);
     }

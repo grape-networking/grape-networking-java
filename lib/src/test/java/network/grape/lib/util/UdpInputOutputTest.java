@@ -33,13 +33,21 @@ public class UdpInputOutputTest {
         });
         t.start();
 
+        Thread.sleep(1000);
+
         while(!recv.get()) {
             udpOutputStream.write("test".getBytes());
+            udpOutputStream.flush();
             System.out.println("Wrote data");
             Thread.sleep(1000);
         }
         t.join();
-        // todo: fix this failing test
+
+        System.out.println("Received: " + new String(buf));
+
+        udpInputStream.close();
+        udpOutputStream.close();
+
         assert(Arrays.equals(buf, "test".getBytes()));
     }
 }

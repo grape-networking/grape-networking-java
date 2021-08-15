@@ -224,6 +224,7 @@ public class UdpInputStream extends InputStream {
      *****************************************************************
      */
     public int read(byte[] buff) throws IOException {
+        System.out.println("Waiting for " + buff.length + " bytes of data");
         return read(buff, 0, buff.length);
     }
 
@@ -325,6 +326,7 @@ public class UdpInputStream extends InputStream {
         dpack = new DatagramPacket(ddata, PACKET_BUFFER_SIZE);
         System.out.println("LISTENING ON: " + dsock.getLocalPort());
         dsock.receive(dpack);
+        System.out.println("RECEVIED!!!!!");
         packIdx = 0;
         packSize = dpack.getLength();
     }
