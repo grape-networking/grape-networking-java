@@ -88,7 +88,7 @@ public class VpnForwardingReader implements Runnable {
                         if (ipHeader.getProtocol() == TransportHeader.UDP_PROTOCOL) {
                             logger.info("Got a UDP Packet");
                         } else if (ipHeader.getProtocol() == TransportHeader.TCP_PROTOCOL) {
-                            //logger.info("Got a TCP packet");
+                            logger.info("Got a TCP packet");
                             continue;
                         } else {
                             logger.info("Got an unsupported transport protocol: " + ipHeader.getProtocol());

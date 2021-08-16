@@ -27,13 +27,13 @@ public class TcpServer {
 
   public void service() {
     while(true) {
-      System.out.println("Waiting for connection...");
+      System.out.println("Tcp server Waiting for connection...");
       try {
         SocketChannel socketChannel = serverSocketChannel.accept();
         if (socketChannel == null) {
           System.out.println("Null socketchannel");
         } else {
-          System.out.println("Got a new connection");
+          System.out.println("Got a new tcp connection");
           executor.execute(() -> handleConnection(socketChannel));
         }
       } catch (IOException e) {

@@ -26,7 +26,7 @@ public class UdpServer {
     byte[] buffer = new byte[MAX_RECEIVE_BUFFER_SIZE];
     running = true;
     while (running) {
-      System.out.println("Echo server Listening on port: " + DEFAULT_PORT + " for data");
+      System.out.println("Udp server Listening on port: " + DEFAULT_PORT + " for data");
       DatagramPacket request = new DatagramPacket(buffer, MAX_RECEIVE_BUFFER_SIZE);
 
       try {
@@ -38,7 +38,7 @@ public class UdpServer {
         byte[] recv = new byte[request.getLength()];
         System.arraycopy(request.getData(), 0, recv, 0, request.getLength());
 
-        System.out.println("DATA RECEIVED AT ECHO SERVER: " + new String(recv));
+        System.out.println("DATA RECEIVED AT UDP ECHO SERVER: " + new String(recv));
 
         InetAddress clientAddress = request.getAddress();
         int clientPort = request.getPort();

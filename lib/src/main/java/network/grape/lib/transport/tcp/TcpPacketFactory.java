@@ -3,7 +3,11 @@ package network.grape.lib.transport.tcp;
 import static network.grape.lib.network.ip.IpHeader.IP4_WORD_LEN;
 import static network.grape.lib.network.ip.IpPacketFactory.copyIpHeader;
 import static network.grape.lib.transport.TransportHeader.TCP_PROTOCOL;
+import static network.grape.lib.transport.TransportHeader.UDP_PROTOCOL;
 
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
@@ -375,5 +379,92 @@ public class TcpPacketFactory {
     ipHeader.setPayloadLength(tcp.getHeaderLength());
 
     return createPacketData(ipHeader, tcpHeader, null);
+  }
+
+  public static byte[] createSynPacket(InetAddress sourceAddress, InetAddress destinationAddress,
+                                       int sourcePort, int destinationPort, int starting_seq) {
+    TcpHeader tcpHeader = new TcpHeader(sourcePort, destinationPort, starting_seq, 0, (short) 5, 0, 0, 0, 0, new ArrayList<>());
+    tcpHeader.setSyn(true);
+    int tcpLen = tcpHeader.getHeaderLength();
+    byte[] buffer = new byte[tcpLen];
+    byte[] headerData = tcpHeader.toByteArray();
+    System.arraycopy(headerData, 0, buffer, 0, headerData.length);
+
+    ByteBuffer pseudoHeader;
+    if (sourceAddress instanceof Inet4Address) {
+      if (!(destinationAddress instanceof  Inet4Address)) {
+        throw new IllegalArgumentException("Source is Ip4Address and Dest isn't");
+      }
+      pseudoHeader = ByteBuffer.allocate(12 + tcpLen);
+      pseudoHeader.put(sourceAddress.getAddress());
+      pseudoHeader.put(destinationAddress.getAddress());
+      pseudoHeader.put((byte) 0x00);
+      pseudoHeader.put(TCP_PROTOCOL);
+      pseudoHeader.putShort((short) tcpLen);
+    } else {
+      if (!(destinationAddress instanceof Inet6Address)) {
+        throw new IllegalArgumentException("Source is Ip6Address and Dest isn't");
+      }
+      pseudoHeader = ByteBuffer.allocate(40 + tcpLen);
+      pseudoHeader.put(sourceAddress.getAddress());
+      pseudoHeader.put(destinationAddress.getAddress());
+      pseudoHeader.putInt(tcpLen);
+      pseudoHeader.putInt(TCP_PROTOCOL);
+    }
+
+    byte[] pseudoheaderBuffer = pseudoHeader.array();
+
+    byte[] tcpChecksum = PacketUtil.calculateChecksum(
+            pseudoheaderBuffer, 0, pseudoheaderBuffer.length);
+
+    System.arraycopy(tcpChecksum, 0, buffer, 16, 2);
+
+    return buffer;
+  }
+
+  public static byte[] encapsulate(InetAddress sourceAddress, InetAddress destinationAddress,
+                                   int sourcePort, int destinationPort, int seq_num, int ack_num,
+                                   short offset, byte[] data) {
+    TcpHeader tcpHeader = new TcpHeader(sourcePort, destinationPort, seq_num, ack_num, offset, 0, 0, 0, 0, new ArrayList<>());
+    int tcpLen = tcpHeader.getHeaderLength();
+    if (data != null) {
+      tcpLen += data.length;
+    }
+    byte[] buffer = new byte[tcpLen];
+    byte[] headerData = tcpHeader.toByteArray();
+    System.arraycopy(headerData, 0, buffer, 0, headerData.length);
+    System.arraycopy(data, 0, buffer, headerData.length, data.length);
+
+    ByteBuffer pseudoHeader;
+    if (sourceAddress instanceof Inet4Address) {
+      if (!(destinationAddress instanceof  Inet4Address)) {
+        throw new IllegalArgumentException("Source is Ip4Address and Dest isn't");
+      }
+      pseudoHeader = ByteBuffer.allocate(12 + tcpLen);
+      pseudoHeader.put(sourceAddress.getAddress());
+      pseudoHeader.put(destinationAddress.getAddress());
+      pseudoHeader.put((byte) 0x00);
+      pseudoHeader.put(TCP_PROTOCOL);
+      pseudoHeader.putShort((short) tcpLen);
+      pseudoHeader.put(data);
+    } else {
+      if (!(destinationAddress instanceof Inet6Address)) {
+        throw new IllegalArgumentException("Source is Ip6Address and Dest isn't");
+      }
+      pseudoHeader = ByteBuffer.allocate(40 + tcpLen);
+      pseudoHeader.put(sourceAddress.getAddress());
+      pseudoHeader.put(destinationAddress.getAddress());
+      pseudoHeader.putInt(tcpLen);
+      pseudoHeader.putInt(TCP_PROTOCOL);
+    }
+
+    byte[] pseudoheaderBuffer = pseudoHeader.array();
+
+    byte[] tcpChecksum = PacketUtil.calculateChecksum(
+            pseudoheaderBuffer, 0, pseudoheaderBuffer.length);
+
+    System.arraycopy(tcpChecksum, 0, buffer, 16, 2);
+
+    return buffer;
   }
 }
