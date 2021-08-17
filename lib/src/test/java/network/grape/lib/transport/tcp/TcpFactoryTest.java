@@ -15,11 +15,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.Random;
+
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.network.ip.FakeIp4Header;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.Ip6Header;
 import network.grape.lib.network.ip.IpHeader;
+import network.grape.lib.transport.TransportHeader;
+import network.grape.lib.transport.udp.UdpHeader;
+
 import org.junit.jupiter.api.Test;
 
 /**
@@ -139,5 +144,19 @@ public class TcpFactoryTest {
 
     Ip6Header ip6Header = copyIp6Header(testIp6Header());
     TcpPacketFactory.createFinAckData(ip6Header, tcpHeader, 5, 3, true, true);
+  }
+
+  @Test public void encapsulateTest() throws PacketHeaderException, UnknownHostException {
+    InetAddress localAddress = InetAddress.getLocalHost();
+    int sourcePort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
+    int destPort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
+    byte[] testPacket = TcpPacketFactory.encapsulate(localAddress, localAddress, sourcePort, destPort, 0, 0, (short)5, new byte[0]);
+    ByteBuffer buffer = ByteBuffer.allocate(testPacket.length);
+    buffer.put(testPacket);
+    buffer.rewind();
+
+    TransportHeader transportHeader = TcpHeader.parseBuffer(buffer);
+    assertEquals(transportHeader.getDestinationPort(), destPort);
+    assertEquals(transportHeader.getSourcePort(), sourcePort);
   }
 }
