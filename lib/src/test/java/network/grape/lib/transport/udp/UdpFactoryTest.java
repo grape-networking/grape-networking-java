@@ -2,12 +2,21 @@ package network.grape.lib.transport.udp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import static network.grape.lib.transport.TransportHeader.TCP_PROTOCOL;
+
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.Random;
+
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.Ip6Header;
+import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.network.ip.IpTestCommon;
+import network.grape.lib.transport.TransportHeader;
+import network.grape.lib.transport.tcp.TcpHeader;
+
 import org.junit.jupiter.api.Test;
 
 /**
@@ -65,5 +74,21 @@ public class UdpFactoryTest extends UdpPacketFactory {
     // source and destination addresses should be flipped in the response
     assertEquals(ip6Header.getSourceAddress(), ip6Header1.getDestinationAddress());
     assertEquals(ip6Header.getDestinationAddress(), ip6Header1.getSourceAddress());
+  }
+
+  @Test
+  public void encapsulateTest() throws UnknownHostException, PacketHeaderException {
+    InetAddress localAddress = InetAddress.getLocalHost();
+    int sourcePort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
+    int destPort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
+    byte[] testPacket = UdpPacketFactory.encapsulate(localAddress, localAddress, sourcePort, destPort, new byte[0]);
+
+    ByteBuffer buffer = ByteBuffer.allocate(testPacket.length);
+    buffer.put(testPacket);
+    buffer.rewind();
+
+    TransportHeader transportHeader = UdpHeader.parseBuffer(buffer);
+    assertEquals(transportHeader.getDestinationPort(), destPort);
+    assertEquals(transportHeader.getSourcePort(), sourcePort);
   }
 }
