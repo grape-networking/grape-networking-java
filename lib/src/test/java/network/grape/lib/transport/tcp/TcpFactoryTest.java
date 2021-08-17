@@ -25,6 +25,7 @@ import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.transport.udp.UdpHeader;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -144,6 +145,20 @@ public class TcpFactoryTest {
 
     Ip6Header ip6Header = copyIp6Header(testIp6Header());
     TcpPacketFactory.createFinAckData(ip6Header, tcpHeader, 5, 3, true, true);
+  }
+
+  @Test public void createSynPacket() throws UnknownHostException, PacketHeaderException {
+    Ip4Header ip4Header = copyIp4Header(testIp4Header());
+    TcpHeader tcpHeader = copyTcpHeader(testTcpHeader());
+    byte[] response = TcpPacketFactory.createSynPacket(ip4Header.getSourceAddress(), ip4Header.getDestinationAddress(), tcpHeader.getSourcePort(), tcpHeader.getDestinationPort(), 0);
+    ByteBuffer buffer = ByteBuffer.allocate(response.length);
+    buffer.put(response);
+    buffer.rewind();
+    TcpHeader tcpHeader1 = TcpHeader.parseBuffer(buffer);
+    assertTrue(tcpHeader1.isSyn());
+    assertFalse(tcpHeader1.isAck());
+    Ip6Header ip6Header = copyIp6Header(testIp6Header());
+    TcpPacketFactory.createSynPacket(ip6Header.getSourceAddress(), ip6Header.getDestinationAddress(), tcpHeader.getSourcePort(), tcpHeader.getDestinationPort(), 0);
   }
 
   @Test public void encapsulateTest() throws PacketHeaderException, UnknownHostException {

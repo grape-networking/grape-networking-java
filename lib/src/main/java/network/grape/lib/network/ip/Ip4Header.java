@@ -1,5 +1,8 @@
 package network.grape.lib.network.ip;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -8,6 +11,7 @@ import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import network.grape.lib.PacketHeaderException;
+import network.grape.lib.transport.udp.UdpPacketFactory;
 import network.grape.lib.util.BufferUtil;
 import network.grape.lib.util.PacketUtil;
 
@@ -18,7 +22,7 @@ import network.grape.lib.util.PacketUtil;
 @Data
 @AllArgsConstructor
 public class Ip4Header implements IpHeader {
-
+  private static final Logger logger = LoggerFactory.getLogger(Ip4Header.class);
   private short version;
   private short ihl;    // this * TCP_WORD_LEN will give the header length
   private short dscp;
@@ -53,6 +57,8 @@ public class Ip4Header implements IpHeader {
     short versionIhlByte = BufferUtil.getUnsignedByte(stream);
     short ipVersion = (short) (versionIhlByte >> 4);
     if (ipVersion != IP4_VERSION) {
+      stream.rewind();
+      logger.error("Error parsing IPv4 packet: {}", BufferUtil.hexDump(stream.array(), 0, stream.array().length, true, false));
       throw new PacketHeaderException("This packet is not an Ipv4 packet, the version is: "
           + ipVersion);
     }
