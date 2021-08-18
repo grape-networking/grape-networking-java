@@ -168,6 +168,21 @@ public class TcpFactoryTest {
     assertThrows(IllegalArgumentException.class, ()->TcpPacketFactory.createSynPacket(ip6Header.getSourceAddress(), ip4Header.getDestinationAddress(), tcpHeader.getSourcePort(), tcpHeader.getDestinationPort(), 0));
   }
 
+  // todo: fix (for some reason syn, ack and seq numbers are not taking effect)
+  @Disabled
+  @Test public void createSynAckPacketData() throws UnknownHostException, PacketHeaderException {
+    Ip4Header ip4Header = copyIp4Header(testIp4Header());
+    TcpHeader tcpHeader = copyTcpHeader(testTcpHeader());
+    byte[] response = TcpPacketFactory.createSynAckPacketData(ip4Header, tcpHeader);
+    ByteBuffer buffer = ByteBuffer.allocate(response.length);
+    buffer.put(response);
+    buffer.rewind();
+    TcpHeader tcpHeader1 = TcpHeader.parseBuffer(buffer);
+    //assertTrue(tcpHeader1.isSyn());
+    //assertTrue(tcpHeader1.isAck());
+    assertEquals(tcpHeader.getSequenceNumber(), tcpHeader1.getAckNumber() + 1);
+  }
+
   @Test public void encapsulateTest() throws PacketHeaderException, UnknownHostException {
     InetAddress localAddress = InetAddress.getLocalHost();
     int sourcePort = new Random().nextInt(2 * Short.MAX_VALUE - 1);

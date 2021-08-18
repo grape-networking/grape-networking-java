@@ -119,7 +119,7 @@ public class TcpPacketFactory {
    */
   public static byte[] createSynAckPacketData(IpHeader ip, TcpHeader tcp) {
     IpHeader ipHeader = copyIpHeader(ip);
-    TcpHeader tcpHeader = TcpPacketFactory.copyTcpHeader(tcp);
+    TcpHeader tcpHeader = copyTcpHeader(tcp);
 
     ipHeader.swapAddresses();
     tcpHeader.swapSourceDestination();
@@ -128,7 +128,7 @@ public class TcpPacketFactory {
     long seqNumber = Math.abs(random.nextLong());
     logger.info("Initial seq #" + seqNumber);
     tcpHeader.setSequenceNumber(seqNumber);
-    long ackNumber = tcpHeader.getSequenceNumber() + 1;
+    long ackNumber = tcp.getSequenceNumber() + 1;
     tcpHeader.setAckNumber(ackNumber);
     tcpHeader.setSyn(true);
     tcpHeader.setAck(true);
