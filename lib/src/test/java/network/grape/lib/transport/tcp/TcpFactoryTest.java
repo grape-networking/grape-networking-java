@@ -9,6 +9,7 @@ import static network.grape.lib.transport.tcp.TcpPacketFactory.copyTcpHeader;
 import static network.grape.lib.transport.tcp.TcpTest.testTcpHeader;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
@@ -149,7 +150,9 @@ public class TcpFactoryTest {
 
   @Test public void createSynPacket() throws UnknownHostException, PacketHeaderException {
     Ip4Header ip4Header = copyIp4Header(testIp4Header());
+    Ip6Header ip6Header = copyIp6Header(testIp6Header());
     TcpHeader tcpHeader = copyTcpHeader(testTcpHeader());
+    assertThrows(IllegalArgumentException.class, ()->TcpPacketFactory.createSynPacket(ip4Header.getSourceAddress(), ip6Header.getDestinationAddress(), tcpHeader.getSourcePort(), tcpHeader.getDestinationPort(), 0));
     byte[] response = TcpPacketFactory.createSynPacket(ip4Header.getSourceAddress(), ip4Header.getDestinationAddress(), tcpHeader.getSourcePort(), tcpHeader.getDestinationPort(), 0);
     ByteBuffer buffer = ByteBuffer.allocate(response.length);
     buffer.put(response);
@@ -157,8 +160,9 @@ public class TcpFactoryTest {
     TcpHeader tcpHeader1 = TcpHeader.parseBuffer(buffer);
     assertTrue(tcpHeader1.isSyn());
     assertFalse(tcpHeader1.isAck());
-    Ip6Header ip6Header = copyIp6Header(testIp6Header());
+
     TcpPacketFactory.createSynPacket(ip6Header.getSourceAddress(), ip6Header.getDestinationAddress(), tcpHeader.getSourcePort(), tcpHeader.getDestinationPort(), 0);
+    assertThrows(IllegalArgumentException.class, ()->TcpPacketFactory.createSynPacket(ip6Header.getSourceAddress(), ip4Header.getDestinationAddress(), tcpHeader.getSourcePort(), tcpHeader.getDestinationPort(), 0));
   }
 
   @Test public void encapsulateTest() throws PacketHeaderException, UnknownHostException {
