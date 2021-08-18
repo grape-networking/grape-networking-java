@@ -57,6 +57,9 @@ public class TcpFactoryTest {
     Ip4Header ip4Header1 = Ip4Header.parseBuffer(buffer);
     TcpHeader tcpHeader1 = TcpHeader.parseBuffer(buffer);
     assertTrue(tcpHeader1.isAck());
+    assertFalse(tcpHeader1.isSyn());
+    assertFalse(tcpHeader1.isPsh());
+    assertFalse(tcpHeader1.isFin());
     assertEquals(tcpHeader1.getAckNumber(), tcpHeader.getAckNumber() + 1);
     assertEquals(ip4Header.getSourceAddress(), ip4Header1.getDestinationAddress());
     assertEquals(ip4Header.getDestinationAddress(), ip4Header1.getSourceAddress());
