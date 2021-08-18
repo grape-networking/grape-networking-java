@@ -125,10 +125,7 @@ public class TcpPacketFactory {
     tcpHeader.swapSourceDestination();
 
     Random random = new Random();
-    long seqNumber = random.nextInt();
-    if (seqNumber < 0) {
-      seqNumber = seqNumber * -1;
-    }
+    long seqNumber = Math.abs(random.nextLong());
     logger.info("Initial seq #" + seqNumber);
     tcpHeader.setSequenceNumber(seqNumber);
     long ackNumber = tcpHeader.getSequenceNumber() + 1;
