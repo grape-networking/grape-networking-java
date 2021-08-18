@@ -69,6 +69,10 @@ public class IpPacketFactory {
    * @return an encapsulated IP packet with the supplied data
    */
   public static byte[] encapsulate(InetAddress source, InetAddress destination, short protocol, byte[] data) {
+    int datalen = 0;
+    if (data != null) {
+      datalen = data.length;
+    }
     IpHeader ipHeader;
     byte[] ipData;
     int totalLength;
@@ -77,22 +81,26 @@ public class IpPacketFactory {
         throw new IllegalArgumentException("Source is Ip4Address and Dest isn't");
       }
       short ihl = 5;
-      ipHeader = new Ip4Header(IP4_VERSION, ihl, (short)0, (short)0, ihl * TCP_WORD_LEN + data.length, PacketUtil.getPacketId(), (short)0, 0, (short)64, protocol, 0, (Inet4Address)source, (Inet4Address)destination, new ArrayList<>());
+      ipHeader = new Ip4Header(IP4_VERSION, ihl, (short)0, (short)0, ihl * TCP_WORD_LEN + datalen, PacketUtil.getPacketId(), (short)0, 0, (short)64, protocol, 0, (Inet4Address)source, (Inet4Address)destination, new ArrayList<>());
       ipData = ipHeader.toByteArray();
+      byte[] zero = {0x00, 0x00};
+      System.arraycopy(zero, 0, ipData, 10, 2);
       byte[] ipChecksum = PacketUtil.calculateChecksum(ipData, 0, ipData.length);
       System.arraycopy(ipChecksum, 0, ipData, 10, 2);
-      totalLength = ihl * TCP_WORD_LEN + data.length + data.length;
+      totalLength = ihl * TCP_WORD_LEN + ipData.length + datalen;
     } else {
       if (!(destination instanceof Inet6Address)) {
         throw new IllegalArgumentException("Source is Ip6Address and Dest isn't");
       }
-      ipHeader = new Ip6Header(IP6_VERSION, (short)0, PacketUtil.getPacketId(), data.length, protocol, (short)64, (Inet6Address)source, (Inet6Address)destination);
+      ipHeader = new Ip6Header(IP6_VERSION, (short)0, PacketUtil.getPacketId(), datalen, protocol, (short)64, (Inet6Address)source, (Inet6Address)destination);
       ipData = ipHeader.toByteArray();
-      totalLength = IP6HEADER_LEN + data.length;
+      totalLength = IP6HEADER_LEN + datalen;
     }
     byte[] buffer = new byte[totalLength];
     System.arraycopy(ipData, 0, buffer, 0, ipData.length);
-    System.arraycopy(data, 0, buffer, ipData.length, data.length);
+    if (datalen > 0) {
+      System.arraycopy(data, 0, buffer, ipData.length, datalen);
+    }
     return buffer;
   }
 }

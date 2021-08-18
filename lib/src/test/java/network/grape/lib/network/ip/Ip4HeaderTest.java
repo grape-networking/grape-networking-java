@@ -82,4 +82,15 @@ public class Ip4HeaderTest {
     buf2.rewind();
     Ip4Header.parseBuffer(buf2);
   }
+
+  @Test
+  public void checksumTest() throws UnknownHostException, PacketHeaderException {
+    Ip4Header ip4Header = copyIp4Header(testIp4Header());
+    byte[] buffer = ip4Header.toByteArray();
+    ByteBuffer buf = ByteBuffer.allocate(buffer.length);
+    buf.put(buffer);
+    buf.rewind();
+    Ip4Header ip4Header1 = Ip4Header.parseBuffer(buf);
+    assertEquals(ip4Header.getChecksum(), ip4Header1.getChecksum());
+  }
 }

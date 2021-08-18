@@ -103,6 +103,7 @@ public class PacketUtil {
     checksum[1] = (byte) sum;
 
     //logger.info("CS: " + BufferUtil.hexDump(checksum, 0, 2, false, false));
+    System.out.println("CS: " + BufferUtil.hexDump(checksum, 0, 2, false, false));
 
     return checksum;
   }
