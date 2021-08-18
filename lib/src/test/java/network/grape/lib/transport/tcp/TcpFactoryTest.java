@@ -195,5 +195,14 @@ public class TcpFactoryTest {
     TransportHeader transportHeader = TcpHeader.parseBuffer(buffer);
     assertEquals(transportHeader.getDestinationPort(), destPort);
     assertEquals(transportHeader.getSourcePort(), sourcePort);
+
+    TcpPacketFactory.encapsulate(localAddress, localAddress, sourcePort, destPort, 0, 0, (short)5, null);
+
+    Ip4Header ip4Header = copyIp4Header(testIp4Header());
+    Ip6Header ip6Header = copyIp6Header(testIp6Header());
+    assertThrows(IllegalArgumentException.class, ()->TcpPacketFactory.encapsulate(ip4Header.getSourceAddress(), ip6Header.getDestinationAddress(), sourcePort, destPort, 0, 0, (short)5, null));
+    assertThrows(IllegalArgumentException.class, ()->TcpPacketFactory.encapsulate(ip6Header.getSourceAddress(), ip4Header.getDestinationAddress(), sourcePort, destPort, 0, 0, (short)5, null));
+
+    TcpPacketFactory.encapsulate(ip6Header.getSourceAddress(), ip6Header.getDestinationAddress(), sourcePort, destPort, 0, 0, (short)5, null);
   }
 }

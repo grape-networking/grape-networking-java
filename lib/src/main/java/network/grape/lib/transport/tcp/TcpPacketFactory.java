@@ -430,7 +430,9 @@ public class TcpPacketFactory {
     byte[] buffer = new byte[tcpLen];
     byte[] headerData = tcpHeader.toByteArray();
     System.arraycopy(headerData, 0, buffer, 0, headerData.length);
-    System.arraycopy(data, 0, buffer, headerData.length, data.length);
+    if (data != null) {
+      System.arraycopy(data, 0, buffer, headerData.length, data.length);
+    }
 
     ByteBuffer pseudoHeader;
     if (sourceAddress instanceof Inet4Address) {
@@ -443,7 +445,9 @@ public class TcpPacketFactory {
       pseudoHeader.put((byte) 0x00);
       pseudoHeader.put(TCP_PROTOCOL);
       pseudoHeader.putShort((short) tcpLen);
-      pseudoHeader.put(data);
+      if (data != null) {
+        pseudoHeader.put(data);
+      }
     } else {
       if (!(destinationAddress instanceof Inet6Address)) {
         throw new IllegalArgumentException("Source is Ip6Address and Dest isn't");

@@ -121,14 +121,18 @@ public class UdpPacketFactory {
    */
   public static byte[] encapsulate(InetAddress sourceAddress, InetAddress destinationAddress, int sourcePort, int destinationPort, byte[] data) {
     int udpLen = UDP_HEADER_LEN;
+    int datalen = 0;
     if (data != null) {
       udpLen += data.length;
+      datalen = data.length;
     }
     byte[] buffer = new byte[udpLen];
-    UdpHeader header = new UdpHeader(sourcePort, destinationPort, data.length, 0);
+    UdpHeader header = new UdpHeader(sourcePort, destinationPort, datalen, 0);
     byte[] headerData = header.toByteArray();
     System.arraycopy(headerData, 0, buffer, 0, headerData.length);
-    System.arraycopy(data, 0, buffer, headerData.length, data.length);
+    if (datalen > 0) {
+      System.arraycopy(data, 0, buffer, headerData.length, datalen);
+    }
 
     ByteBuffer pseudoHeader;
     if (sourceAddress instanceof Inet4Address) {
@@ -141,7 +145,9 @@ public class UdpPacketFactory {
       pseudoHeader.put((byte) 0x00);
       pseudoHeader.put(UDP_PROTOCOL);
       pseudoHeader.putShort((short) udpLen);
-      pseudoHeader.put(data);
+      if (datalen > 0) {
+        pseudoHeader.put(data);
+      }
     } else {
       if (!(destinationAddress instanceof Inet6Address)) {
         throw new IllegalArgumentException("Source is Ip6Address and Dest isn't");

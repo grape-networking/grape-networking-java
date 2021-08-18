@@ -1,7 +1,12 @@
 package network.grape.lib.transport.udp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import static network.grape.lib.network.ip.IpPacketFactory.copyIp4Header;
+import static network.grape.lib.network.ip.IpPacketFactory.copyIp6Header;
+import static network.grape.lib.network.ip.IpTestCommon.testIp4Header;
+import static network.grape.lib.network.ip.IpTestCommon.testIp6Header;
 import static network.grape.lib.transport.TransportHeader.TCP_PROTOCOL;
 
 import java.net.InetAddress;
@@ -16,6 +21,7 @@ import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.network.ip.IpTestCommon;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.transport.tcp.TcpHeader;
+import network.grape.lib.transport.tcp.TcpPacketFactory;
 
 import org.junit.jupiter.api.Test;
 
@@ -81,7 +87,7 @@ public class UdpFactoryTest extends UdpPacketFactory {
     InetAddress localAddress = InetAddress.getLocalHost();
     int sourcePort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
     int destPort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
-    byte[] testPacket = UdpPacketFactory.encapsulate(localAddress, localAddress, sourcePort, destPort, new byte[0]);
+    byte[] testPacket = UdpPacketFactory.encapsulate(localAddress, localAddress, sourcePort, destPort, "test".getBytes());
 
     ByteBuffer buffer = ByteBuffer.allocate(testPacket.length);
     buffer.put(testPacket);
@@ -90,5 +96,14 @@ public class UdpFactoryTest extends UdpPacketFactory {
     TransportHeader transportHeader = UdpHeader.parseBuffer(buffer);
     assertEquals(transportHeader.getDestinationPort(), destPort);
     assertEquals(transportHeader.getSourcePort(), sourcePort);
+
+    UdpPacketFactory.encapsulate(localAddress, localAddress, sourcePort, destPort, null);
+
+    Ip4Header ip4Header = copyIp4Header(testIp4Header());
+    Ip6Header ip6Header = copyIp6Header(testIp6Header());
+    assertThrows(IllegalArgumentException.class, ()-> UdpPacketFactory.encapsulate(ip4Header.getSourceAddress(), ip6Header.getDestinationAddress(), sourcePort, destPort, new byte[0]));
+    assertThrows(IllegalArgumentException.class, ()->UdpPacketFactory.encapsulate(ip6Header.getSourceAddress(), ip4Header.getDestinationAddress(), sourcePort, destPort, new byte[0]));
+
+    UdpPacketFactory.encapsulate(ip6Header.getSourceAddress(), ip6Header.getDestinationAddress(), sourcePort, destPort, null);
   }
 }
