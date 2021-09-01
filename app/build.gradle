@@ -104,7 +104,6 @@ dependencies {
 }
 
 apply from: '../checkstyle.gradle' //disabled because of some weird java 8 problem
-apply from: 'dependencies.gradle'
 
 // disable the logback logging because it will fail unit tests where it can't access android storage
 configurations.all { config ->

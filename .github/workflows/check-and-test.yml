@@ -19,8 +19,6 @@ jobs:
         uses: android-actions/setup-android@v2.0.7
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-      - name: check deps
-        run: ./gradlew lib:generatePomFileForMavenPublication && diff lib/pom.xml lib/build/publications/maven/pom-default.xml
       - name: lint
         run: ./gradlew lib:lint
       - name: lint results
@@ -49,8 +47,6 @@ jobs:
         uses: android-actions/setup-android@v2.0.7
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-      - name: check app dependency update
-        run: ./gradlew app:generatePomFileForDebugPublication && diff app/pom.xml app/build/publications/debug/pom-default.xml
       - name: lint
         run: ./gradlew app:lint
       - name: app lint results
