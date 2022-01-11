@@ -11,10 +11,12 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 
+/*
 import com.nguyenhoanglam.imagepicker.model.Config;
 import com.nguyenhoanglam.imagepicker.model.Image;
 import com.nguyenhoanglam.imagepicker.ui.imagepicker.GlideLoader;
 import com.nguyenhoanglam.imagepicker.ui.imagepicker.ImagePicker;
+ */
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -34,23 +36,26 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        /*
         ImagePicker.with(this)
                 .setFolderMode(false)
                 .setMultipleMode(false)
                 .setShowNumberIndicator(true)
                 .setRequestCode(100)
                 .start();
+         */
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        /*
         if (ImagePicker.shouldHandleResult(requestCode, resultCode, data, 100)) {
             ArrayList<Image> images = ImagePicker.getImages(data);
             Image image = images.get(0);
             ImageView imageView = (ImageView) findViewById(R.id.imageView);
             imageView.setImageURI(image.getUri());
-        }
+        }*/
     }
 
     // https://stackoverflow.com/questions/25086868/how-to-send-images-through-sockets-in-java
