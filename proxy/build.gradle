@@ -2,7 +2,7 @@ apply plugin: 'application'
 
 dependencies {
     implementation project(path: ':lib')
-    implementation "org.slf4j:slf4j-api:1.7.32"
+    implementation "org.slf4j:slf4j-api:1.7.33"
     implementation ('com.papertrailapp:logback-syslog4j:1.0.0') {
         exclude group: 'ch.qos.logback'
     }
