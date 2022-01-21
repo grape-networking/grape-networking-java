@@ -68,7 +68,7 @@ android {
 dependencies {
     implementation project(path: ':lib')
     implementation "androidx.multidex:multidex:${multidexVersion}"
-    implementation 'com.google.android.material:material:1.4.0'
+    implementation 'com.google.android.material:material:1.5.0'
     implementation "com.google.dagger:hilt-android:${hiltVersion}"
     implementation "org.slf4j:slf4j-api:${slf4jApiVersion}"
     implementation ("com.papertrailapp:logback-syslog4j:${papertrailLogVersion}") {
