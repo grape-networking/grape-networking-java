@@ -7,13 +7,11 @@ buildscript {
         maven { url "https://jitpack.io" }
     }
     dependencies {
-        //classpath "com.android.tools.build:gradle:7.1.0-alpha08"
-        classpath 'com.android.tools.build:gradle:7.0.4'
-        classpath "de.mannodermaus.gradle.plugins:android-junit5:1.8.2.0"
-        classpath "com.vanniktech:gradle-android-junit-jacoco-plugin:0.16.0"
+        classpath "com.android.tools.build:gradle:${gradlePluginVersion}"
+        classpath "de.mannodermaus.gradle.plugins:android-junit5:${androidJunitPluginVersion}"
+        classpath "com.vanniktech:gradle-android-junit-jacoco-plugin:${jacocoPluginVersion}"
         classpath "com.google.dagger:hilt-android-gradle-plugin:${hiltVersion}"
-        classpath "com.hiya:jacoco-android:0.2"
-        classpath "com.vanniktech:gradle-android-junit-jacoco-plugin:0.17.0-SNAPSHOT"
+        classpath "com.hiya:jacoco-android:${hiyaPluginVersion}"
     }
 }
 
