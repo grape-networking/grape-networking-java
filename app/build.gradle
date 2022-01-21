@@ -22,12 +22,12 @@ apply plugin: 'com.hiya.jacoco-android'
 apply plugin: 'maven-publish'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
     buildToolsVersion "30.0.3"
     defaultConfig {
         applicationId "network.grape.app"
         minSdkVersion 18 // want 15, but uiautomator requires 18
-        targetSdkVersion 30
+        targetSdkVersion 31
         versionCode 1
         versionName "1.0"
         multiDexEnabled true
@@ -68,7 +68,7 @@ android {
 dependencies {
     implementation project(path: ':lib')
     implementation "androidx.multidex:multidex:${multidexVersion}"
-    implementation 'com.google.android.material:material:1.4.0'
+    implementation "com.google.android.material:material:${materialVersion}"
     implementation "com.google.dagger:hilt-android:${hiltVersion}"
     implementation "org.slf4j:slf4j-api:${slf4jApiVersion}"
     implementation ("com.papertrailapp:logback-syslog4j:${papertrailLogVersion}") {
