@@ -6,7 +6,7 @@ dependencies {
     implementation ("com.papertrailapp:logback-syslog4j:${papertrailLogVersion}") {
         exclude group: 'ch.qos.logback'
     }
-    implementation "org.slf4j:slf4j-simple:1.7.32"
+    implementation "org.slf4j:slf4j-simple:1.7.33"
 
     testImplementation project(path: ':utilities:udp_server')
     testImplementation project(path: ':utilities:tcp_server')
