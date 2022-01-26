@@ -21,7 +21,7 @@ buildscript {
         multidexVersion = "2.0.1"
         lombokVersion = "1.18.22"
         mockitoVersion = "4.3.0"
-        slf4jApiVersion = "1.7.33"
+        slf4jApiVersion = "1.7.34"
         papertrailLogVersion = "1.0.0"
         materialVersion = "1.5.0"
         constraintLayoutVersion = "2.1.3"
