@@ -88,7 +88,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
       - name: Display structure of downloaded files
         run: ls -R
       - name: codecov upload
