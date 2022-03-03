@@ -29,7 +29,7 @@ jobs:
         run: ./gradlew lib:checkstyle
       - name: junit5 units tests (with jacoco covarege reports)
         run: ./gradlew lib:jacocoTestReport
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: lib-reports
           path: lib/build/reports
@@ -57,7 +57,7 @@ jobs:
 #        run: ./gradlew app:checkstyle
 #      - name: junit5 instrumented tests (with jacoco coverage reports))
 #        run: adb connect android-emulator:5555 && adb wait-for-device && ./gradlew app:connectedCheck && ./gradlew app:jacocoTestDebugUnitTestReport
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: app-reports
           path: app/build/reports
@@ -78,7 +78,7 @@ jobs:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
       - name: run proxy-client test
         run: ./gradlew proxy:test --info
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: proxy-reports
           path: proxy/build/reports
