@@ -7,8 +7,9 @@ import static network.grape.lib.transport.TransportHeader.TCP_PROTOCOL;
 import static network.grape.lib.transport.TransportHeader.UDP_PROTOCOL;
 import static network.grape.proxy.ProxyMain.DEFAULT_PORT;
 
-import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -60,7 +61,7 @@ public class ProxyClientTest {
     static Thread udpServerThread;
     static Thread tcpServerThread;
 
-    @BeforeAll public static void init() throws IOException {
+    @BeforeEach public void init() throws IOException, InterruptedException {
         proxyMain = new ProxyMain();
         proxyThread = new Thread(()->{
             try {
@@ -84,9 +85,11 @@ public class ProxyClientTest {
             tcpServer.service();
         });
         tcpServerThread.start();
+
+        Thread.sleep(500);
     }
 
-    @AfterAll public static void cleanup() throws InterruptedException {
+    @AfterEach public void cleanup() throws InterruptedException, IOException {
         if (proxyThread.isAlive()) {
             proxyMain.shutdown();;
             proxyThread.join(100);
@@ -94,6 +97,10 @@ public class ProxyClientTest {
         if (udpServerThread.isAlive()) {
             udpServer.shutdown();;
             udpServerThread.join(100);
+        }
+        if (tcpServerThread.isAlive()) {
+            tcpServer.shutdown();
+            tcpServerThread.join(100);
         }
     }
 
@@ -192,7 +199,7 @@ public class ProxyClientTest {
         VpnForwardingWriter vpnWriter = new VpnForwardingWriter(outputStream, vpnPacket, localVpnPort, protector);
 
         // put a SYN packet into the inputstream
-        InetAddress source = InetAddress.getLoopbackAddress(); // try loopback because local doesnt seem to work on CI
+        InetAddress source = InetAddress.getLocalHost();
         System.out.println("SOURCE: " + source.getHostAddress());
         int sourcePort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
         byte[] tcpPacket = TcpPacketFactory.createSynPacket(source, source, sourcePort, TcpServer.DEFAULT_PORT, 0);
@@ -224,7 +231,7 @@ public class ProxyClientTest {
         vpnClient = new VpnClient(vpnWriter, vpnReader);
         vpnClient.start();
 
-        Thread.sleep(5000);
+        Thread.sleep(3000);
 
         byte[] received = outputStream.toByteArray();
         System.out.println("RECEIVED: " + received.length + " bytes");

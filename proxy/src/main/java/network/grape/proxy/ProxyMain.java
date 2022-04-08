@@ -9,6 +9,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.StandardSocketOptions;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
@@ -43,6 +44,7 @@ public class ProxyMain implements ProtectSocket {
     public ProxyMain() throws IOException {
         logger = LoggerFactory.getLogger(ProxyMain.class);
         socket = new DatagramSocket(DEFAULT_PORT);
+        socket.setOption(StandardSocketOptions.SO_REUSEADDR, true);
         Map<String, Session> sessionTable = new ConcurrentHashMap<>();
         Selector selector = Selector.open();
         final BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<>();
@@ -83,6 +85,7 @@ public class ProxyMain implements ProtectSocket {
 
     public void shutdown() {
         running = false;
+        socket.close();
     }
 
     public static void main(String[] args) {

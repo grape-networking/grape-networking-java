@@ -19,6 +19,7 @@ public class TcpServer {
   public static final int DEFAULT_PORT = 8888;
   private ServerSocketChannel serverSocketChannel;
   private Executor executor;
+  private volatile boolean running;
 
   public TcpServer() throws IOException {
     serverSocketChannel = ServerSocketChannel.open();
@@ -28,7 +29,8 @@ public class TcpServer {
   }
 
   public void service() {
-    while(true) {
+    running = true;
+    while(running) {
       System.out.println("Tcp server Waiting for connection...");
       try {
         SocketChannel socketChannel = serverSocketChannel.accept();
@@ -64,6 +66,11 @@ public class TcpServer {
       }
     }
     System.out.println("Connection closed");
+  }
+
+  public void shutdown() throws IOException {
+    running = false;
+    serverSocketChannel.close();
   }
 
   public static void main(String[] args) {
