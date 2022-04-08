@@ -27,7 +27,9 @@ import network.grape.lib.transport.udp.UdpHeader;
 import network.grape.lib.util.UdpOutputStream;
 
 /**
- * Reads from the VPN inputstream, and writes to the UDP outputstream to the VPN server.
+ * Reads from the VPN inputstream (ie: the phone OS), and writes to the UDP outputstream to the
+ * VPN server.
+ *
  * TODO: initiate a secure connection before writing data.
  */
 public class VpnForwardingReader implements Runnable {
@@ -73,6 +75,7 @@ public class VpnForwardingReader implements Runnable {
                             continue;
                         }
                         byte version = (byte) (packet.get() >> 4);
+                        logger.info("VERSION: " + version);
                         packet.rewind();
 
                         final IpHeader ipHeader;
@@ -81,7 +84,7 @@ public class VpnForwardingReader implements Runnable {
                         } else if (version == IP6_VERSION) {
                             ipHeader = Ip6Header.parseBuffer(packet);
                         } else {
-                            //logger.error("Got a packet which isn't Ip4 or Ip6: " + version);
+                            logger.error("Got a packet which isn't Ip4 or Ip6: " + version);
                             continue;
                         }
 
@@ -89,7 +92,6 @@ public class VpnForwardingReader implements Runnable {
                             logger.info("Got a UDP Packet");
                         } else if (ipHeader.getProtocol() == TransportHeader.TCP_PROTOCOL) {
                             logger.info("Got a TCP packet");
-                            continue;
                         } else {
                             logger.info("Got an unsupported transport protocol: " + ipHeader.getProtocol());
                         }

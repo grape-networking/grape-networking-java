@@ -114,7 +114,7 @@ public class ProxyClientTest {
 
     // sends to the test tcp server and expects an echo back without using the proxy as a sanity
     // check
-    @Test public void noProxyTcpEchoTest() throws IOException {
+    @Test public void noProxyTcpEchoTest() throws IOException, InterruptedException {
         InetAddress serverAddress = InetAddress.getLocalHost();
         int serverPort = TcpServer.DEFAULT_PORT;
         byte[] buffer = "test".getBytes();
@@ -143,7 +143,7 @@ public class ProxyClientTest {
 
         // put a packet into the inputstream
         InetAddress source = InetAddress.getLocalHost();
-        System.out.println("SOURCE: " + source.toString());
+        System.out.println("SOURCE: " + source.getHostAddress());
         int sourcePort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
         byte[] udpPacket = UdpPacketFactory.encapsulate(source, source, sourcePort, UdpServer.DEFAULT_PORT, "test".getBytes());
         byte[] ipPacket = IpPacketFactory.encapsulate(source, source, UDP_PROTOCOL, udpPacket);
@@ -183,8 +183,6 @@ public class ProxyClientTest {
         vpnClient.shutdown();
     }
 
-    // todo: fix, idea is send tcp syn, get syn-ack, send ack back, then close connection.
-    @Disabled
     @Test public void proxyTcpConnectTest() throws SocketException, UnknownHostException, PacketHeaderException, InterruptedException {
         // setup the writing side of the vpn
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -195,7 +193,7 @@ public class ProxyClientTest {
 
         // put a SYN packet into the inputstream
         InetAddress source = InetAddress.getLocalHost();
-        System.out.println("SOURCE: " + source.toString());
+        System.out.println("SOURCE: " + source.getHostAddress());
         int sourcePort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
         byte[] tcpPacket = TcpPacketFactory.createSynPacket(source, source, sourcePort, TcpServer.DEFAULT_PORT, 0);
         byte[] ipPacket = IpPacketFactory.encapsulate(source, source, TCP_PROTOCOL, tcpPacket);
@@ -226,11 +224,22 @@ public class ProxyClientTest {
         vpnClient = new VpnClient(vpnWriter, vpnReader);
         vpnClient.start();
 
-        Thread.sleep(3000);
+        Thread.sleep(5000);
 
         byte[] received = outputStream.toByteArray();
         System.out.println("RECEIVED: " + received.length + " bytes");
+
+        // make sure we got a SYN-ACK
         assert(received.length > 0);
+        buffer = ByteBuffer.allocate(received.length);
+        buffer.put(received);
+        buffer.rewind();
+        ip4Header = Ip4Header.parseBuffer(buffer);
+        tcpHeader = TcpHeader.parseBuffer(buffer);
+        assert(tcpHeader.isSyn());
+        assert(tcpHeader.isAck());
+
+        vpnClient.shutdown();
     }
 
     // todo finish implementing

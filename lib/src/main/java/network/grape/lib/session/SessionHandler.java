@@ -114,8 +114,8 @@ public class SessionHandler {
     } else if (ipHeader.getProtocol() == TransportHeader.TCP_PROTOCOL) {
       //logger.warn("PACKET: \n" + BufferUtil.hexDump(debugbuffer, 0, stream.limit(), true, true));
       transportHeader = TcpHeader.parseBuffer(stream);
-      handleTcpPacket(stream, ipHeader, (TcpHeader) transportHeader, outputstream);
       logger.info("TCP from port: " + transportHeader.getSourcePort() + " to " + transportHeader.getDestinationPort());
+      handleTcpPacket(stream, ipHeader, (TcpHeader) transportHeader, outputstream);
     } else {
       throw new PacketHeaderException(
           "Got an unsupported transport protocol: " + ipHeader.getProtocol());
@@ -446,6 +446,7 @@ public class SessionHandler {
     try {
       // logger.info("WRITING: " + BufferUtil.hexDump(synAck, 0, synAck.length, true, true));
       session.getOutputStream().write(synAck);
+      session.getOutputStream().flush();
       logger.info("Wrote SYN-ACK for session: " + session.getKey());
     } catch (IOException e) {
       e.printStackTrace();
@@ -502,6 +503,7 @@ public class SessionHandler {
     byte[] data = createResponseAckData(ipHeader, tcpHeader, ackNumber);
     try {
       session.getOutputStream().write(data);
+      session.getOutputStream().flush();
     } catch (IOException e) {
       logger
           .error("Failed to send ACK packet for session: " + session.getKey() + ":" + e.toString());
@@ -517,6 +519,7 @@ public class SessionHandler {
             + ackNumber + "\n" + BufferUtil.hexDump(data, 0, data.length, true, true));
     try {
       session.getOutputStream().write(data);
+      session.getOutputStream().flush();
     } catch (IOException e) {
       logger
           .error("Failed to send ACK packet for session: " + session.getKey() + ":" + e.toString());
@@ -563,6 +566,7 @@ public class SessionHandler {
     final byte[] data = createFinAckData(ipHeader, tcpHeader, ack, seq, true, false);
     try {
       session.getOutputStream().write(data);
+      session.getOutputStream().flush();
       logger.info("Wrote FIN-ACK for session: " + session.getKey());
     } catch (IOException e) {
       logger.error(
@@ -579,6 +583,7 @@ public class SessionHandler {
     byte[] data = createFinAckData(ipHeader, tcpHeader, ack, seq, true, true);
     try {
       session.getOutputStream().write(data);
+      session.getOutputStream().flush();
       if (session != null) {
         session.getSelectionKey().cancel();
         //sessionManager.closeSession(session);
