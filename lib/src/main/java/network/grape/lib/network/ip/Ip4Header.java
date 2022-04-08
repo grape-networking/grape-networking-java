@@ -151,6 +151,11 @@ public class Ip4Header implements IpHeader {
   }
 
   @Override
+  public int getPayloadLength() {
+    return length - getHeaderLength();
+  }
+
+  @Override
   public void setPayloadLength(int l) {
     this.length = ihl * IpHeader.IP4_WORD_LEN + l;
   }

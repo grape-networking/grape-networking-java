@@ -18,6 +18,8 @@ public interface IpHeader {
 
   int getHeaderLength();
 
+  int getPayloadLength();
+
   void setPayloadLength(int length);
 
   short IP4_VERSION = 0x04;
