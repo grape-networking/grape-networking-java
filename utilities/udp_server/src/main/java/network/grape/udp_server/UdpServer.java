@@ -8,6 +8,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.StandardSocketOptions;
 
 /**
  * A UDP echo server for testing.
@@ -25,6 +26,7 @@ public class UdpServer {
   public void service() throws IOException {
     byte[] buffer = new byte[MAX_RECEIVE_BUFFER_SIZE];
     running = true;
+    socket.setOption(StandardSocketOptions.SO_REUSEADDR, true);
     while (running) {
       System.out.println("Udp server Listening on port: " + DEFAULT_PORT + " for data");
       DatagramPacket request = new DatagramPacket(buffer, MAX_RECEIVE_BUFFER_SIZE);

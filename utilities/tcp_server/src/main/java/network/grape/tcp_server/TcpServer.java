@@ -4,6 +4,7 @@ import static network.grape.lib.util.Constants.MAX_RECEIVE_BUFFER_SIZE;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
@@ -21,6 +22,7 @@ public class TcpServer {
 
   public TcpServer() throws IOException {
     serverSocketChannel = ServerSocketChannel.open();
+    serverSocketChannel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
     serverSocketChannel.bind(new InetSocketAddress(DEFAULT_PORT));
     executor = Executors.newFixedThreadPool(5);
   }
