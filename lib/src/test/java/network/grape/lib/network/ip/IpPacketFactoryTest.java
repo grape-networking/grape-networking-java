@@ -15,6 +15,8 @@ import org.junit.jupiter.api.Test;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Random;
 
 import network.grape.lib.PacketHeaderException;
 
@@ -57,6 +59,11 @@ public class IpPacketFactoryTest extends IpPacketFactory {
         }
 
         @Override
+        public int getPayloadLength() {
+            return 0;
+        }
+
+        @Override
         public void setPayloadLength(int length) {
 
         }
@@ -89,7 +96,24 @@ public class IpPacketFactoryTest extends IpPacketFactory {
 
         IpPacketFactory.encapsulate(ip6Header.getSourceAddress(), ip6Header.getDestinationAddress(), ip4Header.getProtocol(), "test".getBytes());
         IpPacketFactory.encapsulate(ip4Header.getSourceAddress(), ip4Header.getDestinationAddress(), TCP_PROTOCOL, null);
-        assertThrows(IllegalArgumentException.class, ()->IpPacketFactory.encapsulate(ip4Header.getSourceAddress(), ip6Header.getDestinationAddress(), ip4Header.getProtocol(), new byte[0]));
-        assertThrows(IllegalArgumentException.class, ()->IpPacketFactory.encapsulate(ip6Header.getSourceAddress(), ip4Header.getDestinationAddress(), ip4Header.getProtocol(), new byte[0]));
+
+        InetAddress source = InetAddress.getLocalHost();
+        InetAddress dest = InetAddress.getLoopbackAddress();
+        byte[] ipPacket = IpPacketFactory.encapsulate(source, dest, TCP_PROTOCOL, "test".getBytes());
+        buffer = ByteBuffer.allocate(ipPacket.length);
+        buffer.put(ipPacket);
+        buffer.rewind();
+        ip4Header = Ip4Header.parseBuffer(buffer);
+        assertEquals(ip4Header.getSourceAddress(), source);
+        assertEquals(ip4Header.getDestinationAddress(), dest);
+        assertEquals(ip4Header.getProtocol(), TCP_PROTOCOL);
+        byte[] payload = new byte[ip4Header.getPayloadLength()];
+        buffer.get(payload);
+        assertEquals(new String(payload), "test");
+
+        Ip4Header finalIp4Header = ip4Header;
+        assertThrows(IllegalArgumentException.class, ()->IpPacketFactory.encapsulate(finalIp4Header.getSourceAddress(), ip6Header.getDestinationAddress(), finalIp4Header.getProtocol(), new byte[0]));
+        Ip4Header finalIp4Header1 = ip4Header;
+        assertThrows(IllegalArgumentException.class, ()->IpPacketFactory.encapsulate(ip6Header.getSourceAddress(), finalIp4Header1.getDestinationAddress(), finalIp4Header1.getProtocol(), new byte[0]));
     }
 }
