@@ -1,12 +1,9 @@
 package network.grape.app;
 
-import android.app.Application;
-import dagger.hilt.android.HiltAndroidApp;
+import androidx.multidex.MultiDexApplication;
 
 /**
  * The main application for the Grape Network Android App.
  */
-@HiltAndroidApp
-public class GrapeApplication extends Application {
-
+public class GrapeApplication extends MultiDexApplication {
 }
