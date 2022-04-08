@@ -192,7 +192,7 @@ public class ProxyClientTest {
         VpnForwardingWriter vpnWriter = new VpnForwardingWriter(outputStream, vpnPacket, localVpnPort, protector);
 
         // put a SYN packet into the inputstream
-        InetAddress source = InetAddress.getLocalHost();
+        InetAddress source = InetAddress.getLoopbackAddress(); // try loopback because local doesnt seem to work on CI
         System.out.println("SOURCE: " + source.getHostAddress());
         int sourcePort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
         byte[] tcpPacket = TcpPacketFactory.createSynPacket(source, source, sourcePort, TcpServer.DEFAULT_PORT, 0);
