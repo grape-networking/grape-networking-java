@@ -1,7 +1,5 @@
 package network.grape.tcp_image_server;
 
-import static network.grape.lib.util.Constants.MAX_RECEIVE_BUFFER_SIZE;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -13,16 +11,20 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 /**
- * A Tcp image server for testing.
+ * A TCP binary data echo server for testing.
+ *
+ * Reads in an int which defines the number of bytes still to come, reads those bytes in fully.
+ * Writes all of those bytes back.
+ *
  * https://stackoverflow.com/questions/25086868/how-to-send-images-through-sockets-in-java
  */
-public class TcpServer {
+public class TcpBinaryEchoServer {
 
   private static final int DEFAULT_PORT = 8888;
   private ServerSocketChannel serverSocketChannel;
   private Executor executor;
 
-  public TcpServer() throws IOException {
+  public TcpBinaryEchoServer() throws IOException {
     serverSocketChannel = ServerSocketChannel.open();
     serverSocketChannel.bind(new InetSocketAddress(DEFAULT_PORT));
     executor = Executors.newFixedThreadPool(5);
@@ -78,7 +80,7 @@ public class TcpServer {
 
   public static void main(String[] args) {
     try {
-      TcpServer tcpServer = new TcpServer();
+      TcpBinaryEchoServer tcpServer = new TcpBinaryEchoServer();
       tcpServer.service();
      } catch (IOException e) {
       e.printStackTrace();
