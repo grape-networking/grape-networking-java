@@ -254,4 +254,11 @@ public class TcpTest {
     buffer.rewind();
     tcpHeader1 = TcpHeader.parseBuffer(buffer);
   }
+
+  @Test public void swapSrcDestTest() {
+    TcpHeader tcpHeader = copyTcpHeader(testTcpHeader());
+    tcpHeader.swapSourceDestination();
+    assertEquals(tcpHeader.getSourcePort(), testTcpHeader().getDestinationPort());
+    assertEquals(tcpHeader.getDestinationPort(), testTcpHeader().getSourcePort());
+  }
 }

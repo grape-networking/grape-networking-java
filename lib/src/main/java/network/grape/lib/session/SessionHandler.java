@@ -4,7 +4,7 @@ import static network.grape.lib.network.ip.IpHeader.IP4_VERSION;
 import static network.grape.lib.network.ip.IpHeader.IP6_VERSION;
 import static network.grape.lib.network.ip.IpPacketFactory.copyIpHeader;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.copyTcpHeader;
-import static network.grape.lib.transport.tcp.TcpPacketFactory.createFinAckData;
+import static network.grape.lib.transport.tcp.TcpPacketFactory.createAckData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createPacketData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createResponseAckData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createRstData;
@@ -91,7 +91,8 @@ public class SessionHandler {
     } else if (version == IP6_VERSION) {
       ipHeader = Ip6Header.parseBuffer(stream);
     } else {
-      throw new PacketHeaderException("Got a packet which isn't Ip4 or Ip6: " + version);
+      logger.error("Got a packet which isn't Ip4 or Ip6: \n{}", BufferUtil.hexDump(stream.array(), 0, stream.limit(), true, true));
+      throw new PacketHeaderException("Got a packet which isn't Ip4 or Ip6: " + version + " in SessionHandler");
     }
 
     if (!filterTo.isEmpty()) {
@@ -117,8 +118,8 @@ public class SessionHandler {
       logger.info("TCP from port: " + transportHeader.getSourcePort() + " to " + transportHeader.getDestinationPort());
       handleTcpPacket(stream, ipHeader, (TcpHeader) transportHeader, outputstream);
     } else {
-      throw new PacketHeaderException(
-          "Got an unsupported transport protocol: " + ipHeader.getProtocol());
+      logger.error("Got an unsupported transport protocol in SessionHandler: {}\n{}", ipHeader.getProtocol(),
+              BufferUtil.hexDump(stream.array(), 0, stream.limit(), true, true));
     }
   }
 
@@ -563,7 +564,7 @@ public class SessionHandler {
   protected void sendFinAck(IpHeader ipHeader, TcpHeader tcpHeader, Session session) {
     final long ack = tcpHeader.getSequenceNumber();
     final long seq = tcpHeader.getAckNumber();
-    final byte[] data = createFinAckData(ipHeader, tcpHeader, ack, seq, true, false);
+    final byte[] data = createAckData(ipHeader, tcpHeader, ack, seq, false, false, true, false);
     try {
       session.getOutputStream().write(data);
       session.getOutputStream().flush();
@@ -580,7 +581,7 @@ public class SessionHandler {
   protected void ackFinAck(IpHeader ipHeader, TcpHeader tcpHeader, Session session) {
     long ack = tcpHeader.getSequenceNumber() + 1;
     long seq = tcpHeader.getAckNumber();
-    byte[] data = createFinAckData(ipHeader, tcpHeader, ack, seq, true, true);
+    byte[] data = createAckData(ipHeader, tcpHeader, ack, seq, false, false, true, true);
     try {
       session.getOutputStream().write(data);
       session.getOutputStream().flush();

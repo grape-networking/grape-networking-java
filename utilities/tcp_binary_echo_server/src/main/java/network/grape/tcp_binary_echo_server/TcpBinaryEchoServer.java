@@ -1,4 +1,4 @@
-package network.grape.tcp_image_server;
+package network.grape.tcp_binary_echo_server;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,9 +20,10 @@ import java.util.concurrent.Executors;
  */
 public class TcpBinaryEchoServer {
 
-  private static final int DEFAULT_PORT = 8888;
+  public static final int DEFAULT_PORT = 8890;
   private ServerSocketChannel serverSocketChannel;
   private Executor executor;
+  private volatile boolean running;
 
   public TcpBinaryEchoServer() throws IOException {
     serverSocketChannel = ServerSocketChannel.open();
@@ -30,16 +31,17 @@ public class TcpBinaryEchoServer {
     executor = Executors.newFixedThreadPool(5);
   }
 
-  private void service() {
-    while(true) {
-      System.out.println("Waiting for connection...");
+  public void service() {
+    running = true;
+    while(running) {
+      System.out.println("Waiting for connection on binary echo server...");
       try {
         SocketChannel socketChannel = serverSocketChannel.accept();
         if (socketChannel == null) {
           System.out.println("Null socketchannel");
           continue;
         } else {
-          System.out.println("Got a new connection");
+          System.out.println("Got a new connection on binary echo server");
           executor.execute(() -> handleConnection(socketChannel));
         }
       } catch (IOException e) {
@@ -55,19 +57,20 @@ public class TcpBinaryEchoServer {
       byte[] sizeAr = new byte[4];
       inputStream.read(sizeAr);
       int size = ByteBuffer.wrap(sizeAr).asIntBuffer().get();
-      System.out.println("ABOUT TO READ " + size + " bytes");
+      System.out.println("ABOUT TO READ " + size + " bytes at binary echo server");
       byte[] imageAr = new byte[size];
 
       int totalRead = 0;
       while (totalRead < size) {
         int remaining = size - totalRead;
         int read = inputStream.read(imageAr, totalRead, remaining);
-        System.out.println("READ " + read + " bytes");
+        System.out.println("READ " + read + " bytes at binary echo server");
         totalRead += read;
       }
 
       OutputStream outputStream = socketChannel.socket().getOutputStream();
       outputStream.write(imageAr);
+      System.out.println("Wrote " + size + " bytes at binary echo server");
       outputStream.flush();
       outputStream.close();
 
@@ -75,7 +78,12 @@ public class TcpBinaryEchoServer {
       e.printStackTrace();
     }
 
-    System.out.println("Connection closed");
+    System.out.println("Connection closed at binary echo server");
+  }
+
+  public void shutdown() throws IOException {
+    running = false;
+    serverSocketChannel.close();
   }
 
   public static void main(String[] args) {

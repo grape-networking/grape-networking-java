@@ -26,6 +26,7 @@ import network.grape.lib.PacketHeaderException;
 import network.grape.lib.session.Session;
 import network.grape.lib.session.SessionHandler;
 import network.grape.lib.session.SessionManager;
+import network.grape.lib.util.BufferUtil;
 import network.grape.lib.util.UdpOutputStream;
 import network.grape.lib.vpn.ProtectSocket;
 import network.grape.lib.vpn.SocketProtector;
@@ -63,22 +64,30 @@ public class ProxyMain implements ProtectSocket {
         running = true;
         while (running) {
             DatagramPacket request = new DatagramPacket(buffer, MAX_RECEIVE_BUFFER_SIZE);
-            socket.receive(request);
-            if (!socket.isConnected()) {
-                protectSocket(socket);
-                socket.connect(request.getAddress(), request.getPort());
+            try {
+                socket.receive(request);
+                if (!socket.isConnected()) {
+                    protectSocket(socket);
+                    socket.connect(request.getAddress(), request.getPort());
+                }
+            } catch(IOException ex) {
+                // todo: validate this is is true
+                logger.error("Error receiving from main socket, likely shutting down: "
+                        + ex.toString());
+                break;
             }
 
-            System.out.println("Got Data." + request.getLength() + " bytes from: " +
+            int length = request.getLength();
+            System.out.println("Got Data." + length + " bytes from: " +
                     request.getSocketAddress().toString());
 
             ByteBuffer packet = ByteBuffer.wrap(request.getData());
-            packet.limit(request.getLength());
+            packet.limit(length);
             try {
                 UdpOutputStream outputStream = new UdpOutputStream(socket);
                 handler.handlePacket(packet, outputStream);
             } catch (PacketHeaderException | UnknownHostException ex) {
-                logger.error(ex.toString());
+                logger.error("Error handling a udp outputstream session: " + ex.toString());
             }
         }
     }

@@ -24,6 +24,7 @@ import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.transport.tcp.TcpHeader;
 import network.grape.lib.transport.udp.UdpHeader;
+import network.grape.lib.util.BufferUtil;
 import network.grape.lib.util.UdpOutputStream;
 
 /**
@@ -84,7 +85,7 @@ public class VpnForwardingReader implements Runnable {
                         } else if (version == IP6_VERSION) {
                             ipHeader = Ip6Header.parseBuffer(packet);
                         } else {
-                            logger.error("Got a packet which isn't Ip4 or Ip6: " + version);
+                            logger.error("Got a packet which isn't Ip4 or Ip6 in VPNForwardingReader: " + version);
                             continue;
                         }
 
@@ -93,7 +94,9 @@ public class VpnForwardingReader implements Runnable {
                         } else if (ipHeader.getProtocol() == TransportHeader.TCP_PROTOCOL) {
                             logger.info("Got a TCP packet");
                         } else {
-                            logger.info("Got an unsupported transport protocol: " + ipHeader.getProtocol());
+                            packet.rewind();
+                            logger.error("Got an unsupported transport protocol in VPNForwardingReader: {}\n{}", ipHeader.getProtocol(),
+                                    BufferUtil.hexDump(packet.array(), 0, packet.limit(), true, false));
                         }
 
                         if (!filterTo.isEmpty()) {

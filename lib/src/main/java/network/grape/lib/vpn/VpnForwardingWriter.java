@@ -17,7 +17,7 @@ import network.grape.lib.util.UdpInputStream;
 
 /**
  * Receives data on the UDP inputstream stream from the VPN server, and writes the packets to the
- * VPN outputStream.
+ * VPN outputStream (ie: back to the phone OS)
  */
 public class VpnForwardingWriter implements Runnable {
     private final Logger logger;

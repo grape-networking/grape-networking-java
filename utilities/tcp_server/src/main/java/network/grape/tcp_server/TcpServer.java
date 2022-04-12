@@ -55,13 +55,13 @@ public class TcpServer {
         if (bytesRead > 0) {
           buffer.rewind();
           buffer.limit(bytesRead);
-          System.out.println("Read " + bytesRead + " bytes.");
+          System.out.println("Read " + bytesRead + " bytes on TCP server");
           int bytesWrote = socketChannel.write(buffer);
-          System.out.println("Wrote " + bytesWrote + " bytes.");
+          System.out.println("Wrote " + bytesWrote + " bytes from TCP server");
           buffer.clear();
         }
       } catch (IOException ex) {
-        System.out.println("IO Exception on read / write: " + ex.toString());
+        System.out.println("IO Exception on read / write on TCP server: " + ex.toString());
         break;
       }
     }
