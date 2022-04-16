@@ -52,17 +52,14 @@ public class VpnForwardingWriter implements Runnable {
         try {
             while (isRunning()) {
                 data = packet.array();
-                System.out.println("VPNFORWARD WRITING WAITING");
                 length = inputStream.read(data);
-                System.out.println("VPNFORWARD NOT WAITING");
                 if (length > 0) {
-                    System.out.println("RECV PACKET FROM VPN");
-                    logger.info("received packet from vpn: " + length);
+                    logger.debug("Received " + length + " bytes from VPN, about to write it back to the application");
+                    packet.rewind();
                     packet.limit(length);
                     outputStream.write(packet.array(), 0, length);
                     outputStream.flush();
-                } else {
-                    System.out.println("0 LENGTH RECV IN FORWARDING WRITER");
+                    packet.clear();
                 }
             }
         } catch (IOException ex) {

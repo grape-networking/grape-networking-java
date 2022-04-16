@@ -77,6 +77,7 @@ public class SessionHandler {
    * @param outputstream the outputstream to write responses back to
    */
   public void handlePacket(ByteBuffer stream, OutputStream outputstream) throws PacketHeaderException, UnknownHostException {
+    stream.rewind();
     if (stream.remaining() < 1) {
       throw new PacketHeaderException("Need at least a single byte to determine the packet type");
     }
@@ -101,12 +102,9 @@ public class SessionHandler {
         return;
       }
     }
-
     logger.info(
         "GOT VPN TRAFFIC TO: " + ipHeader.getDestinationAddress().toString() + " FROM"
             + ipHeader.getSourceAddress().toString() + " " + stream.limit() + " bytes");
-    //logger.info("PROTO: " + ipHeader.getProtocol());
-
     final TransportHeader transportHeader;
     if (ipHeader.getProtocol() == TransportHeader.UDP_PROTOCOL) {
       transportHeader = UdpHeader.parseBuffer(stream);
@@ -121,7 +119,7 @@ public class SessionHandler {
       String protocol = "00 00";
       if (version == IP4_VERSION) {
         protocol = "08 00";
-      } else if (version == IP6_VERSION) {
+      } else {
         protocol = "86 DD";
       }
       logger.error("Got an unsupported transport protocol in SessionHandler: {}\n{}", ipHeader.getProtocol(),

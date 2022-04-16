@@ -67,25 +67,29 @@ public class VpnForwardingReader implements Runnable {
                 data = packet.array();
                 length = inputStream.read(data);
                 if (length > 0) {
-                    logger.info("received packet from vpn client: " + length);
+                    logger.info("received packet from vpn client with length " + length + " bytes");
                     packet.limit(length);
+                    packet.rewind();
 
                     try {
                         if (packet.remaining() < 1) {
                             logger.error("Need at least a single byte to determine the packet type");
                             continue;
                         }
-                        byte version = (byte) (packet.get() >> 4);
-                        logger.info("VERSION: " + version);
+                        byte version_byte = (byte)(packet.get() & 0xff);
+                        byte version = (byte) (version_byte >> 4);
+                        logger.info("VESION_BYTE: " + version_byte + " VERSION BYTE HEX: " + String.format("%02X", version_byte) + " VERSION: " + version);
                         packet.rewind();
 
                         final IpHeader ipHeader;
                         if (version == IP4_VERSION) {
+                            logger.info("Good IPv4 packet: \n" + BufferUtil.hexDump(packet.array(), 0, length, true, false, ""));
                             ipHeader = Ip4Header.parseBuffer(packet);
                         } else if (version == IP6_VERSION) {
-                            ipHeader = Ip6Header.parseBuffer(packet);
+                            continue; // skip ipv6 packets for now
+                            // ipHeader = Ip6Header.parseBuffer(packet);
                         } else {
-                            logger.error("Got a packet which isn't Ip4 or Ip6 in VPNForwardingReader: " + version);
+                            logger.error("Got a packet which isn't Ip4 or Ip6 in VPNForwardingReader: " + version + "\n" + BufferUtil.hexDump(packet.array(), 0, length, true, false, ""));
                             continue;
                         }
 
@@ -120,6 +124,7 @@ public class VpnForwardingReader implements Runnable {
                     packet.rewind();
                     outputStream.write(packet.array(), 0, length);
                     outputStream.flush();
+                    packet.clear();
                 }
             }
         } catch (IOException ex) {
