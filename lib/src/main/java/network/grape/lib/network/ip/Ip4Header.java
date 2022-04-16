@@ -58,7 +58,7 @@ public class Ip4Header implements IpHeader {
     short ipVersion = (short) (versionIhlByte >> 4);
     if (ipVersion != IP4_VERSION) {
       stream.rewind();
-      logger.error("Error parsing IPv4 packet: {}", BufferUtil.hexDump(stream.array(), 0, stream.array().length, true, false));
+      logger.error("Error parsing IPv4 packet: {}", BufferUtil.hexDump(stream.array(), 0, stream.array().length, true, true, "08 00"));
       throw new PacketHeaderException("This packet is not an Ipv4 packet, the version is: "
           + ipVersion);
     }

@@ -95,8 +95,14 @@ public class VpnForwardingReader implements Runnable {
                             logger.info("Got a TCP packet");
                         } else {
                             packet.rewind();
+                            String protocol = "00 00";
+                            if (version == IP4_VERSION) {
+                                protocol = "08 00";
+                            } else {
+                                protocol = "86 DD";
+                            }
                             logger.error("Got an unsupported transport protocol in VPNForwardingReader: {}\n{}", ipHeader.getProtocol(),
-                                    BufferUtil.hexDump(packet.array(), 0, packet.limit(), true, false));
+                                    BufferUtil.hexDump(packet.array(), 0, packet.limit(), true, false, protocol));
                         }
 
                         if (!filterTo.isEmpty()) {

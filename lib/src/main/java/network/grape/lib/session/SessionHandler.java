@@ -91,7 +91,7 @@ public class SessionHandler {
     } else if (version == IP6_VERSION) {
       ipHeader = Ip6Header.parseBuffer(stream);
     } else {
-      logger.error("Got a packet which isn't Ip4 or Ip6: \n{}", BufferUtil.hexDump(stream.array(), 0, stream.limit(), true, true));
+      logger.error("Got a packet which isn't Ip4 or Ip6: \n{}", BufferUtil.hexDump(stream.array(), 0, stream.limit(), true, true, "86 DD"));
       throw new PacketHeaderException("Got a packet which isn't Ip4 or Ip6: " + version + " in SessionHandler");
     }
 
@@ -118,8 +118,14 @@ public class SessionHandler {
       logger.info("TCP from port: " + transportHeader.getSourcePort() + " to " + transportHeader.getDestinationPort());
       handleTcpPacket(stream, ipHeader, (TcpHeader) transportHeader, outputstream);
     } else {
+      String protocol = "00 00";
+      if (version == IP4_VERSION) {
+        protocol = "08 00";
+      } else if (version == IP6_VERSION) {
+        protocol = "86 DD";
+      }
       logger.error("Got an unsupported transport protocol in SessionHandler: {}\n{}", ipHeader.getProtocol(),
-              BufferUtil.hexDump(stream.array(), 0, stream.limit(), true, true));
+              BufferUtil.hexDump(stream.array(), 0, stream.limit(), true, true, protocol));
       throw new PacketHeaderException("Got an unsupported transport protocol: " + ipHeader.getProtocol());
     }
   }
@@ -299,7 +305,7 @@ public class SessionHandler {
     } else {
       byte[] tcpbuffer = tcpHeader.toByteArray();
       logger.error("Unknown TCP header flag: "
-          + BufferUtil.hexDump(tcpbuffer, 0, tcpbuffer.length, false, false));
+          + BufferUtil.hexDump(tcpbuffer, 0, tcpbuffer.length, false, false, ""));
     }
   }
 
@@ -516,9 +522,15 @@ public class SessionHandler {
                                     int acceptedDataLength, Session session) {
     long ackNumber = tcpHeader.getSequenceNumber() + acceptedDataLength;
     byte[] data = createResponseAckData(ipHeader, tcpHeader, ackNumber);
+    String protocol = "00 00";
+    if (ipHeader instanceof Ip4Header) {
+      protocol = "08 00";
+    } else {
+      protocol = "86 DD";
+    }
     logger.info(
         "sending: ACK# " + tcpHeader.getSequenceNumber() + " + " + acceptedDataLength + " = "
-            + ackNumber + "\n" + BufferUtil.hexDump(data, 0, data.length, true, true));
+            + ackNumber + "\n" + BufferUtil.hexDump(data, 0, data.length, true, true, protocol));
     try {
       session.getOutputStream().write(data);
       session.getOutputStream().flush();
