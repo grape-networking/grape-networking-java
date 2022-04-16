@@ -54,7 +54,7 @@ import network.grape.lib.vpn.SocketProtector;
 public class UdpInputStream extends InputStream {
 
     private static final int PACKET_BUFFER_SIZE = 5000;
-    private final Logger logger;
+    private final Logger logger = LoggerFactory.getLogger(UdpInputStream.class);
 
     @Getter DatagramSocket dsock = null;
     DatagramPacket dpack = null;
@@ -82,7 +82,7 @@ public class UdpInputStream extends InputStream {
      ***                ***
      *****************************************************************
      */
-    public UdpInputStream() { this.logger = LoggerFactory.getLogger(UdpInputStream.class); }
+    public UdpInputStream() {}
 
     /*
      *****************************************************************
@@ -103,7 +103,6 @@ public class UdpInputStream extends InputStream {
      */
     public UdpInputStream(int port, SocketProtector protector)
             throws UnknownHostException, SocketException {
-        this.logger = LoggerFactory.getLogger(UdpInputStream.class);
         open(port, protector);
     }
 
@@ -127,7 +126,8 @@ public class UdpInputStream extends InputStream {
      */
     public void open(int port, SocketProtector protector)
             throws UnknownHostException, SocketException {
-        System.out.println("OPEN: " + port);
+        logger.debug("UDP Inputstream opening on port {}", port);
+        System.out.println("UDP Inputstream opening on port : " + port);
         dsock = new DatagramSocket(port);
         dsock.setReuseAddress(true);
         protector.protect(dsock);
@@ -224,7 +224,8 @@ public class UdpInputStream extends InputStream {
      *****************************************************************
      */
     public int read(byte[] buff) throws IOException {
-        System.out.println("Waiting for " + buff.length + " bytes of data");
+        logger.debug("UDP Inputstream waiting for {} bytes of data", buff.length);
+        System.out.println("UDP Inputstream waiting for " + buff.length + " bytes of data");
         return read(buff, 0, buff.length, true);
     }
 
@@ -249,7 +250,6 @@ public class UdpInputStream extends InputStream {
         if (packIdx == packSize) {
             receive();
         }
-        System.out.println("GOT HERE");
 
         int lenRemaining = len;
 
@@ -329,9 +329,11 @@ public class UdpInputStream extends InputStream {
      */
     private void receive() throws IOException {
         dpack = new DatagramPacket(ddata, PACKET_BUFFER_SIZE);
-        System.out.println("LISTENING ON: " + dsock.getLocalPort());
+        logger.debug("UDP Inputstream listening on port: {}", dsock.getLocalPort());
+        System.out.println("UDP Inputstream listening on port: " + dsock.getLocalPort());
         dsock.receive(dpack);
-        System.out.println("RECEVIED!!!!!");
+        logger.debug("UDP Inpustream received {} bytes of data", dpack.getLength());
+        System.out.println("UDP Inputstream received " + dpack.getLength() + " bytes of data");
         packIdx = 0;
         packSize = dpack.getLength();
     }

@@ -83,11 +83,13 @@ public class VpnForwardingReader implements Runnable {
 
                         final IpHeader ipHeader;
                         if (version == IP4_VERSION) {
-                            logger.info("Good IPv4 packet: \n" + BufferUtil.hexDump(packet.array(), 0, length, true, false, ""));
+                            logger.info("Good IPv4 packet: \n" + BufferUtil.hexDump(packet.array(), 0, length, true, true, "08 00"));
+                            packet.rewind();
                             ipHeader = Ip4Header.parseBuffer(packet);
                         } else if (version == IP6_VERSION) {
-                            continue; // skip ipv6 packets for now
-                            // ipHeader = Ip6Header.parseBuffer(packet);
+                            logger.info("Good IPv6 packet: \n" + BufferUtil.hexDump(packet.array(), 0, length, true, true, "86 DD"));
+                            packet.rewind();
+                            ipHeader = Ip6Header.parseBuffer(packet);
                         } else {
                             logger.error("Got a packet which isn't Ip4 or Ip6 in VPNForwardingReader: " + version + "\n" + BufferUtil.hexDump(packet.array(), 0, length, true, false, ""));
                             continue;
