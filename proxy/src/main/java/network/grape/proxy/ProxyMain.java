@@ -35,7 +35,7 @@ import network.grape.lib.vpn.VpnWriter;
 import static network.grape.lib.util.Constants.MAX_RECEIVE_BUFFER_SIZE;
 
 public class ProxyMain implements ProtectSocket {
-    public static final int DEFAULT_PORT = 9999;
+    public static final int DEFAULT_PORT = 19999;
     private final Logger logger;
     private DatagramSocket socket;
     private final SessionHandler handler;
