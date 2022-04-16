@@ -11,7 +11,6 @@ dependencies {
     testImplementation project(path: ':utilities:udp_server')
     testImplementation project(path: ':utilities:tcp_server')
     testImplementation project(path: ':utilities:tcp_binary_echo_server')
-    testRuntimeOnly "uk.org.lidalia:slf4j-test:1.2.0"
     testImplementation "org.junit.jupiter:junit-jupiter:${jUnitVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter-params:${jUnitVersion}"

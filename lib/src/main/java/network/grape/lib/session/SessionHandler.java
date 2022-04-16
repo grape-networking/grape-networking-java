@@ -120,6 +120,7 @@ public class SessionHandler {
     } else {
       logger.error("Got an unsupported transport protocol in SessionHandler: {}\n{}", ipHeader.getProtocol(),
               BufferUtil.hexDump(stream.array(), 0, stream.limit(), true, true));
+      throw new PacketHeaderException("Got an unsupported transport protocol: " + ipHeader.getProtocol());
     }
   }
 
