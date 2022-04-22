@@ -4,7 +4,7 @@ import static network.grape.lib.network.ip.IpHeader.IP4_VERSION;
 import static network.grape.lib.network.ip.IpHeader.IP6_VERSION;
 import static network.grape.lib.network.ip.IpPacketFactory.copyIpHeader;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.copyTcpHeader;
-import static network.grape.lib.transport.tcp.TcpPacketFactory.createFinAckData;
+import static network.grape.lib.transport.tcp.TcpPacketFactory.createAckData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createPacketData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createResponseAckData;
 import static network.grape.lib.transport.tcp.TcpPacketFactory.createRstData;
@@ -77,6 +77,7 @@ public class SessionHandler {
    * @param outputstream the outputstream to write responses back to
    */
   public void handlePacket(ByteBuffer stream, OutputStream outputstream) throws PacketHeaderException, UnknownHostException {
+    stream.rewind();
     if (stream.remaining() < 1) {
       throw new PacketHeaderException("Need at least a single byte to determine the packet type");
     }
@@ -91,7 +92,8 @@ public class SessionHandler {
     } else if (version == IP6_VERSION) {
       ipHeader = Ip6Header.parseBuffer(stream);
     } else {
-      throw new PacketHeaderException("Got a packet which isn't Ip4 or Ip6: " + version);
+      logger.error("Got a packet which isn't Ip4 or Ip6: \n{}", BufferUtil.hexDump(stream.array(), 0, stream.limit(), true, true, "86 DD"));
+      throw new PacketHeaderException("Got a packet which isn't Ip4 or Ip6: " + version + " in SessionHandler");
     }
 
     if (!filterTo.isEmpty()) {
@@ -100,12 +102,9 @@ public class SessionHandler {
         return;
       }
     }
-
     logger.info(
         "GOT VPN TRAFFIC TO: " + ipHeader.getDestinationAddress().toString() + " FROM"
             + ipHeader.getSourceAddress().toString() + " " + stream.limit() + " bytes");
-    //logger.info("PROTO: " + ipHeader.getProtocol());
-
     final TransportHeader transportHeader;
     if (ipHeader.getProtocol() == TransportHeader.UDP_PROTOCOL) {
       transportHeader = UdpHeader.parseBuffer(stream);
@@ -114,11 +113,18 @@ public class SessionHandler {
     } else if (ipHeader.getProtocol() == TransportHeader.TCP_PROTOCOL) {
       //logger.warn("PACKET: \n" + BufferUtil.hexDump(debugbuffer, 0, stream.limit(), true, true));
       transportHeader = TcpHeader.parseBuffer(stream);
-      handleTcpPacket(stream, ipHeader, (TcpHeader) transportHeader, outputstream);
       logger.info("TCP from port: " + transportHeader.getSourcePort() + " to " + transportHeader.getDestinationPort());
+      handleTcpPacket(stream, ipHeader, (TcpHeader) transportHeader, outputstream);
     } else {
-      throw new PacketHeaderException(
-          "Got an unsupported transport protocol: " + ipHeader.getProtocol());
+      String protocol = "00 00";
+      if (version == IP4_VERSION) {
+        protocol = "08 00";
+      } else {
+        protocol = "86 DD";
+      }
+      logger.error("Got an unsupported transport protocol in SessionHandler: {}\n{}", ipHeader.getProtocol(),
+              BufferUtil.hexDump(stream.array(), 0, stream.limit(), true, true, protocol));
+      throw new PacketHeaderException("Got an unsupported transport protocol: " + ipHeader.getProtocol());
     }
   }
 
@@ -297,7 +303,7 @@ public class SessionHandler {
     } else {
       byte[] tcpbuffer = tcpHeader.toByteArray();
       logger.error("Unknown TCP header flag: "
-          + BufferUtil.hexDump(tcpbuffer, 0, tcpbuffer.length, false, false));
+          + BufferUtil.hexDump(tcpbuffer, 0, tcpbuffer.length, false, false, ""));
     }
   }
 
@@ -446,6 +452,7 @@ public class SessionHandler {
     try {
       // logger.info("WRITING: " + BufferUtil.hexDump(synAck, 0, synAck.length, true, true));
       session.getOutputStream().write(synAck);
+      session.getOutputStream().flush();
       logger.info("Wrote SYN-ACK for session: " + session.getKey());
     } catch (IOException e) {
       e.printStackTrace();
@@ -502,6 +509,7 @@ public class SessionHandler {
     byte[] data = createResponseAckData(ipHeader, tcpHeader, ackNumber);
     try {
       session.getOutputStream().write(data);
+      session.getOutputStream().flush();
     } catch (IOException e) {
       logger
           .error("Failed to send ACK packet for session: " + session.getKey() + ":" + e.toString());
@@ -512,11 +520,18 @@ public class SessionHandler {
                                     int acceptedDataLength, Session session) {
     long ackNumber = tcpHeader.getSequenceNumber() + acceptedDataLength;
     byte[] data = createResponseAckData(ipHeader, tcpHeader, ackNumber);
+    String protocol = "00 00";
+    if (ipHeader instanceof Ip4Header) {
+      protocol = "08 00";
+    } else {
+      protocol = "86 DD";
+    }
     logger.info(
         "sending: ACK# " + tcpHeader.getSequenceNumber() + " + " + acceptedDataLength + " = "
-            + ackNumber + "\n" + BufferUtil.hexDump(data, 0, data.length, true, true));
+            + ackNumber + "\n" + BufferUtil.hexDump(data, 0, data.length, true, true, protocol));
     try {
       session.getOutputStream().write(data);
+      session.getOutputStream().flush();
     } catch (IOException e) {
       logger
           .error("Failed to send ACK packet for session: " + session.getKey() + ":" + e.toString());
@@ -560,9 +575,10 @@ public class SessionHandler {
   protected void sendFinAck(IpHeader ipHeader, TcpHeader tcpHeader, Session session) {
     final long ack = tcpHeader.getSequenceNumber();
     final long seq = tcpHeader.getAckNumber();
-    final byte[] data = createFinAckData(ipHeader, tcpHeader, ack, seq, true, false);
+    final byte[] data = createAckData(ipHeader, tcpHeader, ack, seq, false, false, true, false);
     try {
       session.getOutputStream().write(data);
+      session.getOutputStream().flush();
       logger.info("Wrote FIN-ACK for session: " + session.getKey());
     } catch (IOException e) {
       logger.error(
@@ -576,9 +592,10 @@ public class SessionHandler {
   protected void ackFinAck(IpHeader ipHeader, TcpHeader tcpHeader, Session session) {
     long ack = tcpHeader.getSequenceNumber() + 1;
     long seq = tcpHeader.getAckNumber();
-    byte[] data = createFinAckData(ipHeader, tcpHeader, ack, seq, true, true);
+    byte[] data = createAckData(ipHeader, tcpHeader, ack, seq, false, false, true, true);
     try {
       session.getOutputStream().write(data);
+      session.getOutputStream().flush();
       if (session != null) {
         session.getSelectionKey().cancel();
         //sessionManager.closeSession(session);

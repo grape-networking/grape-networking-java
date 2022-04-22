@@ -1,5 +1,9 @@
 package network.grape.lib.util;
 
+import network.grape.lib.session.SessionHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +18,7 @@ import java.util.Arrays;
  * unsigned values. https://stackoverflow.com/a/9883582
  */
 public class BufferUtil {
-
+  private static final Logger logger = LoggerFactory.getLogger(BufferUtil.class);
   /**
    * Gets an unsigned byte from the buffer at the current position.
    *
@@ -159,8 +163,8 @@ public class BufferUtil {
     bb.putInt(position, (int) (value & 0xffffffffL));
   }
 
-  public static String dummyEthernetData() {
-    return "14 c0 3e 55 0b 35 74 d0 2b 29 a5 18 08 00 ";
+  public static String dummyEthernetData(String protocol) {
+    return "14 c0 3e 55 0b 35 74 d0 2b 29 a5 18 " + protocol + " ";
   }
 
   /**
@@ -170,10 +174,13 @@ public class BufferUtil {
    * @param data   the raw data buffer
    * @param offset where to start in the buffer
    * @param length the length to dump until
+   * @param addresses true if the dump should output addresses on the left (compatibble with Wireshark Hexdump)
+   * @param dummyEthernet true if a dummy ethernet header should be pre-pended (makes Wireshark debugging easier)
+   * @param dummyProtocol the protocol to add to the dummy header - typically "08 00" for IpV4 and "86 DD" for Ipv6.
    * @return a String representation of the buffer
    */
   public static String hexDump(byte[] data, int offset, int length, boolean addresses,
-                               boolean dummyEthernet) {
+                               boolean dummyEthernet, String dummyProtocol) {
     StringBuilder output = new StringBuilder();
     int count = 0;
 
@@ -182,7 +189,11 @@ public class BufferUtil {
     }
 
     if (dummyEthernet) {
-      output.append(dummyEthernetData());
+      if (dummyProtocol.isEmpty()) {
+        logger.warn("dummyEthernet set to true but dummyProtocol is not set, defaulting to ipv4: 08 00");
+        dummyProtocol = "08 00";
+      }
+      output.append(dummyEthernetData(dummyProtocol));
       count += 14;
     }
 

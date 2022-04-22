@@ -38,6 +38,11 @@ public class FakeIp4Header implements IpHeader {
   }
 
   @Override
+  public int getPayloadLength() {
+    return 0;
+  }
+
+  @Override
   public void setPayloadLength(int length) {
 
   }

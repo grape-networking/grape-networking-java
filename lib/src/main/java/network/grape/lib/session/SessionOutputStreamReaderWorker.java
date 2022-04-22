@@ -235,7 +235,13 @@ public class SessionOutputStreamReaderWorker extends SessionWorker implements Ru
         //logger.info(BufferUtil.hexDump(data, 0, data.length, true, true));
       } catch (PacketHeaderException e) {
         e.printStackTrace();
-        logger.info(BufferUtil.hexDump(data, 0, data.length, true, true));
+        String protocol = "00 00";
+        if (ipHeader instanceof Ip4Header) {
+          protocol = "08 00";
+        } else {
+          protocol = "86 DD";
+        }
+        logger.info(BufferUtil.hexDump(data, 0, data.length, true, true, protocol));
       } catch (UnknownHostException e) {
         e.printStackTrace();
       }

@@ -45,7 +45,7 @@ public class PacketUtilTest extends PacketUtil {
     byte[] buffer = {0x66, 0x60, 0x55, 0x55, (byte) 0x8F, 0x0C};
     byte[] checksum =  PacketUtil.calculateChecksum(buffer, 0, 6);
     byte[] actualChecksum = {(byte) 0xB5, 0x3D};
-    System.out.println("CS: " + BufferUtil.hexDump(checksum, 0, 2, false, false));
+    System.out.println("CS: " + BufferUtil.hexDump(checksum, 0, 2, false, false, ""));
     assertArrayEquals(actualChecksum, checksum);
 
     // https://en.wikipedia.org/wiki/IPv4_header_checksum
@@ -53,7 +53,7 @@ public class PacketUtilTest extends PacketUtil {
         (byte) 0xc0, (byte) 0xa8, 0x00, 0x01, (byte) 0xc0, (byte) 0xa8, 0x00, (byte) 0xc7};
     checksum =  PacketUtil.calculateChecksum(buffer2, 0, buffer2.length);
     byte[] actualCheckSum2 = {(byte) 0xb8, 0x61};
-    System.out.println("CS: " + BufferUtil.hexDump(checksum, 0, 2, false, false));
+    System.out.println("CS: " + BufferUtil.hexDump(checksum, 0, 2, false, false, ""));
     assertArrayEquals(actualCheckSum2, checksum);
   }
 
@@ -83,11 +83,11 @@ public class PacketUtilTest extends PacketUtil {
     // ensure the parsed IP buffer is the same as the original
     byte[] parsedIpBuffer = ip4Header.toByteArray();
     assertArrayEquals(ipbuff, parsedIpBuffer);
-    System.out.println(BufferUtil.hexDump(parsedIpBuffer, 0, parsedIpBuffer.length, false, false));
+    System.out.println(BufferUtil.hexDump(parsedIpBuffer, 0, parsedIpBuffer.length, false, false, ""));
 
     // create a response packet and ensure that the checksum is correct
     byte[] rawresponse = UdpPacketFactory.createResponsePacket(ip4Header, udpHeader, payload);
-    System.out.println(BufferUtil.hexDump(rawresponse, 0, rawresponse.length, false, true));
+    System.out.println(BufferUtil.hexDump(rawresponse, 0, rawresponse.length, false, true, "08 00"));
 
     ByteBuffer fullResponseBuffer = ByteBuffer.allocate(rawresponse.length);
     fullResponseBuffer.put(rawresponse);
@@ -131,7 +131,7 @@ public class PacketUtilTest extends PacketUtil {
     // ensure the parsed IP buffer is the same as the original
     byte[] parsedIpBuffer = ip4Header.toByteArray();
     assertArrayEquals(ipbuff, parsedIpBuffer);
-    System.out.println(BufferUtil.hexDump(parsedIpBuffer, 0, parsedIpBuffer.length, false, false));
+    System.out.println(BufferUtil.hexDump(parsedIpBuffer, 0, parsedIpBuffer.length, false, false, ""));
 
   }
 }

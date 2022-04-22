@@ -24,10 +24,13 @@ import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.transport.tcp.TcpHeader;
 import network.grape.lib.transport.udp.UdpHeader;
+import network.grape.lib.util.BufferUtil;
 import network.grape.lib.util.UdpOutputStream;
 
 /**
- * Reads from the VPN inputstream, and writes to the UDP outputstream to the VPN server.
+ * Reads from the VPN inputstream (ie: the phone OS), and writes to the UDP outputstream to the
+ * VPN server.
+ *
  * TODO: initiate a secure connection before writing data.
  */
 public class VpnForwardingReader implements Runnable {
@@ -64,24 +67,29 @@ public class VpnForwardingReader implements Runnable {
                 data = packet.array();
                 length = inputStream.read(data);
                 if (length > 0) {
-                    logger.info("received packet from vpn client: " + length);
+                    logger.info("received packet from vpn client with length " + length + " bytes");
                     packet.limit(length);
+                    packet.rewind();
 
                     try {
                         if (packet.remaining() < 1) {
                             logger.error("Need at least a single byte to determine the packet type");
                             continue;
                         }
-                        byte version = (byte) (packet.get() >> 4);
+                        byte version_byte = (byte)(packet.get() & 0xff);
+                        byte version = (byte) (version_byte >> 4);
+                        logger.info("VESION_BYTE: " + version_byte + " VERSION BYTE HEX: " + String.format("%02X", version_byte) + " VERSION: " + version);
                         packet.rewind();
 
                         final IpHeader ipHeader;
                         if (version == IP4_VERSION) {
+                            logger.info("Good IPv4 packet: \n" + BufferUtil.hexDump(packet.array(), 0, length, true, false, ""));
                             ipHeader = Ip4Header.parseBuffer(packet);
                         } else if (version == IP6_VERSION) {
-                            ipHeader = Ip6Header.parseBuffer(packet);
+                            continue; // skip ipv6 packets for now
+                            // ipHeader = Ip6Header.parseBuffer(packet);
                         } else {
-                            //logger.error("Got a packet which isn't Ip4 or Ip6: " + version);
+                            logger.error("Got a packet which isn't Ip4 or Ip6 in VPNForwardingReader: " + version + "\n" + BufferUtil.hexDump(packet.array(), 0, length, true, false, ""));
                             continue;
                         }
 
@@ -89,9 +97,16 @@ public class VpnForwardingReader implements Runnable {
                             logger.info("Got a UDP Packet");
                         } else if (ipHeader.getProtocol() == TransportHeader.TCP_PROTOCOL) {
                             logger.info("Got a TCP packet");
-                            continue;
                         } else {
-                            logger.info("Got an unsupported transport protocol: " + ipHeader.getProtocol());
+                            packet.rewind();
+                            String protocol = "00 00";
+                            if (version == IP4_VERSION) {
+                                protocol = "08 00";
+                            } else {
+                                protocol = "86 DD";
+                            }
+                            logger.error("Got an unsupported transport protocol in VPNForwardingReader: {}\n{}", ipHeader.getProtocol(),
+                                    BufferUtil.hexDump(packet.array(), 0, packet.limit(), true, false, protocol));
                         }
 
                         if (!filterTo.isEmpty()) {
@@ -109,6 +124,7 @@ public class VpnForwardingReader implements Runnable {
                     packet.rewind();
                     outputStream.write(packet.array(), 0, length);
                     outputStream.flush();
+                    packet.clear();
                 }
             }
         } catch (IOException ex) {

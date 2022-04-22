@@ -7,9 +7,8 @@ import static network.grape.lib.transport.TransportHeader.TCP_PROTOCOL;
 import static network.grape.lib.transport.TransportHeader.UDP_PROTOCOL;
 import static network.grape.proxy.ProxyMain.DEFAULT_PORT;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -17,6 +16,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -31,9 +32,7 @@ import java.util.Random;
 
 import network.grape.lib.PacketHeaderException;
 import network.grape.lib.network.ip.Ip4Header;
-import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.network.ip.IpPacketFactory;
-import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.transport.tcp.TcpHeader;
 import network.grape.lib.transport.tcp.TcpPacketFactory;
 import network.grape.lib.transport.udp.UdpHeader;
@@ -42,6 +41,7 @@ import network.grape.lib.vpn.SocketProtector;
 import network.grape.lib.vpn.VpnClient;
 import network.grape.lib.vpn.VpnForwardingReader;
 import network.grape.lib.vpn.VpnForwardingWriter;
+import network.grape.tcp_binary_echo_server.TcpBinaryEchoServer;
 import network.grape.tcp_server.TcpServer;
 import network.grape.udp_server.UdpServer;
 
@@ -56,11 +56,13 @@ public class ProxyClientTest {
     static ProxyMain proxyMain;
     static UdpServer udpServer;
     static TcpServer tcpServer;
+    static TcpBinaryEchoServer tcpBinaryEchoServer;
     static Thread proxyThread;
     static Thread udpServerThread;
     static Thread tcpServerThread;
+    static Thread tcpBinaryEchoServerThread;
 
-    @BeforeAll public static void init() throws IOException {
+    @BeforeEach public void init() throws IOException, InterruptedException {
         proxyMain = new ProxyMain();
         proxyThread = new Thread(()->{
             try {
@@ -84,9 +86,15 @@ public class ProxyClientTest {
             tcpServer.service();
         });
         tcpServerThread.start();
+        tcpBinaryEchoServer = new TcpBinaryEchoServer();
+        tcpBinaryEchoServerThread = new Thread(()-> {
+            tcpBinaryEchoServer.service();
+        });
+        tcpBinaryEchoServerThread.start();
+        Thread.sleep(500);
     }
 
-    @AfterAll public static void cleanup() throws InterruptedException {
+    @AfterEach public void cleanup() throws InterruptedException, IOException {
         if (proxyThread.isAlive()) {
             proxyMain.shutdown();;
             proxyThread.join(100);
@@ -94,6 +102,14 @@ public class ProxyClientTest {
         if (udpServerThread.isAlive()) {
             udpServer.shutdown();;
             udpServerThread.join(100);
+        }
+        if (tcpServerThread.isAlive()) {
+            tcpServer.shutdown();
+            tcpServerThread.join(100);
+        }
+        if (tcpBinaryEchoServerThread.isAlive()) {
+            tcpBinaryEchoServer.shutdown();
+            tcpBinaryEchoServerThread.join(100);
         }
     }
 
@@ -114,7 +130,7 @@ public class ProxyClientTest {
 
     // sends to the test tcp server and expects an echo back without using the proxy as a sanity
     // check
-    @Test public void noProxyTcpEchoTest() throws IOException {
+    @Test public void noProxyTcpEchoTest() throws IOException, InterruptedException {
         InetAddress serverAddress = InetAddress.getLocalHost();
         int serverPort = TcpServer.DEFAULT_PORT;
         byte[] buffer = "test".getBytes();
@@ -143,7 +159,7 @@ public class ProxyClientTest {
 
         // put a packet into the inputstream
         InetAddress source = InetAddress.getLocalHost();
-        System.out.println("SOURCE: " + source.toString());
+        System.out.println("SOURCE: " + source.getHostAddress());
         int sourcePort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
         byte[] udpPacket = UdpPacketFactory.encapsulate(source, source, sourcePort, UdpServer.DEFAULT_PORT, "test".getBytes());
         byte[] ipPacket = IpPacketFactory.encapsulate(source, source, UDP_PROTOCOL, udpPacket);
@@ -183,23 +199,28 @@ public class ProxyClientTest {
         vpnClient.shutdown();
     }
 
-    // todo: fix, idea is send tcp syn, get syn-ack, send ack back, then close connection.
-    @Disabled
-    @Test public void proxyTcpConnectTest() throws SocketException, UnknownHostException, PacketHeaderException, InterruptedException {
+    @Test public void proxyTcpConnectTest() throws IOException, PacketHeaderException, InterruptedException {
+        PipedInputStream in_to_reader = new PipedInputStream();
+        final PipedOutputStream out_to_vpn = new PipedOutputStream(in_to_reader);
+
+        PipedInputStream in_from_vpn = new PipedInputStream();
+        final PipedOutputStream out_from_writer = new PipedOutputStream(in_from_vpn);
+
         // setup the writing side of the vpn
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        //ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         SocketProtector protector = mock(SocketProtector.class);
         ByteBuffer vpnPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
         int localVpnPort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
-        VpnForwardingWriter vpnWriter = new VpnForwardingWriter(outputStream, vpnPacket, localVpnPort, protector);
+        VpnForwardingWriter vpnWriter = new VpnForwardingWriter(out_from_writer, vpnPacket, localVpnPort, protector);
 
         // put a SYN packet into the inputstream
         InetAddress source = InetAddress.getLocalHost();
-        System.out.println("SOURCE: " + source.toString());
+        System.out.println("SOURCE: " + source.getHostAddress());
         int sourcePort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
         byte[] tcpPacket = TcpPacketFactory.createSynPacket(source, source, sourcePort, TcpServer.DEFAULT_PORT, 0);
         byte[] ipPacket = IpPacketFactory.encapsulate(source, source, TCP_PROTOCOL, tcpPacket);
 
+        // validate everything went ok
         ByteBuffer buffer = ByteBuffer.allocate(ipPacket.length);
         buffer.put(ipPacket);
         buffer.rewind();
@@ -209,11 +230,12 @@ public class ProxyClientTest {
         assert(tcpHeader.getSourcePort() == sourcePort);
         assert(ip4Header.getDestinationAddress().equals(source));
         assert(tcpHeader.getDestinationPort() == TcpServer.DEFAULT_PORT);
-
         System.out.println("IP packet length: " + ipPacket.length);
 
         // setup the reading side of the vpn
-        InputStream inputStream = new ByteArrayInputStream(ipPacket);
+        //InputStream inputStream = new ByteArrayInputStream(ipPacket);
+        out_to_vpn.write(ipPacket);
+        out_to_vpn.flush();
         ByteBuffer appPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
         List<InetAddress> filters = new ArrayList<>();
         filters.add(source);
@@ -221,37 +243,278 @@ public class ProxyClientTest {
         DatagramSocket vpnSocket = vpnWriter.getSocket();
         vpnSocket.connect(InetAddress.getLocalHost(), DEFAULT_PORT);
 
-        VpnForwardingReader vpnReader = new VpnForwardingReader(inputStream, appPacket, vpnSocket, filters);
+        VpnForwardingReader vpnReader = new VpnForwardingReader(in_to_reader, appPacket, vpnSocket, filters);
 
         vpnClient = new VpnClient(vpnWriter, vpnReader);
         vpnClient.start();
 
         Thread.sleep(3000);
 
-        byte[] received = outputStream.toByteArray();
-        System.out.println("RECEIVED: " + received.length + " bytes");
-        assert(received.length > 0);
+        ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_LEN);
+        byte[] data = packet.array();
+        int length = in_from_vpn.read(data);
+        assert(length > 0);
+        System.out.println("RECEIVED: " + length + " bytes in test");
+        packet.limit(length);
+
+        // make sure we got a SYN-ACK
+        ip4Header = Ip4Header.parseBuffer(packet);
+        tcpHeader = TcpHeader.parseBuffer(packet);
+        assert(tcpHeader.isSyn());
+        assert(tcpHeader.isAck());
+
+        System.out.println("GOT TCP SYN ACK: " + tcpHeader.toString());
+
+        // make an ACK to the SYN ack (bn: createAckData returns an IP packet, not a TCP packet so
+        // we don't have to encapsulate it further
+        ipPacket = TcpPacketFactory.createAckData(ip4Header, tcpHeader,  tcpHeader.getSequenceNumber() + 1, tcpHeader.getAckNumber(), false, false, false, true);
+
+        buffer = ByteBuffer.allocate(ipPacket.length);
+        buffer.put(ipPacket);
+        buffer.rewind();
+        ip4Header = Ip4Header.parseBuffer(buffer);
+        tcpHeader = TcpHeader.parseBuffer(buffer);
+        System.out.println("ABOUT TO SEND ACK: " + tcpHeader.toString());
+
+        out_to_vpn.write(ipPacket);
+        out_to_vpn.flush();
+
+        Thread.sleep(3000);
+
+        // make sure we don't get anything back because nothing should ACK an ACK.
+        assert(in_from_vpn.available() == 0);
+
+        vpnClient.shutdown();
+
+        try {
+            in_to_reader.close();
+            out_to_vpn.close();
+        } catch (Exception ex) {
+            // pass
+        }
     }
 
-    // todo finish implementing
-    @Disabled
-    @Test public void proxyTcpEchoTest() throws SocketException, UnknownHostException {
+    @Test public void proxyTcpEchoTest() throws IOException, PacketHeaderException, InterruptedException {
+        PipedInputStream in_to_reader = new PipedInputStream();
+        final PipedOutputStream out_to_vpn = new PipedOutputStream(in_to_reader);
+
+        PipedInputStream in_from_vpn = new PipedInputStream();
+        final PipedOutputStream out_from_writer = new PipedOutputStream(in_from_vpn);
+
         // setup the writing side of the vpn
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        //ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         SocketProtector protector = mock(SocketProtector.class);
         ByteBuffer vpnPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
         int localVpnPort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
-        VpnForwardingWriter vpnWriter = new VpnForwardingWriter(outputStream, vpnPacket, localVpnPort, protector);
+        VpnForwardingWriter vpnWriter = new VpnForwardingWriter(out_from_writer, vpnPacket, localVpnPort, protector);
 
-        // put a packet into the inputstream
+        // put a SYN packet into the inputstream
         InetAddress source = InetAddress.getLocalHost();
-        System.out.println("SOURCE: " + source.toString());
+        System.out.println("SOURCE: " + source.getHostAddress());
         int sourcePort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
-
-        // todo: prep and send tcp syn, recv tcp syn-ack, reply ack
-
-
-        byte[] tcpPacket = TcpPacketFactory.encapsulate(source, source, sourcePort, TcpServer.DEFAULT_PORT, 0, 0, (short) 0, "test".getBytes());
+        byte[] tcpPacket = TcpPacketFactory.createSynPacket(source, source, sourcePort, TcpServer.DEFAULT_PORT, 0);
         byte[] ipPacket = IpPacketFactory.encapsulate(source, source, TCP_PROTOCOL, tcpPacket);
+
+        // validate everything went ok
+        ByteBuffer buffer = ByteBuffer.allocate(ipPacket.length);
+        buffer.put(ipPacket);
+        buffer.rewind();
+        Ip4Header ip4Header = Ip4Header.parseBuffer(buffer);
+        TcpHeader tcpHeader = TcpHeader.parseBuffer(buffer);
+        assert(ip4Header.getSourceAddress().equals(source));
+        assert(tcpHeader.getSourcePort() == sourcePort);
+        assert(ip4Header.getDestinationAddress().equals(source));
+        assert(tcpHeader.getDestinationPort() == TcpServer.DEFAULT_PORT);
+        System.out.println("IP packet length: " + ipPacket.length);
+
+        // setup the reading side of the vpn
+        //InputStream inputStream = new ByteArrayInputStream(ipPacket);
+        out_to_vpn.write(ipPacket);
+        out_to_vpn.flush();
+        ByteBuffer appPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
+        List<InetAddress> filters = new ArrayList<>();
+        filters.add(source);
+
+        DatagramSocket vpnSocket = vpnWriter.getSocket();
+        vpnSocket.connect(InetAddress.getLocalHost(), DEFAULT_PORT);
+
+        VpnForwardingReader vpnReader = new VpnForwardingReader(in_to_reader, appPacket, vpnSocket, filters);
+
+        vpnClient = new VpnClient(vpnWriter, vpnReader);
+        vpnClient.start();
+
+        Thread.sleep(3000);
+
+        ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_LEN);
+        byte[] data = packet.array();
+        int length = in_from_vpn.read(data);
+        assert(length > 0);
+        System.out.println("RECEIVED: " + length + " bytes in test");
+        packet.limit(length);
+
+        // make sure we got a SYN-ACK
+        ip4Header = Ip4Header.parseBuffer(packet);
+        tcpHeader = TcpHeader.parseBuffer(packet);
+        assert(tcpHeader.isSyn());
+        assert(tcpHeader.isAck());
+
+        System.out.println("GOT TCP SYN ACK: " + tcpHeader.toString());
+
+        // make an ACK to the SYN ack (bn: createAckData returns an IP packet, not a TCP packet so
+        // we don't have to encapsulate it further
+        ipPacket = TcpPacketFactory.createResponsePacketData(ip4Header, tcpHeader, "test".getBytes(), true, tcpHeader.getSequenceNumber() + 1, tcpHeader.getAckNumber(), (int)System.currentTimeMillis(),tcpHeader.getTimestampSender());
+
+        buffer = ByteBuffer.allocate(ipPacket.length);
+        buffer.put(ipPacket);
+        buffer.rewind();
+        ip4Header = Ip4Header.parseBuffer(buffer);
+        tcpHeader = TcpHeader.parseBuffer(buffer);
+        System.out.println("ABOUT TO SEND ACK WITH DATA: " + tcpHeader.toString());
+
+        out_to_vpn.write(ipPacket);
+        out_to_vpn.flush();
+
+        Thread.sleep(3000);
+
+        // make sure we don't get anything back because nothing should ACK an ACK.
+        assert(in_from_vpn.available() > 0);
+
+        packet.rewind();
+        length = in_from_vpn.read(data);
+        assert(length > 0);
+        System.out.println("RECEIVED: " + length + " bytes");
+        assert(length > 0);
+        ip4Header = Ip4Header.parseBuffer(packet);
+        tcpHeader = TcpHeader.parseBuffer(packet);
+        System.out.println("GOT TCP PACKET: " + tcpHeader);
+
+        vpnClient.shutdown();
+
+        try {
+            in_to_reader.close();
+            out_to_vpn.close();
+        } catch (Exception ex) {
+            // pass
+        }
+    }
+
+    @Test
+    public void testFileTransfer() throws IOException, PacketHeaderException, InterruptedException {
+        PipedInputStream in_to_reader = new PipedInputStream();
+        final PipedOutputStream out_to_vpn = new PipedOutputStream(in_to_reader);
+
+        PipedInputStream in_from_vpn = new PipedInputStream();
+        final PipedOutputStream out_from_writer = new PipedOutputStream(in_from_vpn);
+
+        // setup the writing side of the vpn
+        //ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        SocketProtector protector = mock(SocketProtector.class);
+        ByteBuffer vpnPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
+        int localVpnPort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
+        VpnForwardingWriter vpnWriter = new VpnForwardingWriter(out_from_writer, vpnPacket, localVpnPort, protector);
+
+        // put a SYN packet into the inputstream
+        InetAddress source = InetAddress.getLocalHost();
+        System.out.println("SOURCE: " + source.getHostAddress());
+        int sourcePort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
+        byte[] tcpPacket = TcpPacketFactory.createSynPacket(source, source, sourcePort, TcpBinaryEchoServer.DEFAULT_PORT, 0);
+        byte[] ipPacket = IpPacketFactory.encapsulate(source, source, TCP_PROTOCOL, tcpPacket);
+
+        // validate everything went ok
+        ByteBuffer buffer = ByteBuffer.allocate(ipPacket.length);
+        buffer.put(ipPacket);
+        buffer.rewind();
+        Ip4Header ip4Header = Ip4Header.parseBuffer(buffer);
+        TcpHeader tcpHeader = TcpHeader.parseBuffer(buffer);
+        assert(ip4Header.getSourceAddress().equals(source));
+        assert(tcpHeader.getSourcePort() == sourcePort);
+        assert(ip4Header.getDestinationAddress().equals(source));
+        assert(tcpHeader.getDestinationPort() == TcpBinaryEchoServer.DEFAULT_PORT);
+        System.out.println("IP packet length: " + ipPacket.length);
+
+        // setup the reading side of the vpn
+        //InputStream inputStream = new ByteArrayInputStream(ipPacket);
+        out_to_vpn.write(ipPacket);
+        out_to_vpn.flush();
+        ByteBuffer appPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
+        List<InetAddress> filters = new ArrayList<>();
+        filters.add(source);
+
+        DatagramSocket vpnSocket = vpnWriter.getSocket();
+        vpnSocket.connect(InetAddress.getLocalHost(), DEFAULT_PORT);
+
+        VpnForwardingReader vpnReader = new VpnForwardingReader(in_to_reader, appPacket, vpnSocket, filters);
+
+        vpnClient = new VpnClient(vpnWriter, vpnReader);
+        vpnClient.start();
+
+        Thread.sleep(3000);
+
+        ByteBuffer packet = ByteBuffer.allocate(MAX_PACKET_LEN);
+        byte[] data = packet.array();
+        int length = in_from_vpn.read(data);
+        assert(length > 0);
+        System.out.println("RECEIVED: " + length + " bytes in test");
+        packet.limit(length);
+
+        // make sure we got a SYN-ACK
+        ip4Header = Ip4Header.parseBuffer(packet);
+        tcpHeader = TcpHeader.parseBuffer(packet);
+        assert(tcpHeader.isSyn());
+        assert(tcpHeader.isAck());
+
+        System.out.println("GOT TCP SYN ACK: " + tcpHeader.toString());
+
+        // make an ACK to the SYN ack (bn: createAckData returns an IP packet, not a TCP packet so
+        // we don't have to encapsulate it further
+        ByteBuffer payload = ByteBuffer.allocate(8);
+        payload.putInt(4);
+        payload.put("test".getBytes());
+        ipPacket = TcpPacketFactory.createResponsePacketData(ip4Header, tcpHeader, payload.array(), true, tcpHeader.getSequenceNumber() + 1, tcpHeader.getAckNumber(), (int)System.currentTimeMillis(),tcpHeader.getTimestampSender());
+
+        buffer = ByteBuffer.allocate(ipPacket.length);
+        buffer.put(ipPacket);
+        buffer.rewind();
+        ip4Header = Ip4Header.parseBuffer(buffer);
+        tcpHeader = TcpHeader.parseBuffer(buffer);
+        System.out.println("ABOUT TO SEND ACK WITH DATA: " + tcpHeader.toString());
+
+        out_to_vpn.write(ipPacket);
+        out_to_vpn.flush();
+
+        Thread.sleep(3000);
+
+        // make sure we don't get anything back because nothing should ACK an ACK.
+        assert(in_from_vpn.available() > 0);
+
+        packet.rewind();
+        length = in_from_vpn.read(data);
+        assert(length > 0);
+        System.out.println("RECEIVED: " + length + " bytes");
+        assert(length > 0);
+        ip4Header = Ip4Header.parseBuffer(packet);
+        tcpHeader = TcpHeader.parseBuffer(packet);
+        System.out.println("GOT TCP PACKET: " + tcpHeader);
+
+        if (packet.hasRemaining()) {
+            System.out.println("STILL HAVE MORE!");
+            ip4Header = Ip4Header.parseBuffer(packet);
+            tcpHeader = TcpHeader.parseBuffer(packet);
+            System.out.println("GOT TCP PACKET: " + tcpHeader);
+        }
+
+        vpnClient.shutdown();
+
+        try {
+            in_to_reader.close();
+            out_to_vpn.close();
+        } catch (Exception ex) {
+            // pass
+        }
+    }
+
+    @Test
+    public void testWeb() {
+
     }
 }

@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.net.VpnService;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
-import dagger.hilt.android.AndroidEntryPoint;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -27,7 +26,6 @@ import org.slf4j.LoggerFactory;
 /**
  * The MainActivity of the app.
  */
-@AndroidEntryPoint
 public class MainActivity extends AppCompatActivity {
   // SLF4J
   Logger logger = LoggerFactory.getLogger(MainActivity.class);

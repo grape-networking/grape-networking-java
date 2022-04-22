@@ -7,7 +7,6 @@
 
     <application
         android:icon="@drawable/grape"
-        android:allowBackup="false"
         android:name=".GrapeApplication"
         android:theme="@style/Theme.Grape">
 
@@ -28,5 +27,4 @@
             </intent-filter>
         </service>
     </application>
-
 </manifest>

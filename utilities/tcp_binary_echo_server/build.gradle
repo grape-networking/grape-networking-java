@@ -5,7 +5,7 @@ dependencies {
 }
 
 application {
-    mainClass = 'network.grape.tcp_image_server.TcpServer'
+    mainClass = 'network.grape.tcp_binary_echo_server.TcpBinaryEchoServer'
 }
 
 java {

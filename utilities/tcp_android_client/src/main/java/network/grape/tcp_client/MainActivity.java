@@ -10,6 +10,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
+import network.grape.tcp_binary_echo_server.TcpBinaryEchoServer;
 
 /*
 import com.nguyenhoanglam.imagepicker.model.Config;
@@ -62,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
     // https://stackoverflow.com/questions/37779515/how-can-i-convert-an-imageview-to-byte-array-in-android-studio
     public void sendImage(View v) {
         Thread thread = new Thread(() -> {
-            InetSocketAddress inetSocketAddress = new InetSocketAddress("10.0.0.111", 8888);
+            InetSocketAddress inetSocketAddress = new InetSocketAddress("10.0.0.89", TcpBinaryEchoServer.DEFAULT_PORT);
             Socket s = new Socket();
             try {
                 s.connect(inetSocketAddress);

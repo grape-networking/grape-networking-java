@@ -28,9 +28,9 @@ import org.slf4j.LoggerFactory;
 public class GrapeVpnService extends VpnService implements Runnable, ProtectSocket {
 
   private static final int MAX_PACKET_LEN = 1500;
-  private static final String VPN_ADDRESS = "10.0.0.3";
+  private static final String VPN_ADDRESS = "10.0.0.89";
   private static final int VPN_LOCAL_PORT = 8888;
-  private static final int VPN_REMOTE_PORT = 9999;
+  private static final int VPN_REMOTE_PORT = 19999;
 
   // SLF4J
   private final Logger logger;
@@ -167,7 +167,7 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     // new SocketProtector(this));
 
     List<InetAddress> filters = new ArrayList<>();
-    filters.add(InetAddress.getByName("10.0.0.103"));
+    //filters.add(InetAddress.getByName("10.0.0.89"));
 
 
     DatagramSocket vpnsocket = vpnWriter.getSocket();

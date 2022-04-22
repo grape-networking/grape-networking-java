@@ -339,12 +339,15 @@ public class TcpPacketFactory {
    * @param tcp the TCP header of the FIN packet
    * @param ackToClient the ack number to assign to the FIN-ACK packet
    * @param seqToClient the sequence number to assign to the FIN-ACK packet
+   * @param isSyn true / false indiciating whether the flag is set
+   * @param isPsh true / false indiciating whether the flag is set
    * @param isFin true / false indiciating whether the flag is set
    * @param isAck true / false indiciating whether the flag is set
    * @return a filled in buffer with an IP header and TCP FIN-ACK packet
    */
-  public static byte[] createFinAckData(IpHeader ip, TcpHeader tcp, long ackToClient,
-                                        long seqToClient, boolean isFin, boolean isAck) {
+  public static byte[] createAckData(IpHeader ip, TcpHeader tcp, long ackToClient,
+                                        long seqToClient, boolean isSyn, boolean isPsh,
+                                        boolean isFin, boolean isAck) {
     IpHeader ipHeader = copyIpHeader(ip);
     TcpHeader tcpHeader = copyTcpHeader(tcp);
 
@@ -363,8 +366,8 @@ public class TcpPacketFactory {
     }
 
     tcpHeader.setAck(isAck);
-    tcpHeader.setSyn(false);
-    tcpHeader.setPsh(false);
+    tcpHeader.setSyn(isSyn);
+    tcpHeader.setPsh(isPsh);
     tcpHeader.setFin(isFin);
 
     // set response timestamps in options fields
