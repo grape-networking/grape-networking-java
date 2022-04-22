@@ -55,8 +55,8 @@ jobs:
           report-path: app/build/reports/lint/report.xml
 #      - name: checkstyle
 #        run: ./gradlew app:checkstyle
-#      - name: junit5 instrumented tests (with jacoco coverage reports))
-#        run: adb connect android-emulator:5555 && adb wait-for-device && ./gradlew app:connectedCheck && ./gradlew app:jacocoTestDebugUnitTestReport
+      - name: junit5 instrumented tests (with jacoco coverage reports))
+        run: adb connect android-emulator-grape:5555 && adb wait-for-device && ./gradlew app:connectedCheck && ./gradlew app:jacocoTestDebugUnitTestReport
       - uses: actions/upload-artifact@v3
         with:
           name: app-reports
