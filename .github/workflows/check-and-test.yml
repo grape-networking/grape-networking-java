@@ -16,7 +16,7 @@ jobs:
           distribution: 'adopt'
           java-version: '11.0.4'
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v2.0.7
+        uses: android-actions/setup-android@v2.0.8
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
       - name: lint
@@ -44,7 +44,7 @@ jobs:
           distribution: 'adopt'
           java-version: '11.0.4'
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v2.0.7
+        uses: android-actions/setup-android@v2.0.8
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
       - name: lint
@@ -73,7 +73,7 @@ jobs:
           distribution: 'adopt'
           java-version: '11.0.4'
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v2.0.7
+        uses: android-actions/setup-android@v2.0.8
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
       - name: run proxy-client test
