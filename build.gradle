@@ -17,10 +17,10 @@ buildscript {
         hiltVersion = "2.41"
         espressoVersion = "3.4.0"
         androidxVersion = "1.3.1-alpha03"
-        roboelectricVersion = '4.7.3'
+        roboelectricVersion = '4.8.1'
         multidexVersion = "2.0.1"
-        lombokVersion = "1.18.22"
-        mockitoVersion = "4.4.0"
+        lombokVersion = "1.18.24"
+        mockitoVersion = "4.5.1"
         slf4jApiVersion = "1.7.36"
         papertrailLogVersion = "1.0.0"
         materialVersion = "1.5.0"
