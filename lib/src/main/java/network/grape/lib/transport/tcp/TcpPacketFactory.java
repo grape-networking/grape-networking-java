@@ -297,6 +297,7 @@ public class TcpPacketFactory {
    */
   public static byte[] createFinData(IpHeader ip, TcpHeader tcp, long ackNumber, long seqNumber,
                                      int timeSender, int timeReplyTo) {
+    logger.info("IN CREATE FIN DATA");
     IpHeader ipHeader = copyIpHeader(ip);
     TcpHeader tcpHeader = copyTcpHeader(tcp);
     ipHeader.swapAddresses();;
@@ -401,7 +402,7 @@ public class TcpPacketFactory {
       pseudoHeader.put((byte) 0x00);
       pseudoHeader.put(TCP_PROTOCOL);
       pseudoHeader.putShort((short) tcpLen);
-    } else {
+    } else if(sourceAddress instanceof Inet6Address) {
       if (!(destinationAddress instanceof Inet6Address)) {
         throw new IllegalArgumentException("Source is Ip6Address and Dest isn't");
       }
@@ -410,8 +411,12 @@ public class TcpPacketFactory {
       pseudoHeader.put(destinationAddress.getAddress());
       pseudoHeader.putInt(tcpLen);
       pseudoHeader.putInt(TCP_PROTOCOL);
+    } else {
+      logger.error("Trying to create a SYN packet with a source that isn't ip4 or ip6");
+      return new byte[0];
     }
 
+    pseudoHeader.put(headerData);
     byte[] pseudoheaderBuffer = pseudoHeader.array();
 
     byte[] tcpChecksum = PacketUtil.calculateChecksum(

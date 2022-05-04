@@ -96,9 +96,11 @@ public class VpnForwardingReader implements Runnable {
                         }
 
                         if (ipHeader.getProtocol() == TransportHeader.UDP_PROTOCOL) {
-                            logger.info("Got a UDP Packet");
+                            UdpHeader udpHeader = UdpHeader.parseBuffer(packet);
+                            logger.info("Got a UDP Packet: {}", udpHeader);
                         } else if (ipHeader.getProtocol() == TransportHeader.TCP_PROTOCOL) {
-                            logger.info("Got a TCP packet");
+                            TcpHeader tcpHeader = TcpHeader.parseBuffer(packet);
+                            logger.info("Got a TCP packet: {}", tcpHeader);
                         } else {
                             packet.rewind();
                             String protocol = "00 00";
@@ -115,10 +117,9 @@ public class VpnForwardingReader implements Runnable {
                             if (!filterTo.contains(ipHeader.getDestinationAddress()) && !filterTo.contains(ipHeader.getSourceAddress())) {
                                 logger.info("Skipping {} to {}", ipHeader.getSourceAddress(), ipHeader.getDestinationAddress());
                                 continue;
-                            } else {
-                                logger.info("Sending packet from {} to {}", ipHeader.getSourceAddress(), ipHeader.getDestinationAddress());
                             }
                         }
+                        logger.info("Sending packet from {} to {}", ipHeader.getSourceAddress(), ipHeader.getDestinationAddress());
                     } catch(PacketHeaderException ex) {
                         logger.debug("Error parsing packet: " + ex);
                     }

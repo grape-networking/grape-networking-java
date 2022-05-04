@@ -102,7 +102,7 @@ public class PacketUtil {
     checksum[0] = (byte) (sum >> 8);
     checksum[1] = (byte) sum;
 
-    logger.info("Checksum: " + BufferUtil.hexDump(checksum, 0, 2, false, false, ""));
+    // logger.info("Checksum: " + BufferUtil.hexDump(checksum, 0, 2, false, false, ""));
 
     return checksum;
   }

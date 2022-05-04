@@ -224,8 +224,8 @@ public class UdpInputStream extends InputStream {
      *****************************************************************
      */
     public int read(byte[] buff) throws IOException {
-        logger.debug("UDP Inputstream waiting for {} bytes of data", buff.length);
-        System.out.println("UDP Inputstream waiting for " + buff.length + " bytes of data");
+        logger.debug("UDP Inputstream waiting for up to {} bytes of data", buff.length);
+        System.out.println("UDP Inputstream waiting for up to " + buff.length + " bytes of data");
         return read(buff, 0, buff.length, true);
     }
 

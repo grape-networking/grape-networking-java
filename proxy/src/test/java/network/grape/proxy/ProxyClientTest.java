@@ -398,6 +398,27 @@ public class ProxyClientTest {
         }
     }
 
+    /**
+     * This test is a bidirectional test, ideally with multiple send / recvs
+     *
+     * The order of transmits is as follows:
+     *
+     * Client                             VPN                                Server
+     * SYN    ----------------->
+     *                                    Establish TCP Connection ----->   TCP ACCEPT
+     *            <----------------     SYN-ACK
+     * ACK,PSH -------------------->      Send data ------->                 TCP RECV
+     *                     <-------------- ACK
+     *                                                     <-------------    TCP SEND
+     *                     <-------------- ACK,PSH
+     *                                                       <-----------     CLOSE
+     *                     <-------------- ACK,FIN
+     *
+     *
+     * @throws IOException
+     * @throws PacketHeaderException
+     * @throws InterruptedException
+     */
     @Test
     public void testFileTransfer() throws IOException, PacketHeaderException, InterruptedException {
         PipedInputStream in_to_reader = new PipedInputStream();
@@ -417,7 +438,8 @@ public class ProxyClientTest {
         InetAddress source = InetAddress.getLocalHost();
         System.out.println("SOURCE: " + source.getHostAddress());
         int sourcePort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
-        byte[] tcpPacket = TcpPacketFactory.createSynPacket(source, source, sourcePort, TcpBinaryEchoServer.DEFAULT_PORT, 0);
+        int startingSeq = new Random().nextInt(2 * Short.MAX_VALUE - 1);
+        byte[] tcpPacket = TcpPacketFactory.createSynPacket(source, source, sourcePort, TcpBinaryEchoServer.DEFAULT_PORT, startingSeq);
         byte[] ipPacket = IpPacketFactory.encapsulate(source, source, TCP_PROTOCOL, tcpPacket);
 
         // validate everything went ok
@@ -462,11 +484,11 @@ public class ProxyClientTest {
         tcpHeader = TcpHeader.parseBuffer(packet);
         assert(tcpHeader.isSyn());
         assert(tcpHeader.isAck());
+        assert(tcpHeader.getAckNumber() == startingSeq + 1);
 
         System.out.println("GOT TCP SYN ACK: " + tcpHeader.toString());
 
-        // make an ACK to the SYN ack (bn: createAckData returns an IP packet, not a TCP packet so
-        // we don't have to encapsulate it further
+        // make an ACK to the SYN ack (bn: createAckData returns an IP packet, not a TCP packet so we don't have to encapsulate it further
         ByteBuffer payload = ByteBuffer.allocate(8);
         payload.putInt(4);
         payload.put("test".getBytes());
@@ -484,24 +506,60 @@ public class ProxyClientTest {
 
         Thread.sleep(3000);
 
-        // make sure we don't get anything back because nothing should ACK an ACK.
+        // since we sent data, we expect an ACK back
         assert(in_from_vpn.available() > 0);
 
+        // seems like we get an ACK
         packet.rewind();
         length = in_from_vpn.read(data);
         assert(length > 0);
         System.out.println("RECEIVED: " + length + " bytes");
         assert(length > 0);
+        packet.limit(length);
         ip4Header = Ip4Header.parseBuffer(packet);
         tcpHeader = TcpHeader.parseBuffer(packet);
-        System.out.println("GOT TCP PACKET: " + tcpHeader);
+        System.out.println("GOT PACKET FROM VPN: " + ip4Header + "\n" + tcpHeader);
+        System.out.println("POS: " + packet.position() + " LIMIT: " + packet.limit());
+        System.out.println("IP4LEN: " + ip4Header.getLength() + " PAYLOAD LEN: " + (packet.position() - ip4Header.getLength()));
+        assert(packet.hasRemaining());
 
+        // followed by an ACK,PSH with the echo data
         if (packet.hasRemaining()) {
             System.out.println("STILL HAVE MORE!");
             ip4Header = Ip4Header.parseBuffer(packet);
             tcpHeader = TcpHeader.parseBuffer(packet);
-            System.out.println("GOT TCP PACKET: " + tcpHeader);
+            System.out.println("GOT PACKET FROM VPN: " + ip4Header + "\n" + tcpHeader);
+            System.out.println("POS: " + packet.position() + " LIMIT: " + packet.limit());
+            System.out.println("IP4LEN: " + ip4Header.getLength() + " PAYLOAD LEN: " + ( packet.limit() - packet.position()));
+            assert(packet.limit() - packet.position() == 4);
+            byte[] temp = new byte[4];
+            packet.get(temp);
+            assert(new String(temp).equals("test"));
         }
+
+        // todo: assert the FIN we get back after the server closes has the correct ACK and SEQ numbers
+
+
+        // optional send an ACK - which the proxy will reject because the connection is already aborted
+        // make an ACK to the SYN ack (bn: createAckData returns an IP packet, not a TCP packet so we don't have to encapsulate it further
+        ipPacket = TcpPacketFactory.createResponsePacketData(ip4Header, tcpHeader, new byte[0], true, tcpHeader.getSequenceNumber() + 1, tcpHeader.getAckNumber(), (int)System.currentTimeMillis(),tcpHeader.getTimestampSender());
+
+        buffer = ByteBuffer.allocate(ipPacket.length);
+        buffer.put(ipPacket);
+        buffer.rewind();
+        ip4Header = Ip4Header.parseBuffer(buffer);
+        tcpHeader = TcpHeader.parseBuffer(buffer);
+        System.out.println("ABOUT TO SEND ACK" + tcpHeader.toString());
+
+        out_to_vpn.write(ipPacket);
+        out_to_vpn.flush();
+
+        Thread.sleep(3000);
+
+//        payload = ByteBuffer.allocate(9);
+//        payload.putInt(5);
+//        payload.put("test2".getBytes());
+//        ipPacket = TcpPacketFactory.createResponsePacketData(ip4Header, tcpHeader, payload.array(), true, tcpHeader.getSequenceNumber() + 1, tcpHeader.getAckNumber(), (int)System.currentTimeMillis(),tcpHeader.getTimestampSender());
 
         vpnClient.shutdown();
 

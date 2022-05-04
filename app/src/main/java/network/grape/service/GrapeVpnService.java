@@ -167,7 +167,7 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     // new SocketProtector(this));
 
     List<InetAddress> filters = new ArrayList<>();
-    //filters.add(InetAddress.getByName("10.0.0.89"));
+    //filters.add(InetAddress.getByName("138.68.242.6"));
 
 
     DatagramSocket vpnsocket = vpnWriter.getSocket();

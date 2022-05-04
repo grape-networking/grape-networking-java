@@ -43,7 +43,7 @@ public class VpnInstrumentedTest {
       GrantPermissionRule.grant(Manifest.permission.ACCESS_NETWORK_STATE);
 
   //un-disable this test once the VPN accepts traffic correctly
-  @Disabled
+  // @Disabled
   @RequiresDevice
   @Test
   public void testVpnConnection()

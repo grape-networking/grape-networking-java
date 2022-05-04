@@ -113,7 +113,7 @@ public class SessionHandler {
     } else if (ipHeader.getProtocol() == TransportHeader.TCP_PROTOCOL) {
       //logger.warn("PACKET: \n" + BufferUtil.hexDump(debugbuffer, 0, stream.limit(), true, true));
       transportHeader = TcpHeader.parseBuffer(stream);
-      logger.info("TCP from port: " + transportHeader.getSourcePort() + " to " + transportHeader.getDestinationPort());
+      logger.info("TCP from port: {} to {} \n {}", transportHeader.getSourcePort(), transportHeader.getDestinationPort(), transportHeader);
       handleTcpPacket(stream, ipHeader, (TcpHeader) transportHeader, outputstream);
     } else {
       String protocol = "00 00";
@@ -266,6 +266,7 @@ public class SessionHandler {
         acceptAck(tcpHeader, session);
 
         if (session.isClosingConnection()) {
+          logger.info("SESSION IS CLOSING, SENDING FIN ACK");
           sendFinAck(ipHeader, tcpHeader, session);
         } else if (session.isAckedToFin() && !tcpHeader.isFin()) {
           // the last ACK from VPN after FIN-ACK flag was set
@@ -573,6 +574,7 @@ public class SessionHandler {
   }
 
   protected void sendFinAck(IpHeader ipHeader, TcpHeader tcpHeader, Session session) {
+    logger.debug("IN SEND FIN ACK");
     final long ack = tcpHeader.getSequenceNumber();
     final long seq = tcpHeader.getAckNumber();
     final byte[] data = createAckData(ipHeader, tcpHeader, ack, seq, false, false, true, false);
@@ -590,6 +592,7 @@ public class SessionHandler {
   }
 
   protected void ackFinAck(IpHeader ipHeader, TcpHeader tcpHeader, Session session) {
+    logger.debug("IN ACK FIN ACK");
     long ack = tcpHeader.getSequenceNumber() + 1;
     long seq = tcpHeader.getAckNumber();
     byte[] data = createAckData(ipHeader, tcpHeader, ack, seq, false, false, true, true);

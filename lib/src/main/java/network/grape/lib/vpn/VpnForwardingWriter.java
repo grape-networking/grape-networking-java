@@ -5,6 +5,8 @@ import network.grape.lib.network.ip.Ip4Header;
 import network.grape.lib.network.ip.Ip6Header;
 import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.transport.TransportHeader;
+import network.grape.lib.transport.tcp.TcpHeader;
+import network.grape.lib.transport.udp.UdpHeader;
 import network.grape.lib.util.BufferUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +40,7 @@ public class VpnForwardingWriter implements Runnable {
     private final UdpInputStream inputStream;
 
     public VpnForwardingWriter(OutputStream outputStream, ByteBuffer packet, int localPort, SocketProtector protector) throws SocketException, UnknownHostException {
-        logger = LoggerFactory.getLogger(VpnForwardingReader.class);
+        logger = LoggerFactory.getLogger(VpnForwardingWriter.class);
         this.outputStream = outputStream;
         this.packet = packet;
         this.protector = protector;
@@ -78,22 +80,25 @@ public class VpnForwardingWriter implements Runnable {
                     try {
                         final IpHeader ipHeader;
                         if (version == IP4_VERSION) {
-                            logger.info("Good IPv4 packet from VPN server: \n" + BufferUtil.hexDump(packet.array(), 0, length, true, true, "08 00"));
+                            logger.info("Good IPv4 packet from VPN server: \n{}", BufferUtil.hexDump(packet.array(), 0, length, true, true, "08 00"));
                             packet.rewind();
                             ipHeader = Ip4Header.parseBuffer(packet);
                         } else if (version == IP6_VERSION) {
-                            logger.info("Good IPv6 packet: \n" + BufferUtil.hexDump(packet.array(), 0, length, true, true, "86 DD"));
+                            logger.info("Good IPv6 packet: \n{}", BufferUtil.hexDump(packet.array(), 0, length, true, true, "86 DD"));
                             packet.rewind();
                             ipHeader = Ip6Header.parseBuffer(packet);
                         } else {
-                            logger.error("Got a packet which isn't Ip4 or Ip6 in VPNForwardingWriter: " + version + "\n" + BufferUtil.hexDump(packet.array(), 0, length, true, false, ""));
+                            logger.error("Got a packet which isn't Ip4 or Ip6 in VPNForwardingWriter: {}\n{}",
+                                    version, BufferUtil.hexDump(packet.array(), 0, length, true, false, ""));
                             continue;
                         }
 
                         if (ipHeader.getProtocol() == TransportHeader.UDP_PROTOCOL) {
-                            logger.info("Got a UDP Packet");
+                            UdpHeader udpHeader = UdpHeader.parseBuffer(packet);
+                            logger.info("Got a UDP Packet: {}", udpHeader);
                         } else if (ipHeader.getProtocol() == TransportHeader.TCP_PROTOCOL) {
-                            logger.info("Got a TCP packet");
+                            TcpHeader tcpHeader = TcpHeader.parseBuffer(packet);
+                            logger.info("Got a TCP packet: {}", tcpHeader);
                         } else {
                             packet.rewind();
                             String protocol = "00 00";

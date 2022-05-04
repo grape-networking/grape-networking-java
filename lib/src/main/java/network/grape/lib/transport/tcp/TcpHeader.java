@@ -566,4 +566,14 @@ public class TcpHeader implements TransportHeader {
     //System.out.println("OPTION LEN: " + length);
     return length;
   }
+
+  @Override public String toString() {
+    return "TcpHeader(sourcePort=" + sourcePort + ", destinationPort=" + destinationPort
+            + ", sequenceNumber=" + sequenceNumber + ", ackNumber=" + ackNumber + ", offset=" + offset
+            + ", windowSize=" + windowSize + ", checksum=" + checksum + ", urgentPointer=" + urgentPointer + "\n"
+            + "   timeStampSender=" + timestampSender + ", timeStampReplyTo=" + timestampReplyTo + ", options=" + options.toString() + "\n"
+            + "   isECN: " + isEcn() + ", isACK: " + isAck() + ", isCWR: " + isCwr() + ", isECE: " + isEce()
+            + ", isFIN: " + isFin() + ", isPSH: " + isPsh() + ", isSYN: " + isSyn() + ", isRST: " + isRst()
+            + ", isURG: " + isUrg() + ")";
+  }
 }

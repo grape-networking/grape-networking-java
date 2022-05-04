@@ -67,6 +67,7 @@ public class SessionOutputStreamReaderWorker extends SessionWorker implements Ru
     }
 
     if (session.isAbortingConnection()) {
+      logger.debug("Session is aborting connection in session worker");
       abortSession(session);
     } else {
       session.setBusyRead(false);
@@ -157,7 +158,7 @@ public class SessionOutputStreamReaderWorker extends SessionWorker implements Ru
             sendToRequester(buffer, len, session);
             buffer.clear();
           } else if (len == -1) {
-            //logger.info("End of data from remote server, will send FIN to session: " + sessionKey);
+            logger.info("End of data from remote server, will send FIN to session: " + sessionKey);
             sendFin(session);
             session.setAbortingConnection(true);
           }
@@ -231,7 +232,7 @@ public class SessionOutputStreamReaderWorker extends SessionWorker implements Ru
         temp.rewind();
         Ip4Header ip4Header = Ip4Header.parseBuffer(temp);
         TransportHeader transportHeader = TcpHeader.parseBuffer(temp);
-        logger.info("SENDING TO VPN CLIENT: {} {}", ip4Header, transportHeader);
+        logger.info("SENDING TO VPN CLIENT: \n  {}\n  {}", ip4Header, transportHeader);
         //logger.info(BufferUtil.hexDump(data, 0, data.length, true, true));
       } catch (PacketHeaderException e) {
         e.printStackTrace();
@@ -241,7 +242,7 @@ public class SessionOutputStreamReaderWorker extends SessionWorker implements Ru
         } else {
           protocol = "86 DD";
         }
-        logger.info(BufferUtil.hexDump(data, 0, data.length, true, true, protocol));
+        logger.warn("PACKET EXECEPTION!!!!!\n{}", BufferUtil.hexDump(data, 0, data.length, true, true, protocol));
       } catch (UnknownHostException e) {
         e.printStackTrace();
       }
@@ -260,6 +261,7 @@ public class SessionOutputStreamReaderWorker extends SessionWorker implements Ru
   }
 
   private void sendFin(Session session) {
+    logger.info("SENDING FIN FROM SESSION OUTPUTSTREAM READER WORKER");
     final IpHeader ipHeader = session.getLastIpHeader();
     final TcpHeader tcpHeader = (TcpHeader) session.getLastTransportHeader();
 
