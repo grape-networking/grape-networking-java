@@ -9,7 +9,7 @@ buildscript {
 
     }
     ext {
-        gradlePluginVersion = "7.0.0"
+        gradlePluginVersion = "7.2.0"
         androidJunitPluginVersion = "1.8.2.0"
         jacocoPluginVersion = "0.17.0-SNAPSHOT"
         hiyaPluginVersion = "0.2"
