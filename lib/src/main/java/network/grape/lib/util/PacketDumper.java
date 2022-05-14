@@ -1,21 +1,28 @@
 package network.grape.lib.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
 /**
- * Class used to produce output files which can be read by wireshark
+ * Class used to produce output files which can be read by
+ * <a href="https://www.wireshark.org/docs/wsug_html_chunked/ChIOImportSection.html">wireshark.</a>
  */
 public class PacketDumper {
     public enum OutputFormat {
         ASCII_HEXDUMP,
         PCAP
     }
+
+    private final Logger logger = LoggerFactory.getLogger(PacketDumper.class);
     FileOutputStream fileOutputStream;
     OutputFormat format;
 
     public PacketDumper(String dumpFile, OutputFormat format) throws FileNotFoundException {
+        logger.info("Outputing hexdump to {}", dumpFile);
         fileOutputStream = new FileOutputStream(dumpFile);
         if (format != OutputFormat.ASCII_HEXDUMP) {
             throw new UnsupportedOperationException("ASCII HEXDUMP only output type currently supported");

@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Setter;
+import network.grape.lib.util.PacketDumper;
 import network.grape.lib.vpn.ProtectSocket;
 import network.grape.lib.vpn.SocketProtector;
 import network.grape.lib.vpn.VpnForwardingReader;
@@ -40,6 +41,8 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
   @Setter private VpnForwardingReader vpnReader;
   @Setter private Thread vpnWriterThread;
   @Setter private Thread vpnReaderThread;
+
+  @Setter private PacketDumper packetDumper;
 
   public GrapeVpnService() {
     logger = LoggerFactory.getLogger(VpnService.class);
@@ -136,7 +139,7 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
 
     FileOutputStream clientWriter = new FileOutputStream(vpnInterface.getFileDescriptor());
     ByteBuffer vpnPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
-    vpnWriter = new VpnForwardingWriter(clientWriter, vpnPacket, VPN_LOCAL_PORT, new SocketProtector(this));
+    vpnWriter = new VpnForwardingWriter(clientWriter, vpnPacket, VPN_LOCAL_PORT, new SocketProtector(this), packetDumper);
     vpnWriterThread = new Thread(vpnWriter);
     vpnWriterThread.start();
     /*
@@ -173,7 +176,7 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
     DatagramSocket vpnsocket = vpnWriter.getSocket();
     vpnsocket.connect(InetAddress.getByName(VPN_ADDRESS), VPN_REMOTE_PORT);
 
-    vpnReader = new VpnForwardingReader(clientReader, appPacket, vpnsocket, filters);
+    vpnReader = new VpnForwardingReader(clientReader, appPacket, vpnsocket, filters, packetDumper);
     vpnReaderThread = new Thread(vpnReader);
     vpnReaderThread.start();
   }

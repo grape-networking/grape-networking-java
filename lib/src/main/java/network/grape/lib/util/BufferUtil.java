@@ -220,6 +220,7 @@ public class BufferUtil {
       }
       offset++;
     }
+    output.append("\n");
     return output.toString();
   }
 

@@ -7,6 +7,7 @@ import static network.grape.lib.transport.TransportHeader.TCP_PROTOCOL;
 import static network.grape.lib.transport.TransportHeader.UDP_PROTOCOL;
 import static network.grape.proxy.ProxyMain.DEFAULT_PORT;
 
+import network.grape.lib.util.PacketDumper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -52,6 +53,7 @@ import network.grape.udp_server.UdpServer;
  * will also eventually use).
  */
 public class ProxyClientTest {
+    private static int testCount = 0;
     private static final int MAX_PACKET_LEN = 1500;
     static VpnClient vpnClient;
     static ProxyMain proxyMain;
@@ -63,7 +65,10 @@ public class ProxyClientTest {
     static Thread tcpServerThread;
     static Thread tcpBinaryEchoServerThread;
 
+    static PacketDumper packetDumper;
+
     @BeforeEach public void init() throws IOException, InterruptedException {
+        packetDumper = new PacketDumper("/tmp/output-" + testCount + ".dump", PacketDumper.OutputFormat.ASCII_HEXDUMP);
         proxyMain = new ProxyMain();
         proxyThread = new Thread(()->{
             try {
@@ -112,6 +117,7 @@ public class ProxyClientTest {
             tcpBinaryEchoServer.shutdown();
             tcpBinaryEchoServerThread.join(100);
         }
+        packetDumper.close();
     }
 
     // sends to the test udp server and expects an echo back without using the proxy as a sanity
@@ -131,7 +137,7 @@ public class ProxyClientTest {
 
     // sends to the test tcp server and expects an echo back without using the proxy as a sanity
     // check
-    @Test public void noProxyTcpEchoTest() throws IOException, InterruptedException {
+    @Test public void noProxyTcpEchoTest() throws IOException {
         InetAddress serverAddress = InetAddress.getLocalHost();
         int serverPort = TcpServer.DEFAULT_PORT;
         byte[] buffer = "test".getBytes();
@@ -156,7 +162,7 @@ public class ProxyClientTest {
         SocketProtector protector = mock(SocketProtector.class);
         ByteBuffer vpnPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
         int localVpnPort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
-        VpnForwardingWriter vpnWriter = new VpnForwardingWriter(outputStream, vpnPacket, localVpnPort, protector);
+        VpnForwardingWriter vpnWriter = new VpnForwardingWriter(outputStream, vpnPacket, localVpnPort, protector, packetDumper);
 
         // put a packet into the inputstream
         InetAddress source = InetAddress.getLocalHost();
@@ -186,7 +192,7 @@ public class ProxyClientTest {
         DatagramSocket vpnSocket = vpnWriter.getSocket();
         vpnSocket.connect(InetAddress.getLocalHost(), DEFAULT_PORT);
 
-        VpnForwardingReader vpnReader = new VpnForwardingReader(inputStream, appPacket, vpnSocket, filters);
+        VpnForwardingReader vpnReader = new VpnForwardingReader(inputStream, appPacket, vpnSocket, filters, packetDumper);
 
         vpnClient = new VpnClient(vpnWriter, vpnReader);
         vpnClient.start();
@@ -212,7 +218,7 @@ public class ProxyClientTest {
         SocketProtector protector = mock(SocketProtector.class);
         ByteBuffer vpnPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
         int localVpnPort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
-        VpnForwardingWriter vpnWriter = new VpnForwardingWriter(out_from_writer, vpnPacket, localVpnPort, protector);
+        VpnForwardingWriter vpnWriter = new VpnForwardingWriter(out_from_writer, vpnPacket, localVpnPort, protector, packetDumper);
 
         // put a SYN packet into the inputstream
         InetAddress source = InetAddress.getLocalHost();
@@ -244,7 +250,7 @@ public class ProxyClientTest {
         DatagramSocket vpnSocket = vpnWriter.getSocket();
         vpnSocket.connect(InetAddress.getLocalHost(), DEFAULT_PORT);
 
-        VpnForwardingReader vpnReader = new VpnForwardingReader(in_to_reader, appPacket, vpnSocket, filters);
+        VpnForwardingReader vpnReader = new VpnForwardingReader(in_to_reader, appPacket, vpnSocket, filters, packetDumper);
 
         vpnClient = new VpnClient(vpnWriter, vpnReader);
         vpnClient.start();
@@ -307,7 +313,7 @@ public class ProxyClientTest {
         SocketProtector protector = mock(SocketProtector.class);
         ByteBuffer vpnPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
         int localVpnPort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
-        VpnForwardingWriter vpnWriter = new VpnForwardingWriter(out_from_writer, vpnPacket, localVpnPort, protector);
+        VpnForwardingWriter vpnWriter = new VpnForwardingWriter(out_from_writer, vpnPacket, localVpnPort, protector, packetDumper);
 
         // put a SYN packet into the inputstream
         InetAddress source = InetAddress.getLocalHost();
@@ -339,7 +345,7 @@ public class ProxyClientTest {
         DatagramSocket vpnSocket = vpnWriter.getSocket();
         vpnSocket.connect(InetAddress.getLocalHost(), DEFAULT_PORT);
 
-        VpnForwardingReader vpnReader = new VpnForwardingReader(in_to_reader, appPacket, vpnSocket, filters);
+        VpnForwardingReader vpnReader = new VpnForwardingReader(in_to_reader, appPacket, vpnSocket, filters, packetDumper);
 
         vpnClient = new VpnClient(vpnWriter, vpnReader);
         vpnClient.start();
@@ -434,7 +440,7 @@ public class ProxyClientTest {
         SocketProtector protector = mock(SocketProtector.class);
         ByteBuffer vpnPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
         int localVpnPort = new Random().nextInt(2 * Short.MAX_VALUE - 1);
-        VpnForwardingWriter vpnWriter = new VpnForwardingWriter(out_from_writer, vpnPacket, localVpnPort, protector);
+        VpnForwardingWriter vpnWriter = new VpnForwardingWriter(out_from_writer, vpnPacket, localVpnPort, protector, packetDumper);
 
         // put a SYN packet into the inputstream
         InetAddress source = InetAddress.getLocalHost();
@@ -467,7 +473,7 @@ public class ProxyClientTest {
         DatagramSocket vpnSocket = vpnWriter.getSocket();
         vpnSocket.connect(InetAddress.getLocalHost(), DEFAULT_PORT);
 
-        VpnForwardingReader vpnReader = new VpnForwardingReader(in_to_reader, appPacket, vpnSocket, filters);
+        VpnForwardingReader vpnReader = new VpnForwardingReader(in_to_reader, appPacket, vpnSocket, filters, packetDumper);
 
         vpnClient = new VpnClient(vpnWriter, vpnReader);
         vpnClient.start();
