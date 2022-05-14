@@ -216,8 +216,10 @@ public class SessionOutputStreamReaderWorker extends SessionWorker implements Ru
 
     byte[] packetBody = session.getReceivedData(max);
     if (packetBody != null && packetBody.length > 0) {
+      logger.debug("Received {} bytes from destination, preparing for VPN", packetBody.length);
       long unAck = session.getSendNext();
       long nextUnAck = session.getSendNext() + packetBody.length;
+      logger.debug("Send next: {} ", nextUnAck);
       session.setSendNext(nextUnAck);
       session.setUnackData(packetBody);
       session.setResendPacketCounter(0);
@@ -270,9 +272,27 @@ public class SessionOutputStreamReaderWorker extends SessionWorker implements Ru
       return;
     }
 
+    long ackNumber = session.getRecSequence();
+    long seqNumber = session.getSendNext();
+    logger.debug("PREPPING FIN WITH SEQ: {} ACK: {}", seqNumber, ackNumber);
+
+    tcpHeader.setAckNumber(ackNumber);
+    tcpHeader.setSequenceNumber(seqNumber);
+
     final byte[] data =
-        createFinData(ipHeader, tcpHeader, session.getSendNext(), session.getRecSequence(),
+        createFinData(ipHeader, tcpHeader, ackNumber, seqNumber,
             session.getTimestampSender(), session.getTimestampReplyTo());
+
+    try {
+      if (ipHeader instanceof Ip4Header) {
+        session.getPacketDumper().dumpBuffer(data, data.length, "08 00");
+      } else {
+        session.getPacketDumper().dumpBuffer(data, data.length, "86 DD");
+      }
+    } catch (IOException ex) {
+      logger.error("Failed to write to the packet dumper: " + ex.toString());
+    }
+
     try {
       outputStream.write(data);
       outputStream.flush();

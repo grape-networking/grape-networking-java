@@ -1,6 +1,7 @@
 package network.grape.lib.session;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
@@ -12,6 +13,8 @@ import lombok.Setter;
 import network.grape.lib.network.ip.IpHeader;
 import network.grape.lib.transport.TransportHeader;
 import network.grape.lib.util.Constants;
+import network.grape.lib.util.PacketDumper;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +54,7 @@ public class Session {
   @Getter @Setter private long connectionStartTime = 0;
 
   // tcp stuff
-  @Getter @Setter private long recSequence = 0;
+  @Getter @Setter private long recSequence = 0; // the last received seq number
   @Getter @Setter private boolean closingConnection = false;
   @Getter @Setter private boolean ackedToFin = false;
   // in ACK packet from client, if the previous packet was corrupted,
@@ -60,7 +63,7 @@ public class Session {
   //track ack we sent to client and waiting for ack back from client
   @Getter @Setter private long sendUnack = 0;
   @Getter @Setter private boolean acked = false; //last packet was acked yet?
-  @Getter @Setter private long sendNext = 0; // the next ack to send to the VPN
+  @Getter @Setter private long sendNext = 0; // the next sequence number to send
   @Getter @Setter private int sendWindow = 0; //window = windowsize x windowscale
   @Getter @Setter private int sendWindowSize = 0;
   @Getter @Setter private int sendWindowScale = 0;
@@ -81,6 +84,7 @@ public class Session {
 
   //track how many time a packet has been retransmitted => avoid loop
   @Getter @Setter private int resendPacketCounter = 0;
+  @Getter @Setter private PacketDumper packetDumper;
 
   /**
    * Construct a session with the given identifying properties which are used to form the key in the
@@ -108,6 +112,17 @@ public class Session {
 
     sendingStream = new ByteArrayOutputStream();
     receivingStream = new ByteArrayOutputStream();
+    String filename = "/tmp/output-" + sourceIp.getHostAddress() + "-" + sourcePort + "-" + destinationIp.getHostAddress() + "-" + destinationPort + ".dump";
+    try {
+      packetDumper = new PacketDumper(filename, PacketDumper.OutputFormat.ASCII_HEXDUMP);
+    } catch (FileNotFoundException ex) {
+      logger.warn("Packet dumper can't open file: " + filename);
+    }
+  }
+
+  public void setSendNext(long next) {
+    logger.debug("SETTING SEND NEXT FROM: {} TO: {}", sendNext, next);
+    sendNext = next;
   }
 
   public String getKey() {
