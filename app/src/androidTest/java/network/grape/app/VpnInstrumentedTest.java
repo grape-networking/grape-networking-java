@@ -86,14 +86,18 @@ public class VpnInstrumentedTest {
 
   private static void allowPermissionsIfNeeded() {
     if (Build.VERSION.SDK_INT >= 23) {
+      System.out.println("High enough SDK to try to request permissions");
       UiDevice device = UiDevice.getInstance(getInstrumentation());
       UiObject allowPermissions = device.findObject(new UiSelector().text("OK"));
       if (allowPermissions.exists()) {
         try {
+          System.out.println("Trying to accept the permission");
           allowPermissions.click();
         } catch (UiObjectNotFoundException e) {
           System.out.println("There is no permissions dialog to interact with");
         }
+      } else {
+        System.out.println("Can't find the allow permissions object");
       }
     } else {
       System.out.println("API is too old, can't get permissions");
