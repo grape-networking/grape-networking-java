@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.net.VpnService;
 import android.os.ParcelFileDescriptor;
 import dagger.hilt.android.AndroidEntryPoint;
+
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -41,11 +43,10 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
   @Setter private VpnForwardingReader vpnReader;
   @Setter private Thread vpnWriterThread;
   @Setter private Thread vpnReaderThread;
-
   @Setter private PacketDumper packetDumper;
 
   public GrapeVpnService() {
-    logger = LoggerFactory.getLogger(VpnService.class);
+    logger = LoggerFactory.getLogger(GrapeVpnService.class);
   }
 
   @Override
@@ -139,7 +140,13 @@ public class GrapeVpnService extends VpnService implements Runnable, ProtectSock
 
     FileOutputStream clientWriter = new FileOutputStream(vpnInterface.getFileDescriptor());
     ByteBuffer vpnPacket = ByteBuffer.allocate(MAX_PACKET_LEN);
-    packetDumper = new PacketDumper(getFilesDir().toString() + "/output.dump", PacketDumper.OutputFormat.ASCII_HEXDUMP);
+
+    String directory = ".";
+    if (getFilesDir() != null) {
+      directory = getFilesDir().toString();
+    }
+
+    packetDumper = new PacketDumper(directory + "/output.dump", PacketDumper.OutputFormat.ASCII_HEXDUMP);
     vpnWriter = new VpnForwardingWriter(clientWriter, vpnPacket, VPN_LOCAL_PORT, new SocketProtector(this), packetDumper);
     vpnWriterThread = new Thread(vpnWriter);
     vpnWriterThread.start();
