@@ -426,7 +426,6 @@ public class ProxyClientTest {
      * @throws PacketHeaderException
      * @throws InterruptedException
      */
-    @Disabled("was never working, exposed some issue with multiple tcp packets")
     @Test
     public void testFileTransfer() throws IOException, PacketHeaderException, InterruptedException {
         PipedInputStream in_to_reader = new PipedInputStream();
@@ -533,20 +532,30 @@ public class ProxyClientTest {
 
         // followed by an ACK,PSH with the echo data
         if (packet.hasRemaining()) {
-            System.out.println("STILL HAVE MORE!");
+            System.out.println("STILL HAVE MORE: ");
             ip4Header = Ip4Header.parseBuffer(packet);
             tcpHeader = TcpHeader.parseBuffer(packet);
             System.out.println("GOT PACKET FROM VPN: " + ip4Header + "\n" + tcpHeader);
             System.out.println("POS: " + packet.position() + " LIMIT: " + packet.limit());
-            System.out.println("IP4LEN: " + ip4Header.getLength() + " PAYLOAD LEN: " + ( packet.limit() - packet.position()));
-            assert(packet.limit() - packet.position() == 4);
+            System.out.println("IP4LEN: " + ip4Header.getLength() + " PAYLOAD LEN: " + (ip4Header.getLength() - ip4Header.getHeaderLength()));
+            assert(packet.limit() - packet.position() >= 4);
             byte[] temp = new byte[4];
             packet.get(temp);
             assert(new String(temp).equals("test"));
+            System.out.println("GOT: " + new String(temp));
         }
 
-        // todo: assert the FIN we get back after the server closes has the correct ACK and SEQ numbers
-
+        // assert we have a FIN packet
+        if (packet.hasRemaining()) {
+            System.out.println("STILL HAVE MORE: ");
+            ip4Header = Ip4Header.parseBuffer(packet);
+            tcpHeader = TcpHeader.parseBuffer(packet);
+            System.out.println("GOT PACKET FROM VPN: " + ip4Header + "\n" + tcpHeader);
+            System.out.println("POS: " + packet.position() + " LIMIT: " + packet.limit());
+            System.out.println("IP4LEN: " + ip4Header.getLength() + " PAYLOAD LEN: " + (ip4Header.getLength() - ip4Header.getHeaderLength()));
+            assert(packet.limit() - packet.position() == 0);
+            assert(tcpHeader.isFin());
+        }
 
         // optional send an ACK - which the proxy will reject because the connection is already aborted
         // make an ACK to the SYN ack (bn: createAckData returns an IP packet, not a TCP packet so we don't have to encapsulate it further

@@ -159,4 +159,13 @@ public class Ip4Header implements IpHeader {
   public void setPayloadLength(int l) {
     this.length = ihl * IpHeader.IP4_WORD_LEN + l;
   }
+
+  @Override public String toString() {
+    return "Ip4Header(version=" + version + ", ihl=" + ihl
+            + ", dscp=" + dscp + ", ecn=" + ecn + ", length=" + length + ", headerLength=" + getHeaderLength()
+            + ", id=" + id + ", flags=" + flags + ", fragmentOffset=" + fragmentOffset
+            + "   ttl=" + ttl + ", protocol=" + protocol + ", checksum=" + checksum + "\n"
+            + "   sourceAddress: " + sourceAddress.getHostAddress() + ", destinationAddress: "
+            + destinationAddress.getHostAddress() + ", options: " + options.toString() + ")";
+  }
 }
