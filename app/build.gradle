@@ -129,6 +129,6 @@ apply from: 'jacocoAndroid.gradle'
 // https://github.com/mockito/mockito/issues/2007
 allprojects {
     configurations.all {
-        resolutionStrategy.force 'org.objenesis:objenesis:3.2'
+        resolutionStrategy.force 'org.objenesis:objenesis:3.3'
     }
 }
