@@ -42,7 +42,7 @@ dependencies {
     }
 
     api "io.grpc:grpc-protobuf-lite:1.46.0" // CURRENT_GRPC_VERSION
-    implementation 'io.grpc:grpc-stub:1.46.0' // CURRENT_GRPC_VERSION
+    implementation 'io.grpc:grpc-stub:1.49.0' // CURRENT_GRPC_VERSION
     testImplementation "org.slf4j:slf4j-simple:1.7.36"
     testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter-params:${jUnitVersion}"
