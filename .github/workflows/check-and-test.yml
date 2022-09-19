@@ -92,7 +92,7 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R
       - name: codecov upload
-        uses: codecov/codecov-action@v3.1.0
+        uses: codecov/codecov-action@v3.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: app-reports/jacoco/jacoco.xml,lib-reports/jacoco/jacoco.xml
