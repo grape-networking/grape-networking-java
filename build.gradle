@@ -20,7 +20,7 @@ buildscript {
         roboelectricVersion = '4.8.1'
         multidexVersion = "2.0.1"
         lombokVersion = "1.18.24"
-        mockitoVersion = "4.5.1"
+        mockitoVersion = "4.8.0"
         slf4jApiVersion = "1.7.36"
         papertrailLogVersion = "1.0.0"
         materialVersion = "1.6.0"
