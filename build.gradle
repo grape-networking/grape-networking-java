@@ -23,7 +23,7 @@ buildscript {
         mockitoVersion = "4.5.1"
         slf4jApiVersion = "1.7.36"
         papertrailLogVersion = "1.0.0"
-        materialVersion = "1.6.0"
+        materialVersion = "1.7.0"
         constraintLayoutVersion = "2.1.4"
         // if we bump this version, we fail to find tests:
         // see: https://github.com/mannodermaus/android-junit5/issues/241
